@@ -52,7 +52,7 @@ type UserProfileStats = {
             totalPositive: number;
             totalNegative: number;
             netForYear: number;
-        };
+        } | null;
     };
 };
 
@@ -292,8 +292,8 @@ export default function FacultyDashboard() {
                 <Plus className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-green-600">+{userProfileStats?.stats.currentYearStats.totalPositive ?? 0}</div>
-                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats.currentYearStats.netForYear ?? 0}</p>
+                <div className="text-2xl font-bold text-green-600">+{userProfileStats?.stats?.currentYearStats?.totalPositive ?? 0}</div>
+                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
             </CardContent>
         </Card>
         <Card className="dashboard-card">
@@ -302,8 +302,8 @@ export default function FacultyDashboard() {
                 <Minus className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-red-600">-{userProfileStats?.stats.currentYearStats.totalNegative ?? 0}</div>
-                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats.currentYearStats.netForYear ?? 0}</p>
+                <div className="text-2xl font-bold text-red-600">-{userProfileStats?.stats?.currentYearStats?.totalNegative ?? 0}</div>
+                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
             </CardContent>
         </Card>
       </div>
@@ -408,3 +408,5 @@ export default function FacultyDashboard() {
     </div>
   );
 }
+
+    
