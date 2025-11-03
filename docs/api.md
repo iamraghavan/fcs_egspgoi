@@ -5,7 +5,7 @@ This document outlines the API endpoints for the Faculty Credit System.
 ## Base URL
 
 The base URL for all API endpoints is configured via the `NEXT_PUBLIC_API_BASE_URL` environment variable.
-Default: `https://faculty-credit-system.onrender.com`
+Default: `https://faculty-credit-system.vercel.app`
 
 ---
 
