@@ -327,13 +327,13 @@ export default function ReviewSubmissionsPage() {
               <CardContent>
                 <div className="flex items-center gap-4">
                   <Avatar>
-                    <AvatarImage src={selectedSubmission.faculty.profileImage} />
-                    <AvatarFallback>{selectedSubmission.faculty.name?.charAt(0)}</AvatarFallback>
+                    <AvatarImage src={selectedSubmission.faculty?.profileImage} />
+                    <AvatarFallback>{selectedSubmission.faculty?.name?.charAt(0) ?? '?'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{selectedSubmission.faculty.name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedSubmission.faculty.department}</p>
-                    <p className="text-xs text-muted-foreground">{selectedSubmission.faculty.college}</p>
+                    <p className="font-semibold">{selectedSubmission.faculty?.name}</p>
+                    <p className="text-sm text-muted-foreground">{selectedSubmission.faculty?.department}</p>
+                    <p className="text-xs text-muted-foreground">{selectedSubmission.faculty?.college}</p>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground mt-4">
