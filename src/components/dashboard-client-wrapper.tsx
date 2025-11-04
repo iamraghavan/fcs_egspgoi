@@ -85,7 +85,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         };
 
         const userPayload: User = {
-          id: userData.id,
+          id: userData._id,
           name: userData.name,
           email: userData.email,
           role: userData.role,
