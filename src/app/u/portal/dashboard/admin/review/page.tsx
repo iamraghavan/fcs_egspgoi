@@ -250,7 +250,7 @@ export default function ReviewSubmissionsPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                    <TableRow>
+                    <TableRow key="loading">
                         <TableCell colSpan={5} className="text-center">Loading submissions...</TableCell>
                     </TableRow>
                 ) : submissions.length > 0 ? (
@@ -260,11 +260,11 @@ export default function ReviewSubmissionsPage() {
                         className={`cursor-pointer ${selectedSubmission?._id === submission._id ? "bg-primary/10" : ""}`}
                         onClick={() => setSelectedSubmission(submission)}
                     >
-                        <TableCell className="font-medium">
-                        {submission.faculty.name}
+                        <TableCell className="font-medium text-foreground">
+                        {submission.faculty?.name || "N/A"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
-                          {submission.faculty.college}
+                          {submission.faculty?.college || "N/A"}
                         </TableCell>
                         <TableCell className="text-muted-foreground">
                           {new Date(submission.createdAt).toLocaleDateString()}
@@ -295,7 +295,7 @@ export default function ReviewSubmissionsPage() {
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow>
+                    <TableRow key="no-submissions">
                         <TableCell colSpan={5} className="text-center">No submissions found for this filter.</TableCell>
                     </TableRow>
                 )}
@@ -331,9 +331,9 @@ export default function ReviewSubmissionsPage() {
                     <AvatarFallback>{selectedSubmission.faculty?.name?.charAt(0) ?? '?'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{selectedSubmission.faculty?.name}</p>
-                    <p className="text-sm text-muted-foreground">{selectedSubmission.faculty?.department}</p>
-                    <p className="text-xs text-muted-foreground">{selectedSubmission.faculty?.college}</p>
+                    <p className="font-semibold">{selectedSubmission.faculty?.name || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{selectedSubmission.faculty?.department || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">{selectedSubmission.faculty?.college || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground mt-4">
