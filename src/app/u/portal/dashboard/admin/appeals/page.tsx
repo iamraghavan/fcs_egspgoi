@@ -260,8 +260,8 @@ export default function AppealReviewPage() {
                     <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
                 ) : filteredAppeals.length > 0 ? (
                     filteredAppeals.map((appeal) => (
-                    <TableRow 
-                        key={appeal._id} 
+                    <TableRow
+                        key={appeal._id}
                         className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                         onClick={() => setSelectedAppeal(appeal)}
                     >
