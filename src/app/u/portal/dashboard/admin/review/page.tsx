@@ -328,7 +328,7 @@ export default function ReviewSubmissionsPage() {
                 <div className="flex items-center gap-4">
                   <Avatar>
                     <AvatarImage src={selectedSubmission.faculty.profileImage} />
-                    <AvatarFallback>{selectedSubmission.faculty.name.charAt(0)}</AvatarFallback>
+                    <AvatarFallback>{selectedSubmission.faculty.name?.charAt(0)}</AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="font-semibold">{selectedSubmission.faculty.name}</p>
