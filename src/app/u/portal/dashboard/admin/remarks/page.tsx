@@ -529,12 +529,12 @@ export default function ManageRemarksPage() {
                                 <DialogHeader>
                                 <DialogTitle>Remark Details</DialogTitle>
                                 </DialogHeader>
-                                {selectedRemark && (
+                                {selectedRemark && selectedRemark.faculty && (
                                 <div className="space-y-4 py-4">
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-12 w-12">
                                             <AvatarImage src={selectedRemark.faculty.profileImage} />
-                                            <AvatarFallback>{selectedRemark.faculty.name.charAt(0)}</AvatarFallback>
+                                            <AvatarFallback>{selectedRemark.faculty.name?.charAt(0) ?? '?'}</AvatarFallback>
                                         </Avatar>
                                         <div>
                                             <p className="font-semibold">{selectedRemark.faculty.name}</p>
@@ -586,3 +586,5 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
+
+    
