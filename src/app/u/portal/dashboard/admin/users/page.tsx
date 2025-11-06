@@ -35,6 +35,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAlert } from "@/context/alert-context";
 import { useToast } from "@/hooks/use-toast";
 import { gsap } from "gsap";
+import { Label } from "@/components/ui/label";
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -46,6 +48,7 @@ type FacultyAccount = {
   department?: string;
   currentCredit: number;
   isActive: boolean;
+  role: 'faculty' | 'admin' | 'oa';
 };
 
 type Departments = {
@@ -56,13 +59,17 @@ type Departments = {
 export default function FacultyAccountsPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
+  // Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [college, setCollege] = useState("");
   const [department, setDepartment] = useState("");
+  const [role, setRole] = useState<'faculty' | 'admin' | 'oa'>('faculty');
   const [departments, setDepartments] = useState<Departments>({});
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Table state
   const [facultyAccounts, setFacultyAccounts] = useState<FacultyAccount[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyAccount | null>(null);
@@ -154,6 +161,23 @@ export default function FacultyAccountsPage() {
       return;
     }
 
+    const payload: any = {
+      name,
+      email,
+      password,
+      role,
+    };
+
+    if (role === 'faculty') {
+        if (!college || !department) {
+            showAlert("Incomplete Form", "College and Department are required for faculty accounts.");
+            setIsLoading(false);
+            return;
+        }
+        payload.college = college;
+        payload.department = department;
+    }
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
         method: "POST",
@@ -161,14 +185,7 @@ export default function FacultyAccountsPage() {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`,
         },
-        body: JSON.stringify({
-          name,
-          email,
-          password,
-          college,
-          department,
-          role: "faculty",
-        }),
+        body: JSON.stringify(payload),
       });
 
       const responseData = await response.json();
@@ -179,7 +196,7 @@ export default function FacultyAccountsPage() {
 
       toast({
         title: "Account Created",
-        description: `Faculty account for ${name} has been successfully created.`,
+        description: `Account for ${name} has been successfully created.`,
       });
 
       // Reset form and refresh user list
@@ -188,6 +205,7 @@ export default function FacultyAccountsPage() {
       setPassword("");
       setCollege("");
       setDepartment("");
+      setRole("faculty");
       fetchUsers();
     } catch (error: any) {
       showAlert(
@@ -305,8 +323,8 @@ export default function FacultyAccountsPage() {
                       {account.name}
                     </TableCell>
                     <TableCell>{account.email}</TableCell>
-                    <TableCell>{account.college}</TableCell>
-                    <TableCell className="text-right">{account.currentCredit}</TableCell>
+                    <TableCell>{account.college || 'N/A'}</TableCell>
+                    <TableCell className="text-right">{account.currentCredit ?? 0}</TableCell>
                     <TableCell className="text-center">
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
@@ -347,7 +365,7 @@ export default function FacultyAccountsPage() {
                               <div className="grid grid-cols-2 gap-4 text-sm">
                                   <div>
                                       <p className="text-muted-foreground">College</p>
-                                      <p className="font-medium">{selectedFaculty.college}</p>
+                                      <p className="font-medium">{selectedFaculty.college || 'N/A'}</p>
                                   </div>
                                   <div>
                                       <p className="text-muted-foreground">Department</p>
@@ -355,7 +373,7 @@ export default function FacultyAccountsPage() {
                                   </div>
                                   <div>
                                       <p className="text-muted-foreground">Current Credits</p>
-                                      <p className="font-medium">{selectedFaculty.currentCredit}</p>
+                                      <p className="font-medium">{selectedFaculty.currentCredit ?? 0}</p>
                                   </div>
                                    <div>
                                       <p className="text-muted-foreground">Status</p>
@@ -395,105 +413,78 @@ export default function FacultyAccountsPage() {
           <form className="space-y-6" onSubmit={handleCreateAccount}>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
-                  <label
-                    className="block text-sm font-medium text-foreground mb-2"
-                    htmlFor="name"
-                  >
+                  <Label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
                     Name
-                  </label>
-                  <Input
-                    id="name"
-                    placeholder="Enter faculty name"
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    required
-                  />
+                  </Label>
+                  <Input id="name" placeholder="Enter full name" value={name} onChange={(e) => setName(e.target.value)} required />
                 </div>
                 <div>
-                  <label
-                    className="block text-sm font-medium text-foreground mb-2"
-                    htmlFor="email"
-                  >
+                  <Label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
                     Email
-                  </label>
-                  <Input
-                    id="email"
-                    placeholder="Enter faculty email"
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                  />
+                  </Label>
+                  <Input id="email" placeholder="Enter email address" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
                 </div>
             </div>
-            <div>
-              <label
-                className="block text-sm font-medium text-foreground mb-2"
-                htmlFor="password"
-              >
-                Password
-              </label>
-              <Input
-                id="password"
-                placeholder="Enter a temporary password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <label
-                  className="block text-sm font-medium text-foreground mb-2"
-                  htmlFor="college"
-                >
-                  College
-                </label>
-                <Select onValueChange={setCollege} value={college}>
-                  <SelectTrigger id="college">
-                    <SelectValue placeholder="Select college" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(colleges).map((collegeName) => (
-                      <SelectItem key={collegeName} value={collegeName}>
-                        {collegeName}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <label
-                  className="block text-sm font-medium text-foreground mb-2"
-                  htmlFor="department"
-                >
-                  Department
-                </label>
-                <Select onValueChange={setDepartment} value={department} disabled={!college}>
-                  <SelectTrigger id="department">
-                    <SelectValue placeholder="Select department" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.entries(departments).map(([group, courses]) => (
-                        <SelectGroup key={group}>
-                            <SelectLabel>{group}</SelectLabel>
-                            {courses.map(course => (
-                                <SelectItem key={course} value={course}>{course}</SelectItem>
-                            ))}
-                        </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                    <Label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">Password</Label>
+                    <Input id="password" placeholder="Enter a temporary password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                </div>
+                <div>
+                    <Label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">Role</Label>
+                    <Select onValueChange={(value) => setRole(value as any)} value={role}>
+                      <SelectTrigger id="role">
+                        <SelectValue placeholder="Select role" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="faculty">Faculty</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="oa">Office Assistant (OA)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                </div>
             </div>
+
+            {role === 'faculty' && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <Label htmlFor="college" className="block text-sm font-medium text-foreground mb-2">College</Label>
+                  <Select onValueChange={setCollege} value={college}>
+                    <SelectTrigger id="college">
+                      <SelectValue placeholder="Select college" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.keys(colleges).map((collegeName) => (
+                        <SelectItem key={collegeName} value={collegeName}>
+                          {collegeName}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="department" className="block text-sm font-medium text-foreground mb-2">Department</Label>
+                  <Select onValueChange={setDepartment} value={department} disabled={!college}>
+                    <SelectTrigger id="department">
+                      <SelectValue placeholder="Select department" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(departments).map(([group, courses]) => (
+                          <SelectGroup key={group}>
+                              <SelectLabel>{group}</SelectLabel>
+                              {courses.map(course => (
+                                  <SelectItem key={course} value={course}>{course}</SelectItem>
+                              ))}
+                          </SelectGroup>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            
             <div>
-              <Button
-                type="submit"
-                className="w-full sm:w-auto"
-                disabled={isLoading}
-              >
+              <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
                 {isLoading ? "Creating Account..." : "Create Account"}
               </Button>
             </div>
@@ -503,3 +494,5 @@ export default function FacultyAccountsPage() {
     </div>
   )
 }
+
+    
