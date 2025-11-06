@@ -129,14 +129,15 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         const expectedPathPrefix = getExpectedPath();
         const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
 
+        // Enforce strict routing for roles
         if (userPayload.id !== uid) {
           router.replace(expectedUrl);
-        } else if (!pathname.startsWith(expectedPathPrefix)) {
-          router.replace(expectedUrl);
+        } else if (userPayload.role === 'oa' && !pathname.startsWith('/u/portal/dashboard/oa')) {
+            router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
         } else if (userPayload.role === 'faculty' && (pathname.includes('/admin') || pathname.includes('/oa'))) {
            router.replace(`/u/portal/dashboard?uid=${userPayload.id}`);
-        } else if (userPayload.role === 'oa' && pathname.includes('/admin')) {
-             router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
+        } else if (userPayload.role === 'admin' && !pathname.startsWith('/u/portal/dashboard/admin')) {
+           router.replace(`/u/portal/dashboard/admin?uid=${userPayload.id}`);
         }
 
 
