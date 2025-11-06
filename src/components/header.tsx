@@ -30,7 +30,7 @@ type User = {
   name: string;
   email: string;
   avatar: string;
-  role: "faculty" | "admin";
+  role: "faculty" | "admin" | "oa";
 }
 
 export function Header({ user }: { user: User }) {
@@ -88,7 +88,7 @@ export function Header({ user }: { user: User }) {
             const token = localStorage.getItem("token");
             const facultyId = searchParams.get('uid');
 
-            if (!token || !facultyId || user.role === 'admin') {
+            if (!token || !facultyId || user.role === 'admin' || user.role === 'oa') {
                 setHasUnread(false);
                 return;
             }
@@ -153,18 +153,20 @@ export function Header({ user }: { user: User }) {
             <span className="material-symbols-outlined text-base">timer</span>
             <span>{formatTime(timeLeft)}</span>
           </div>
-          <Link href={notificationsHref}>
-              <Button variant="ghost" size="icon" className="rounded-full relative text-muted-foreground hover:text-foreground">
-                  <span className="material-symbols-outlined">notifications</span>
-                  {hasUnread && (
-                    <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                        <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                    </span>
-                  )}
-                  <span className="sr-only">Toggle notifications</span>
-              </Button>
-          </Link>
+          {(user.role === 'faculty') && (
+            <Link href={notificationsHref}>
+                <Button variant="ghost" size="icon" className="rounded-full relative text-muted-foreground hover:text-foreground">
+                    <span className="material-symbols-outlined">notifications</span>
+                    {hasUnread && (
+                      <span className="absolute -top-1 -right-1 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                      </span>
+                    )}
+                    <span className="sr-only">Toggle notifications</span>
+                </Button>
+            </Link>
+          )}
         <UserNav user={user} logout={logout} />
       </div>
     </header>

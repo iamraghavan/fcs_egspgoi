@@ -19,7 +19,7 @@ import {
 import { Logo, LogoAdmin } from "@/components/icons";
 
 type SidebarNavProps = {
-  role: "faculty" | "admin";
+  role: "faculty" | "admin" | "oa";
 };
 
 const getFacultyNav = (uid: string) => [
@@ -42,13 +42,33 @@ const getAdminNav = (uid: string) => [
   { name: "Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
 ];
 
+const getOANav = (uid: string) => [
+  { name: "Issue Remark", href: `/u/portal/dashboard/oa?uid=${uid}`, icon: MessageSquareWarning },
+];
+
 export function SidebarNav({ role }: SidebarNavProps) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const router = useRouter();
   const uid = searchParams.get('uid') || '';
 
-  const navItems = role === "admin" ? getAdminNav(uid) : getFacultyNav(uid);
+  const getNavItems = () => {
+      switch (role) {
+          case 'admin': return getAdminNav(uid);
+          case 'oa': return getOANav(uid);
+          default: return getFacultyNav(uid);
+      }
+  }
+
+  const navItems = getNavItems();
+  
+  const getBaseUrl = () => {
+      switch (role) {
+          case 'admin': return `/u/portal/dashboard/admin?uid=${uid}`;
+          case 'oa': return `/u/portal/dashboard/oa?uid=${uid}`;
+          default: return `/u/portal/dashboard?uid=${uid}`;
+      }
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -61,7 +81,7 @@ export function SidebarNav({ role }: SidebarNavProps) {
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader>
-        <Link href={role === 'admin' ? `/u/portal/dashboard/admin?uid=${uid}` : `/u/portal/dashboard?uid=${uid}`} className="flex items-center gap-2">
+        <Link href={getBaseUrl()} className="flex items-center gap-2">
           <span className="text-lg font-semibold font-headline text-sidebar-foreground">
             EGSPGOI
           </span>

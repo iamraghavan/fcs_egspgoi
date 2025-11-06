@@ -16,7 +16,7 @@ type User = {
     name: string;
     email: string;
     avatar: string;
-    role: "faculty" | "admin";
+    role: "faculty" | "admin" | "oa";
 }
 
 type UserNavProps = {
@@ -28,9 +28,18 @@ export function UserNav({ user, logout }: UserNavProps) {
   const searchParams = useSearchParams();
   const uid = searchParams.get('uid') || '';
 
-  const settingsHref = user.role === 'admin'
-    ? `/u/portal/dashboard/admin/settings?uid=${uid}`
-    : `/u/portal/dashboard/settings?uid=${uid}`;
+  const getSettingsHref = () => {
+    switch(user.role) {
+        case 'admin':
+            return `/u/portal/dashboard/admin/settings?uid=${uid}`;
+        case 'faculty':
+            return `/u/portal/dashboard/settings?uid=${uid}`;
+        default:
+            return '#'; // No settings page for OA for now
+    }
+  }
+
+  const settingsHref = getSettingsHref();
     
   return (
     <DropdownMenu>
@@ -53,16 +62,20 @@ export function UserNav({ user, logout }: UserNavProps) {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
+           {user.role !== 'oa' && (
+            <>
             <Link href={settingsHref}>
                 <DropdownMenuItem>
                     Profile
                 </DropdownMenuItem>
             </Link>
-          <Link href={settingsHref}>
-            <DropdownMenuItem>
-                Settings
-            </DropdownMenuItem>
-          </Link>
+            <Link href={settingsHref}>
+                <DropdownMenuItem>
+                    Settings
+                </DropdownMenuItem>
+            </Link>
+            </>
+           )}
            <DropdownMenuItem>
                 Help & Feedback
             </DropdownMenuItem>

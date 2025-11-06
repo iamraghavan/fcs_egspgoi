@@ -15,7 +15,7 @@ type User = {
   id: string;
   name: string;
   email: string;
-  role: 'faculty' | 'admin';
+  role: 'faculty' | 'admin' | 'oa';
   avatar: string;
 }
 
@@ -95,16 +95,30 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         setUser(userPayload);
         
         const uid = searchParams.get('uid');
-        const expectedPathPrefix = userPayload.role === 'admin' ? '/u/portal/dashboard/admin' : '/u/portal/dashboard';
-        const expectedUrl = userPayload.role === 'admin' ? `/u/portal/dashboard/admin?uid=${userPayload.id}`: `/u/portal/dashboard?uid=${userPayload.id}`;
+        const getExpectedPath = () => {
+            switch (userPayload.role) {
+                case 'admin':
+                    return '/u/portal/dashboard/admin';
+                case 'oa':
+                    return '/u/portal/dashboard/oa';
+                default:
+                    return '/u/portal/dashboard';
+            }
+        }
+        
+        const expectedPathPrefix = getExpectedPath();
+        const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
 
         if (userPayload.id !== uid) {
           router.replace(expectedUrl);
-        } else if (userPayload.role === 'admin' && !pathname.startsWith(expectedPathPrefix)) {
+        } else if (!pathname.startsWith(expectedPathPrefix)) {
           router.replace(expectedUrl);
-        } else if (userPayload.role === 'faculty' && pathname.includes('/admin')) {
+        } else if (userPayload.role === 'faculty' && (pathname.includes('/admin') || pathname.includes('/oa'))) {
            router.replace(`/u/portal/dashboard?uid=${userPayload.id}`);
+        } else if (userPayload.role === 'oa' && pathname.includes('/admin')) {
+             router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
         }
+
 
       } catch (error: any) {
         showAlert("Session Error", error.message);
