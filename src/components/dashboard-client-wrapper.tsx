@@ -46,12 +46,32 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
 
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const role = localStorage.getItem("userRole");
+
     if (!token) {
       router.push("/u/portal/auth?faculty_login");
       return;
     }
 
     const fetchUser = async () => {
+      // Special handling for hardcoded OA user to prevent API call
+      if (role === 'oa' && token === 'mock_oa_token') {
+          const oaUser: User = {
+              id: 'oa_user_01',
+              name: 'Office Assistant',
+              email: process.env.NEXT_PUBLIC_OA_USERNAME || 'oa@egspec.org',
+              role: 'oa',
+              avatar: `https://ui-avatars.com/api/?name=OA&background=random`,
+          };
+          setUser(oaUser);
+          setLoading(false);
+          const uid = searchParams.get('uid');
+          if (uid !== oaUser.id || !pathname.startsWith('/u/portal/dashboard/oa')) {
+              router.replace(`/u/portal/dashboard/oa?uid=${oaUser.id}`);
+          }
+          return;
+      }
+
       try {
         const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
           headers: {
