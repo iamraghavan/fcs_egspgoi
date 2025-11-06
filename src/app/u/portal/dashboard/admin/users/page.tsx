@@ -65,7 +65,7 @@ export default function FacultyAccountsPage() {
   const [password, setPassword] = useState("");
   const [college, setCollege] = useState("");
   const [department, setDepartment] = useState("");
-  const [role, setRole] = useState<'faculty' | 'admin' | 'oa'>('faculty');
+  const [role, setRole] = useState<'faculty' | 'oa'>('faculty');
   const [departments, setDepartments] = useState<Departments>({});
   const [isLoading, setIsLoading] = useState(false);
   
@@ -176,6 +176,9 @@ export default function FacultyAccountsPage() {
         }
         payload.college = college;
         payload.department = department;
+    } else if (role === 'oa') {
+        payload.college = "EGS Pillay Group of Institutions";
+        payload.department = "Academics / Admistrative";
     }
 
     try {
@@ -438,7 +441,6 @@ export default function FacultyAccountsPage() {
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="faculty">Faculty</SelectItem>
-                        <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="oa">Office Assistant (OA)</SelectItem>
                       </SelectContent>
                     </Select>
@@ -494,5 +496,3 @@ export default function FacultyAccountsPage() {
     </div>
   )
 }
-
-    
