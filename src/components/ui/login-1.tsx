@@ -53,14 +53,38 @@ export function LoginScreen() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
+
+    // Hardcoded OA login check
+    if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
+        const oaUser = {
+            id: 'oa_user_01', // mock ID
+            role: 'oa',
+            token: 'mock_oa_token' // mock token
+        };
+
+        localStorage.setItem("token", oaUser.token);
+        localStorage.setItem("userRole", oaUser.role);
+        
+        const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
+        localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
+
+        const redirectUrl = `/u/portal/dashboard/oa?uid=${oaUser.id}`;
+        router.push(redirectUrl);
+        setIsLoading(false);
+        return;
+    }
+
+
     if (!turnstileToken) {
         showAlert(
             "Verification Failed",
             "Please complete the security check before logging in.",
         );
+        setIsLoading(false);
         return;
     }
-    setIsLoading(true);
+
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
@@ -195,7 +219,7 @@ export function LoginScreen() {
               </div>
             </div>
 
-             {isClient && showTurnstile && (
+             {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
                 <div className="flex justify-center">
                     <Turnstile
                         sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
@@ -218,7 +242,7 @@ export function LoginScreen() {
 
             <Button
               type="submit"
-              disabled={isLoading || (showTurnstile && !turnstileToken)}
+              disabled={isLoading || (showTurnstile && !turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME)}
               className="w-full"
             >
               {isLoading ? 'Signing In...' : 'Sign In'}
