@@ -85,6 +85,14 @@ export default function AppealReviewPage() {
       if (data.negativeAppeals) {
         const sortedAppeals = data.negativeAppeals.sort((a: Appeal, b: Appeal) => new Date(b.appeal.createdAt).getTime() - new Date(a.appeal.createdAt).getTime());
         setAllAppeals(sortedAppeals);
+        
+        // Set the initial selection after fetching
+        if (sortedAppeals.length > 0) {
+           setSelectedAppeal(sortedAppeals.find(a => a.appeal.status === 'pending') || sortedAppeals[0]);
+        } else {
+           setSelectedAppeal(null);
+        }
+
       } else {
         throw new Error('Failed to fetch appeals, unexpected response structure.');
       }
@@ -130,15 +138,6 @@ export default function AppealReviewPage() {
       return true;
     });
   }, [allAppeals, statusFilter, searchTerm, collegeFilter, departmentFilter]);
-  
-  useEffect(() => {
-    if (filteredAppeals.length > 0) {
-      const currentSelection = filteredAppeals.find((a: Appeal) => a._id === selectedAppeal?._id);
-      setSelectedAppeal(currentSelection || filteredAppeals[0]);
-    } else {
-      setSelectedAppeal(null);
-    }
-  }, [filteredAppeals, selectedAppeal?._id]);
   
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
     if (!selectedAppeal || !selectedAppeal._id) {
@@ -397,6 +396,4 @@ export default function AppealReviewPage() {
       </aside>
     </div>
   )
-    
-
-    
+}
