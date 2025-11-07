@@ -1,7 +1,6 @@
-
 "use client"
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Select,
   SelectContent,
@@ -17,6 +16,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { PlusCircle } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
+import { Combobox } from "@/components/ui/combobox";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -210,6 +210,11 @@ export default function OADashboardPage() {
       setIsLoading(false);
     }
   };
+
+  const facultyOptions = useMemo(() => 
+    facultyList.map(f => ({ value: f._id, label: f.name })),
+    [facultyList]
+  );
   
 
   return (
@@ -233,13 +238,15 @@ export default function OADashboardPage() {
         <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4 pt-4">
             <div>
-            <label className="block text-sm font-medium text-muted-foreground" htmlFor="faculty">Faculty Member</label>
-            <Select value={facultyId} onValueChange={setFacultyId}>
-                <SelectTrigger id="faculty"><SelectValue placeholder="Select Faculty Member" /></SelectTrigger>
-                <SelectContent>
-                {facultyList.map(faculty => (<SelectItem key={faculty._id} value={faculty._id}>{faculty.name}</SelectItem>))}
-                </SelectContent>
-            </Select>
+              <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+              <Combobox
+                  options={facultyOptions}
+                  value={facultyId}
+                  onValueChange={setFacultyId}
+                  placeholder="Select faculty member..."
+                  searchPlaceholder="Search faculty..."
+                  emptyPlaceholder="No faculty found."
+              />
             </div>
             <div>
             <label className="block text-sm font-medium text-muted-foreground" htmlFor="creditTitle">Remark Template (Optional)</label>

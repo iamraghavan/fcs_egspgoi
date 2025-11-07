@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -40,6 +39,7 @@ import { PlusCircle, Eye, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
+import { Combobox } from "@/components/ui/combobox";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -355,6 +355,11 @@ export default function ManageRemarksPage() {
     return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  const facultyOptions = useMemo(() => 
+    facultyList.map(f => ({ value: f._id, label: f.name })),
+    [facultyList]
+  );
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -380,13 +385,15 @@ export default function ManageRemarksPage() {
                 </DialogHeader>
                 <form className="space-y-4 pt-4" onSubmit={handleSubmit}>
                     <div>
-                    <label className="block text-sm font-medium text-muted-foreground" htmlFor="faculty">Faculty Member</label>
-                    <Select value={facultyId} onValueChange={setFacultyId}>
-                        <SelectTrigger id="faculty"><SelectValue placeholder="Select Faculty Member" /></SelectTrigger>
-                        <SelectContent>
-                        {facultyList.map(faculty => (<SelectItem key={faculty._id} value={faculty._id}>{faculty.name}</SelectItem>))}
-                        </SelectContent>
-                    </Select>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                        <Combobox
+                            options={facultyOptions}
+                            value={facultyId}
+                            onValueChange={setFacultyId}
+                            placeholder="Select faculty member..."
+                            searchPlaceholder="Search faculty..."
+                            emptyPlaceholder="No faculty found."
+                        />
                     </div>
                     <div>
                     <label className="block text-sm font-medium text-muted-foreground" htmlFor="creditTitle">Remark Template (Optional)</label>
@@ -586,5 +593,3 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
-
-    
