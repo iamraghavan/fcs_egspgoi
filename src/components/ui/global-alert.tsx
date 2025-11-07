@@ -20,7 +20,7 @@ export function GlobalAlert() {
     <AlertDialog open={isAlertOpen} onOpenChange={(open) => !open && closeAlert()}>
       <AlertDialogContent>
         <AlertDialogHeader className="items-center text-center">
-          <ErrorDogIcon className="w-24 h-24 mb-4" />
+          <ErrorDogIcon className="w-32 h-32 mb-4" />
           <AlertDialogTitle>{alertContent.title}</AlertDialogTitle>
           <AlertDialogDescription>
             {alertContent.description}
