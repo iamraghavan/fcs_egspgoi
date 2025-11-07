@@ -39,6 +39,10 @@ export function LoginScreen() {
   useEffect(() => {
     setIsClient(true);
     const isAdmin = searchParams.has('admin');
+    const urlEmail = searchParams.get('email');
+    if (urlEmail) {
+      setEmail(urlEmail);
+    }
     setIsLogin(!isAdmin);
 
      if (formRef.current) {
