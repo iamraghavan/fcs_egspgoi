@@ -62,5 +62,3 @@ export default function Home() {
     </div>
   );
 }
-
-// lops01010
