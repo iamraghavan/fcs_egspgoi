@@ -212,7 +212,10 @@ export default function OADashboardPage() {
   };
 
   const facultyOptions = useMemo(() => 
-    facultyList.map(f => ({ value: f._id, label: f.name })),
+    facultyList
+        .slice()
+        .sort((a, b) => a.name.localeCompare(b.name))
+        .map(f => ({ value: f._id, label: f.name })),
     [facultyList]
   );
   
