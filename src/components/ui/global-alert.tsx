@@ -21,7 +21,7 @@ export function GlobalAlert() {
       <AlertDialogContent>
         <div className="flex gap-6 items-start">
           <div className="flex-shrink-0 pt-1">
-            <ErrorDogIcon className="w-20 h-20" />
+            <ErrorDogIcon className="w-40 h-40 scale-x-[-1]" />
           </div>
           <div className='flex-grow'>
             <AlertDialogHeader className="text-left p-0">
