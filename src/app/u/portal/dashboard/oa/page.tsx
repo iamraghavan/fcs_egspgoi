@@ -224,7 +224,7 @@ export default function OADashboardPage() {
     creditTitles
       .slice()
       .sort((a, b) => a.title.localeCompare(b.title))
-      .map(ct => ({ value: ct.id, label: `${ct.title} (${ct.points} pts)` })),
+      .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })),
     [creditTitles]
   );
   
@@ -309,5 +309,3 @@ export default function OADashboardPage() {
     </div>
   )
 }
-
-    
