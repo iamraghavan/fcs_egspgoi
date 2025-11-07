@@ -9,8 +9,9 @@ import { FileUpload } from "@/components/file-upload";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAlert } from "@/context/alert-context";
-import { Download, UploadCloud, FileCheck, FileX, CheckCircle, XCircle } from "lucide-react";
+import { Download, UploadCloud, FileCheck, FileX, CheckCircle, XCircle, ArrowRight } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Separator } from "@/components/ui/separator";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -98,12 +99,23 @@ export default function BulkAddUsersPage() {
             body: formData,
         });
 
-        const data = await response.json();
-
         if (!response.ok) {
-            throw new Error(data.message || 'Bulk upload failed.');
+            const errorText = await response.text();
+            let errorMessage = 'Bulk upload failed.';
+            try {
+                const errorJson = JSON.parse(errorText);
+                errorMessage = errorJson.message || errorMessage;
+            } catch {
+                if (errorText.includes("<!DOCTYPE html>")) {
+                    errorMessage = "API endpoint not found. Please check the server configuration.";
+                } else {
+                    errorMessage = errorText;
+                }
+            }
+            throw new Error(errorMessage);
         }
-
+        
+        const data = await response.json();
         setSummary(data.summary);
         setResults(data.results);
         showAlert("Upload Complete", `Processed ${data.summary.total} records. ${data.summary.success} succeeded, ${data.summary.failed} failed.`);
@@ -120,41 +132,45 @@ export default function BulkAddUsersPage() {
   const previewHeaders = previewData.length > 0 ? Object.keys(previewData[0]) : [];
 
   return (
-    <div className="mx-auto max-w-7xl space-y-8">
+    <div className="mx-auto max-w-5xl space-y-8">
         <header>
             <h1 className="text-3xl font-bold text-foreground">Bulk User Import</h1>
             <p className="mt-1 text-muted-foreground">
-                Efficiently create multiple user accounts by uploading an Excel or CSV file.
+                Efficiently create multiple user accounts by uploading a spreadsheet file.
             </p>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-1 space-y-8">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Step 1: Prepare Your File</CardTitle>
-                        <CardDescription>
-                            Download our template to ensure your data is formatted correctly.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <a href={TEMPLATE_URL} download="bulk-user-template.xlsx">
-                            <Button variant="outline">
-                                <Download className="mr-2 h-4 w-4" />
-                                Download Template
-                            </Button>
-                        </a>
-                    </CardContent>
-                </Card>
-                
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Step 2: Upload File</CardTitle>
-                        <CardDescription>
-                            Select the completed file from your computer.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-6">
+        <Card>
+            <CardContent className="p-6 space-y-8">
+                 {/* Step 1 */}
+                <div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                           <span className="font-bold text-lg">1</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Prepare Your File</h3>
+                            <p className="text-muted-foreground">
+                                <a href={TEMPLATE_URL} download="bulk-user-template.xlsx" className="text-primary hover:underline font-medium">Download our template</a> to ensure your data is formatted correctly.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <Separator />
+
+                {/* Step 2 */}
+                <div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary">
+                           <span className="font-bold text-lg">2</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Upload & Preview</h3>
+                            <p className="text-muted-foreground">Select the completed file to see a preview of the data.</p>
+                        </div>
+                    </div>
+                    <div className="pl-14 pt-6 space-y-4">
                         <FileUpload onFileSelect={handleFileSelect} disabled={isLoading} />
                         <div className="flex items-center space-x-2">
                             <Checkbox id="send-emails" checked={sendEmails} onCheckedChange={(checked) => setSendEmails(checked as boolean)} disabled={isLoading} />
@@ -162,53 +178,57 @@ export default function BulkAddUsersPage() {
                                 Send welcome email to new users
                             </Label>
                         </div>
-                    </CardContent>
-                    <CardFooter>
-                        <Button onClick={handleUpload} disabled={isLoading || previewData.length === 0}>
-                            <UploadCloud className="mr-2 h-4 w-4" />
-                            {isLoading ? "Uploading..." : "Upload & Process File"}
-                        </Button>
-                    </CardFooter>
-                </Card>
-            </div>
-
-            <div className="lg:col-span-2">
-                {previewData.length > 0 && !results && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Step 3: File Preview</CardTitle>
-                            <CardDescription>Review the data below before processing. The first 10 rows are shown.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="overflow-x-auto border rounded-lg">
-                                <Table>
-                                    <TableHeader>
-                                        <TableRow>
-                                            {previewHeaders.map(header => <TableHead key={header}>{header}</TableHead>)}
-                                        </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                        {previewData.slice(0, 10).map((row, index) => (
-                                            <TableRow key={index}>
-                                                {previewHeaders.map(header => <TableCell key={`${index}-${header}`}>{String(row[header])}</TableCell>)}
+                        {previewData.length > 0 && !results && (
+                           <div className="space-y-2">
+                                <h4 className="font-medium">File Preview (First 10 Rows)</h4>
+                                <div className="overflow-x-auto border rounded-lg">
+                                    <Table>
+                                        <TableHeader>
+                                            <TableRow>
+                                                {previewHeaders.map(header => <TableHead key={header}>{header}</TableHead>)}
                                             </TableRow>
-                                        ))}
-                                    </TableBody>
-                                </Table>
+                                        </TableHeader>
+                                        <TableBody>
+                                            {previewData.slice(0, 10).map((row, index) => (
+                                                <TableRow key={index}>
+                                                    {previewHeaders.map(header => <TableCell key={`${index}-${header}`}>{String(row[header])}</TableCell>)}
+                                                </TableRow>
+                                            ))}
+                                        </TableBody>
+                                    </Table>
+                                </div>
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
-                
+                        )}
+                    </div>
+                </div>
+
+                 <Separator />
+
+                 {/* Step 3 */}
+                 <div>
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-primary text-primary">
+                           <span className="font-bold text-lg">3</span>
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-semibold">Process File</h3>
+                            <p className="text-muted-foreground">Once you're satisfied with the preview, process the file.</p>
+                        </div>
+                    </div>
+                     <div className="pl-14 pt-6">
+                        <Button onClick={handleUpload} disabled={isLoading || previewData.length === 0}>
+                            {isLoading ? "Processing..." : "Process & Import Users"}
+                            <ArrowRight className="ml-2 h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+
                 {summary && results && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Step 4: Review Results</CardTitle>
-                            <CardDescription>
-                                The upload is complete. Below is a summary of the results.
-                            </CardDescription>
-                        </CardHeader>
-                        <CardContent className="space-y-6">
+                    <>
+                    <Separator />
+                    {/* Step 4 Results */}
+                    <div className="space-y-4">
+                        <h3 className="text-lg font-semibold">Import Results</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="flex items-center gap-4 rounded-lg border bg-card p-4">
                                 <FileCheck className="h-8 w-8 text-green-500" />
@@ -256,11 +276,12 @@ export default function BulkAddUsersPage() {
                                 </TableBody>
                             </Table>
                         </div>
-                        </CardContent>
-                    </Card>
+                    </div>
+                    </>
                 )}
-            </div>
-        </div>
+
+            </CardContent>
+        </Card>
     </div>
   );
 }
