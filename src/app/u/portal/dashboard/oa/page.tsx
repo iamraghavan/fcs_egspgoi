@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -219,6 +220,14 @@ export default function OADashboardPage() {
     [facultyList]
   );
   
+  const creditTitleOptions = useMemo(() =>
+    creditTitles
+      .slice()
+      .sort((a, b) => a.title.localeCompare(b.title))
+      .map(ct => ({ value: ct.id, label: `${ct.title} (${ct.points} pts)` })),
+    [creditTitles]
+  );
+  
 
   return (
     <div className="mx-auto max-w-2xl space-y-8">
@@ -252,13 +261,15 @@ export default function OADashboardPage() {
               />
             </div>
             <div>
-            <label className="block text-sm font-medium text-muted-foreground" htmlFor="creditTitle">Remark Template (Optional)</label>
-            <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                <SelectTrigger id="creditTitle"><SelectValue placeholder="Select a template" /></SelectTrigger>
-                <SelectContent>
-                {creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title}</SelectItem>))}
-                </SelectContent>
-            </Select>
+                <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
+                <Combobox
+                    options={creditTitleOptions}
+                    value={creditTitleId}
+                    onValueChange={setCreditTitleId}
+                    placeholder="Select a template..."
+                    searchPlaceholder="Search templates..."
+                    emptyPlaceholder="No templates found."
+                />
             </div>
             <div>
                 <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
@@ -298,3 +309,5 @@ export default function OADashboardPage() {
     </div>
   )
 }
+
+    
