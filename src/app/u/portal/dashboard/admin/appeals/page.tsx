@@ -259,9 +259,9 @@ export default function AppealReviewPage() {
                 {isLoading ? (
                     <TableRow key="loading-row"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
                 ) : filteredAppeals.length > 0 ? (
-                    filteredAppeals.map((appeal) => (
+                    filteredAppeals.map((appeal, index) => (
                     <TableRow
-                        key={appeal._id}
+                        key={`${appeal._id}-${index}`}
                         className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                         onClick={() => setSelectedAppeal(appeal)}
                     >
@@ -386,5 +386,6 @@ export default function AppealReviewPage() {
       </aside>
     </div>
   )
+    
 
     
