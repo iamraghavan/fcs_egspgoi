@@ -89,7 +89,7 @@ export default function BulkAddUsersPage() {
     const formData = new FormData();
     formData.append('file', file);
     
-    const url = `${API_BASE_URL}/api/v1/users/bulk-upload?sendEmails=${sendEmails}`;
+    const url = `${API_BASE_URL}/api/v1/auth/users/bulk-upload?sendEmails=${sendEmails}`;
 
     try {
         const response = await fetch(url, {
