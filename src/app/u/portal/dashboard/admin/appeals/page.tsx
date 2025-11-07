@@ -141,7 +141,11 @@ export default function AppealReviewPage() {
   }, [filteredAppeals, selectedAppeal?._id]);
   
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
-    if (!selectedAppeal) return;
+    if (!selectedAppeal || !selectedAppeal._id) {
+        showAlert('Error', 'No appeal or appeal ID found.');
+        return;
+    };
+
     const token = localStorage.getItem("token");
     if (!token) {
         showAlert("Authentication Error", "You are not logged in.");
@@ -161,6 +165,11 @@ export default function AppealReviewPage() {
             })
         });
 
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.message || `Failed to ${decision} appeal.`);
+        }
+
         const data = await response.json();
         if (!data.success) {
             throw new Error(data.message || `Failed to ${decision} appeal.`);
@@ -168,7 +177,9 @@ export default function AppealReviewPage() {
 
         toast({ title: "Decision Submitted", description: `The appeal has been marked as ${decision}.`});
         
-        fetchAppeals();
+        // Refetch all appeals to get the latest state
+        await fetchAppeals(); 
+        
         setComments("");
 
     } catch (error: any) {
