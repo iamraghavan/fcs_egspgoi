@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -127,7 +128,7 @@ export default function ManageRemarksPage() {
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
+  const [creditTitleFilter, setCreditTitleFilter] = useState("all");
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
@@ -189,7 +190,7 @@ export default function ManageRemarksPage() {
 
           if (searchTerm) params.append('search', searchTerm);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
-          if (statusFilter !== 'all') params.append('status', statusFilter);
+          if (creditTitleFilter !== 'all') params.append('creditTitleId', creditTitleFilter);
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
@@ -227,11 +228,11 @@ export default function ManageRemarksPage() {
         }
     }, 500); // Debounce API call
     return () => clearTimeout(timer);
-  }, [page, adminToken, searchTerm, academicYearFilter, statusFilter, collegeFilter, departmentFilter]);
+  }, [page, adminToken, searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     setPage(1); // Reset to first page whenever filters change
-  }, [searchTerm, academicYearFilter, statusFilter, collegeFilter, departmentFilter]);
+  }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     const selectedTitle = creditTitles.find(ct => ct._id === creditTitleId);
@@ -451,7 +452,7 @@ export default function ManageRemarksPage() {
             <CardDescription>A log of all negative remarks that have been issued.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
               <div className="relative lg:col-span-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
@@ -461,6 +462,15 @@ export default function ManageRemarksPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
+               <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}>
+                  <SelectTrigger>
+                      <SelectValue placeholder="Select Template" />
+                  </SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Templates</SelectItem>
+                      {creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title}</SelectItem>))}
+                  </SelectContent>
+              </Select>
               <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                   <SelectTrigger>
                       <SelectValue placeholder="Select Year" />
@@ -596,3 +606,5 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
+
+    
