@@ -239,7 +239,7 @@ export function LoginScreen() {
                 <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
                 <Label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">Remember me</Label>
               </div>
-              <Link href="#" className="text-sm text-primary hover:text-primary/80 font-medium">
+              <Link href="/u/portal/auth/forgot-password" className="text-sm text-primary hover:text-primary/80 font-medium">
                 Forgot password?
               </Link>
             </div>
@@ -258,5 +258,3 @@ export function LoginScreen() {
     </>
   );
 }
-
-//df
