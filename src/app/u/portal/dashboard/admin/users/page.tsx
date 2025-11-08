@@ -124,15 +124,13 @@ export default function FacultyAccountsPage() {
     }
   };
 
-  // Fetch users when page or filters change (with debounce for search term)
   useEffect(() => {
-    const debounceTimer = setTimeout(() => {
+    const handler = setTimeout(() => {
       fetchUsers(page);
-    }, 500); // 500ms debounce
-    
-    return () => clearTimeout(debounceTimer);
+    }, 500);
+    return () => clearTimeout(handler);
   }, [page, searchTerm, statusFilter, collegeFilter, departmentFilter]);
-  
+
   // Reset to page 1 when filters (except page itself) change
   useEffect(() => {
     setPage(1);
@@ -512,7 +510,5 @@ export default function FacultyAccountsPage() {
     </div>
   )
 }
-
-    
 
     
