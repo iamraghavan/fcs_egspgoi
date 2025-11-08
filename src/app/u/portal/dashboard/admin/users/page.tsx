@@ -87,7 +87,7 @@ export default function FacultyAccountsPage() {
   
   const tableRef = useRef(null);
 
-  const fetchUsers = async (currentPage: number) => {
+  const fetchUsers = async (currentPage: number, search: string, status: string, college: string, department: string) => {
     setIsLoadingUsers(true);
     const adminToken = localStorage.getItem("token");
     if (!adminToken) {
@@ -101,10 +101,10 @@ export default function FacultyAccountsPage() {
         limit: limit.toString(),
         sort: 'name', // Sort alphabetically by name
       });
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'all') params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
-      if (collegeFilter !== 'all') params.append('college', collegeFilter);
-      if (departmentFilter !== 'all') params.append('department', departmentFilter);
+      if (search) params.append('search', search);
+      if (status !== 'all') params.append('isActive', status === 'active' ? 'true' : 'false');
+      if (college !== 'all') params.append('college', college);
+      if (department !== 'all') params.append('department', department);
       
       const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${adminToken}` },
@@ -126,15 +126,10 @@ export default function FacultyAccountsPage() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-      fetchUsers(page);
-    }, 500);
+        fetchUsers(page, searchTerm, statusFilter, collegeFilter, departmentFilter);
+    }, 500); // Debounce requests
     return () => clearTimeout(handler);
   }, [page, searchTerm, statusFilter, collegeFilter, departmentFilter]);
-
-  // Reset to page 1 when filters (except page itself) change
-  useEffect(() => {
-    setPage(1);
-  }, [searchTerm, statusFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     if (!isLoadingUsers && tableRef.current) {
@@ -161,7 +156,10 @@ export default function FacultyAccountsPage() {
     } else {
       setFilteredDepartments({});
     }
-    setDepartmentFilter("all"); // Reset department filter when college changes
+    // Only reset department if the college changes, not on initial load
+    if (departmentFilter !== 'all') {
+      setDepartmentFilter("all"); 
+    }
   }, [collegeFilter]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
@@ -226,7 +224,8 @@ export default function FacultyAccountsPage() {
       setCollege("");
       setDepartment("");
       setRole("faculty");
-      fetchUsers(1);
+      setPage(1); // Go back to first page
+      fetchUsers(1, searchTerm, statusFilter, collegeFilter, departmentFilter);
     } catch (error: any) {
       showAlert(
         "Creation Failed",
@@ -238,6 +237,24 @@ export default function FacultyAccountsPage() {
   };
 
   const totalPages = Math.ceil(total / limit);
+
+  // Handlers to reset page to 1 when filters change
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+    setPage(1);
+  };
+  const handleCollegeFilterChange = (value: string) => {
+    setCollegeFilter(value);
+    setPage(1);
+  };
+   const handleDepartmentFilterChange = (value: string) => {
+    setDepartmentFilter(value);
+    setPage(1);
+  };
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    setPage(1);
+  };
 
   return (
     <div className="flex-1 p-8">
@@ -260,10 +277,10 @@ export default function FacultyAccountsPage() {
               placeholder="Search by name or email"
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearchChange}
             />
           </div>
-            <Select onValueChange={setCollegeFilter} value={collegeFilter}>
+            <Select onValueChange={handleCollegeFilterChange} value={collegeFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="College" />
               </SelectTrigger>
@@ -274,7 +291,7 @@ export default function FacultyAccountsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select onValueChange={setDepartmentFilter} value={departmentFilter} disabled={collegeFilter === 'all' || Object.keys(filteredDepartments).length === 0}>
+            <Select onValueChange={handleDepartmentFilterChange} value={departmentFilter} disabled={collegeFilter === 'all' || Object.keys(filteredDepartments).length === 0}>
               <SelectTrigger>
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
@@ -290,7 +307,7 @@ export default function FacultyAccountsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select onValueChange={setStatusFilter} value={statusFilter}>
+            <Select onValueChange={handleStatusFilterChange} value={statusFilter}>
               <SelectTrigger>
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
