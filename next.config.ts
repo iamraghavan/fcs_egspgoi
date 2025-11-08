@@ -3,6 +3,14 @@ require('dotenv').config({ path: './.env' });
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
+  async rewrites() {
+    return [
+      {
+        source: '/u/portal/auth/reset-password/reset-password/:token*',
+        destination: '/u/portal/auth/reset-password/:token*',
+      },
+    ]
+  },
   /* config options here */
   typescript: {
     ignoreBuildErrors: true,
