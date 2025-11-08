@@ -137,14 +137,14 @@ export function Header({ user }: { user: User }) {
 
   return (
     <>
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-sidebar text-sidebar-foreground px-4 md:px-6">
       <div className="flex items-center gap-4">
-        <SidebarTrigger className="md:hidden" />
+        <SidebarTrigger className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent" />
         <div className="hidden md:flex relative w-full max-w-sm items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
-              className="w-full bg-background pl-10"
+              className="w-full bg-background/20 text-sidebar-foreground placeholder:text-muted-foreground/80 pl-10 border-sidebar-border"
             />
         </div>
       </div>
@@ -155,7 +155,7 @@ export function Header({ user }: { user: User }) {
           </div>
           {(user.role === 'faculty') && (
             <Link href={notificationsHref}>
-                <Button variant="ghost" size="icon" className="rounded-full relative text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="icon" className="rounded-full relative text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
                     <span className="material-symbols-outlined">notifications</span>
                     {hasUnread && (
                       <span className="absolute -top-1 -right-1 flex h-2 w-2">

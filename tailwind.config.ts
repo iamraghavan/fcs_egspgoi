@@ -71,7 +71,7 @@ export default {
         lg: '0.5rem',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        xl: '0.75rem',
+        xl: '0.5rem',
         full: '9999px',
       },
       keyframes: {

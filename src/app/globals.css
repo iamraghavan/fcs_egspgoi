@@ -8,74 +8,74 @@ body {
 
 @layer base {
   :root {
-    --background: 220 13% 97%; /* #f6f6f8 */
-    --foreground: 224 21% 10%; /* #111827 */
-    --card: 0 0% 100%;
+    --background: 220 13% 97%; /* Light Gray similar to AWS console body */
+    --foreground: 224 21% 10%; /* Dark text */
+    --card: 0 0% 100%; /* White for cards/widgets */
     --card-foreground: 224 21% 10%;
     --popover: 0 0% 100%;
     --popover-foreground: 224 21% 10%;
-    --primary: 223 74% 32%; /* #143990 */
+    --primary: 211 41% 35%; /* A muted blue */
     --primary-foreground: 0 0% 100%;
-    --secondary: 220 9% 91%; /* #e5e7eb */
+    --secondary: 220 9% 91%;
     --secondary-foreground: 224 21% 10%;
     --muted: 220 9% 91%;
-    --muted-foreground: 222 9% 47%; /* #6b7280 */
+    --muted-foreground: 222 9% 47%;
     --accent: 220 13% 96%;
-    --accent-foreground: 223 74% 32%;
+    --accent-foreground: 211 41% 35%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
-    --border: 220 9% 85%; /* #d1d5db */
+    --border: 220 9% 85%; /* Light gray for borders */
     --input: 220 9% 85%;
-    --ring: 223 74% 32%;
+    --ring: 211 41% 35%;
     --radius: 0.5rem;
-    --chart-1: 223 74% 32%;
-    --chart-2: 223 74% 52%;
-    --chart-3: 223 74% 72%;
-    --chart-4: 223 74% 82%;
-    --chart-5: 223 74% 92%;
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 224 21% 10%;
-    --sidebar-primary: 223 74% 32%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 13% 96%;
-    --sidebar-accent-foreground: 223 74% 32%;
-    --sidebar-border: 220 9% 91%;
-    --sidebar-ring: 223 74% 32%;
-  }
-
-  .dark {
-    --background: 222 29% 10%; /* #111621 */
-    --foreground: 210 40% 98%; /* #f9fafb */
-    --card: 222 29% 13%; /* #161d2b */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 29% 10%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 223 74% 62%; /* a lighter blue for dark mode */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 222 20% 20%; /* #293245 */
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 20% 20%;
-    --muted-foreground: 220 14% 65%; /* #9ca3af */
-    --accent: 222 29% 13%;
-    --accent-foreground: 223 74% 62%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 222 15% 28%; /* #374151 */
-    --input: 222 15% 28%;
-    --ring: 223 74% 62%;
-    --chart-1: 223 74% 62%;
-    --chart-2: 223 74% 52%;
-    --chart-3: 223 74% 42%;
-    --chart-4: 223 74% 32%;
-    --chart-5: 223 74% 22%;
-    --sidebar-background: 222 29% 10%;
+    --chart-1: 211 41% 35%;
+    --chart-2: 211 41% 55%;
+    --chart-3: 211 41% 75%;
+    --chart-4: 211 41% 85%;
+    --chart-5: 211 41% 95%;
+    --sidebar-background: 222 29% 10%; /* Dark sidebar background */
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 223 74% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 29% 13%;
-    --sidebar-accent-foreground: 223 74% 62%;
+    --sidebar-accent: 222 29% 15%;
+    --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 222 15% 28%;
     --sidebar-ring: 223 74% 62%;
+  }
+
+  .dark {
+    --background: 222 29% 8%; /* Very dark background for dark mode */
+    --foreground: 210 40% 98%;
+    --card: 222 29% 12%; /* Slightly lighter cards */
+    --card-foreground: 210 40% 98%;
+    --popover: 222 29% 8%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 212 77% 61%; /* Brighter blue for dark mode primary */
+    --primary-foreground: 0 0% 100%;
+    --secondary: 222 20% 20%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 222 20% 20%;
+    --muted-foreground: 220 14% 65%;
+    --accent: 222 29% 13%;
+    --accent-foreground: 212 77% 61%;
+    --destructive: 0 62.8% 45.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 222 15% 28%;
+    --input: 222 15% 28%;
+    --ring: 212 77% 61%;
+    --chart-1: 212 77% 61%;
+    --chart-2: 212 77% 51%;
+    --chart-3: 212 77% 41%;
+    --chart-4: 212 77% 31%;
+    --chart-5: 212 77% 21%;
+    --sidebar-background: 222 29% 8%; /* Consistent dark sidebar */
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 212 77% 61%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 29% 13%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 222 15% 28%;
+    --sidebar-ring: 212 77% 61%;
   }
 }
 
