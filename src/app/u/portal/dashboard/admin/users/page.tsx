@@ -70,7 +70,7 @@ export default function FacultyAccountsPage() {
   const [isLoading, setIsLoading] = useState(false);
   
   // Table state
-  const [facultyAccounts, setFacultyAccounts] = useState<FacultyAccount[]>([]);
+  const [allFaculty, setAllFaculty] = useState<FacultyAccount[]>([]);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyAccount | null>(null);
 
@@ -83,11 +83,10 @@ export default function FacultyAccountsPage() {
 
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
-  const [total, setTotal] = useState(0);
   
   const tableRef = useRef(null);
 
-  const fetchUsers = async () => {
+  const fetchAllUsers = async () => {
     setIsLoadingUsers(true);
     const adminToken = localStorage.getItem("token");
     if (!adminToken) {
@@ -96,40 +95,26 @@ export default function FacultyAccountsPage() {
       return;
     }
     try {
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: limit.toString(),
-        sort: 'name',
-      });
-      if (searchTerm) params.append('search', searchTerm);
-      if (statusFilter !== 'all') params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
-      if (collegeFilter !== 'all') params.append('college', collegeFilter);
-      if (departmentFilter !== 'all') params.append('department', departmentFilter);
-      
-      const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
+      // Fetch all users - limit is high to get all of them
+      const response = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
         headers: { "Authorization": `Bearer ${adminToken}` },
       });
       const responseData = await response.json();
       if (!response.ok || !responseData.success) {
         throw new Error(responseData.message || "Failed to fetch users.");
       }
-      setFacultyAccounts(responseData.items);
-      setTotal(responseData.total);
+      setAllFaculty(responseData.items);
     } catch (error: any) {
       showAlert("Failed to Fetch Users", error.message);
-      setFacultyAccounts([]);
-      setTotal(0);
+      setAllFaculty([]);
     } finally {
       setIsLoadingUsers(false);
     }
   };
 
   useEffect(() => {
-    const handler = setTimeout(() => {
-        fetchUsers();
-    }, 500); // Debounce requests
-    return () => clearTimeout(handler);
-  }, [page, searchTerm, statusFilter, collegeFilter, departmentFilter]);
+    fetchAllUsers();
+  }, []);
   
   useEffect(() => {
     if (!isLoadingUsers && tableRef.current) {
@@ -139,7 +124,7 @@ export default function FacultyAccountsPage() {
             { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power3.out" }
         );
     }
-  }, [isLoadingUsers, facultyAccounts]);
+  }, [isLoadingUsers, page]); // Rerun animation on page change
 
   useEffect(() => {
     if (college && colleges[college as keyof typeof colleges]) {
@@ -222,8 +207,7 @@ export default function FacultyAccountsPage() {
       setCollege("");
       setDepartment("");
       setRole("faculty");
-      if (page !== 1) setPage(1);
-      else fetchUsers();
+      fetchAllUsers();
 
     } catch (error: any) {
       showAlert(
@@ -235,8 +219,40 @@ export default function FacultyAccountsPage() {
     }
   };
 
-  const totalPages = Math.ceil(total / limit);
+  const { paginatedItems, totalPages } = useMemo(() => {
+    let filtered = allFaculty;
 
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      filtered = filtered.filter(user => 
+        user.name.toLowerCase().includes(term) ||
+        user.email.toLowerCase().includes(term)
+      );
+    }
+    if (statusFilter !== 'all') {
+      filtered = filtered.filter(user => user.isActive === (statusFilter === 'active'));
+    }
+    if (collegeFilter !== 'all') {
+      filtered = filtered.filter(user => user.college === collegeFilter);
+    }
+    if (departmentFilter !== 'all') {
+      filtered = filtered.filter(user => user.department === departmentFilter);
+    }
+
+    const newTotalPages = Math.ceil(filtered.length / limit);
+    if(page > newTotalPages && newTotalPages > 0) {
+      setPage(newTotalPages);
+    }
+    
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    
+    return {
+      paginatedItems: filtered.slice(startIndex, endIndex),
+      totalPages: newTotalPages
+    };
+  }, [allFaculty, page, limit, searchTerm, statusFilter, collegeFilter, departmentFilter]);
+  
   // Handlers to reset page to 1 when filters change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -336,8 +352,8 @@ export default function FacultyAccountsPage() {
                     Loading faculty accounts...
                   </TableCell>
                 </TableRow>
-              ) : facultyAccounts.length > 0 ? (
-                facultyAccounts.map((account) => (
+              ) : paginatedItems.length > 0 ? (
+                paginatedItems.map((account) => (
                   <TableRow key={account._id}>
                     <TableCell className="font-medium text-foreground">
                       {account.name}
@@ -526,5 +542,3 @@ export default function FacultyAccountsPage() {
     </div>
   )
 }
-
-    
