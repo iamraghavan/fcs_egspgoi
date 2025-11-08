@@ -19,6 +19,65 @@ type User = {
   avatar: string;
 }
 
+const getPageMetadata = (pathname: string, userName: string) => {
+    const baseTitle = `${userName} - CreditWise`;
+    let pageName = "Dashboard";
+    let usecase = "Overview of your activities and credits.";
+
+    if (pathname.includes('/admin/users/bulk-add')) {
+        pageName = 'Bulk Import';
+        usecase = 'Bulk import new users.';
+    } else if (pathname.includes('/admin/users')) {
+        pageName = 'Faculty Accounts';
+        usecase = 'Manage faculty accounts.';
+    } else if (pathname.includes('/admin/credits')) {
+        pageName = 'Credit Titles';
+        usecase = 'Manage credit titles.';
+    } else if (pathname.includes('/admin/review')) {
+        pageName = 'Review Submissions';
+        usecase = 'Review faculty submissions.';
+    } else if (pathname.includes('/admin/remarks')) {
+        pageName = 'Manage Remarks';
+        usecase = 'Manage negative remarks.';
+    } else if (pathname.includes('/admin/appeals')) {
+        pageName = 'Review Appeals';
+        usecase = 'Review faculty appeals.';
+    } else if (pathname.includes('/admin/reports')) {
+        pageName = 'Reports';
+        usecase = 'Generate and view reports.';
+    } else if (pathname.startsWith('/u/portal/dashboard/admin')) {
+        pageName = 'Admin Dashboard';
+        usecase = 'Administrative overview.';
+    } else if (pathname.includes('/good-works/submit')) {
+        pageName = 'Submit Good Work';
+        usecase = 'Submit a new achievement.';
+    } else if (pathname.includes('/good-works')) {
+        pageName = 'Good Works';
+        usecase = 'View your submitted good works.';
+    } else if (pathname.includes('/remarks')) {
+        pageName = 'Negative Remarks';
+        usecase = 'View your negative remarks.';
+    } else if (pathname.includes('/appeals')) {
+        pageName = 'My Appeals';
+        usecase = 'Track your appeals.';
+    } else if (pathname.includes('/notifications')) {
+        pageName = 'Notifications';
+        usecase = 'View your notifications.';
+    } else if (pathname.includes('/settings')) {
+        pageName = 'Settings';
+        usecase = 'Manage your account settings.';
+    } else if (pathname.includes('/oa')) {
+        pageName = 'OA Dashboard';
+        usecase = 'Office Assistant Dashboard.';
+    }
+
+    return {
+        title: `${baseTitle} - ${pageName}`,
+        description: `${pageName}: ${usecase}`
+    };
+};
+
+
 const LoadingSkeleton = () => (
     <div className="flex min-h-screen">
         <div className="hidden md:block w-64 h-full bg-white dark:bg-card border-r">
@@ -43,6 +102,21 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
+
+  useEffect(() => {
+    if (user) {
+        const { title, description } = getPageMetadata(pathname, user.name);
+        document.title = title;
+        
+        let metaDescription = document.querySelector('meta[name="description"]');
+        if (!metaDescription) {
+            metaDescription = document.createElement('meta');
+            metaDescription.setAttribute('name', 'description');
+            document.head.appendChild(metaDescription);
+        }
+        metaDescription.setAttribute('content', description);
+    }
+  }, [pathname, user]);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
