@@ -80,44 +80,63 @@ export default function FacultyAccountsPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
+
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
   
   const tableRef = useRef(null);
 
-  const fetchUsers = async () => {
+  const fetchUsers = async (currentPage: number) => {
     setIsLoadingUsers(true);
     const adminToken = localStorage.getItem("token");
     if (!adminToken) {
-      showAlert(
-        "Authentication Error",
-        "Admin token not found.",
-      );
+      showAlert("Authentication Error", "Admin token not found.");
       setIsLoadingUsers(false);
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
-        headers: {
-          "Authorization": `Bearer ${adminToken}`,
-        },
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sort: 'name', // Sort alphabetically by name
+      });
+      if (searchTerm) params.append('search', searchTerm);
+      if (statusFilter !== 'all') params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      if (collegeFilter !== 'all') params.append('college', collegeFilter);
+      if (departmentFilter !== 'all') params.append('department', departmentFilter);
+      
+      const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
+        headers: { "Authorization": `Bearer ${adminToken}` },
       });
       const responseData = await response.json();
       if (!response.ok || !responseData.success) {
         throw new Error(responseData.message || "Failed to fetch users.");
       }
       setFacultyAccounts(responseData.items);
+      setTotal(responseData.total);
     } catch (error: any) {
-      showAlert(
-        "Failed to Fetch Users",
-        error.message,
-      );
+      showAlert("Failed to Fetch Users", error.message);
+      setFacultyAccounts([]);
+      setTotal(0);
     } finally {
       setIsLoadingUsers(false);
     }
   };
 
+  // Fetch users when page or filters change (with debounce for search term)
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    const debounceTimer = setTimeout(() => {
+      fetchUsers(page);
+    }, 500); // 500ms debounce
+    
+    return () => clearTimeout(debounceTimer);
+  }, [page, searchTerm, statusFilter, collegeFilter, departmentFilter]);
+  
+  // Reset to page 1 when filters (except page itself) change
+  useEffect(() => {
+    setPage(1);
+  }, [searchTerm, statusFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     if (!isLoadingUsers && tableRef.current) {
@@ -141,10 +160,10 @@ export default function FacultyAccountsPage() {
     useEffect(() => {
     if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
       setFilteredDepartments(colleges[collegeFilter as keyof typeof colleges]);
-      setDepartmentFilter("all"); 
     } else {
       setFilteredDepartments({});
     }
+    setDepartmentFilter("all"); // Reset department filter when college changes
   }, [collegeFilter]);
 
   const handleCreateAccount = async (e: React.FormEvent) => {
@@ -209,7 +228,7 @@ export default function FacultyAccountsPage() {
       setCollege("");
       setDepartment("");
       setRole("faculty");
-      fetchUsers();
+      fetchUsers(1);
     } catch (error: any) {
       showAlert(
         "Creation Failed",
@@ -220,23 +239,7 @@ export default function FacultyAccountsPage() {
     }
   };
 
-  const filteredAccounts = useMemo(() => {
-    return facultyAccounts.filter(account => {
-      const matchesSearch = searchTerm.trim() === "" ||
-        account.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        account.email.toLowerCase().includes(searchTerm.toLowerCase());
-      
-      const matchesStatus = statusFilter === 'all' ||
-        (statusFilter === 'active' && account.isActive) ||
-        (statusFilter === 'inactive' && !account.isActive);
-
-      const matchesCollege = collegeFilter === 'all' || account.college === collegeFilter;
-      
-      const matchesDepartment = departmentFilter === 'all' || account.department === departmentFilter;
-
-      return matchesSearch && matchesStatus && matchesCollege && matchesDepartment;
-    });
-  }, [facultyAccounts, searchTerm, statusFilter, collegeFilter, departmentFilter]);
+  const totalPages = Math.ceil(total / limit);
 
   return (
     <div className="flex-1 p-8">
@@ -273,7 +276,7 @@ export default function FacultyAccountsPage() {
                 ))}
               </SelectContent>
             </Select>
-            <Select onValueChange={setDepartmentFilter} value={departmentFilter} disabled={collegeFilter === 'all'}>
+            <Select onValueChange={setDepartmentFilter} value={departmentFilter} disabled={collegeFilter === 'all' || Object.keys(filteredDepartments).length === 0}>
               <SelectTrigger>
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
@@ -315,12 +318,12 @@ export default function FacultyAccountsPage() {
             <TableBody ref={tableRef}>
               {isLoadingUsers ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center">
+                  <TableCell colSpan={6} className="text-center h-24">
                     Loading faculty accounts...
                   </TableCell>
                 </TableRow>
-              ) : filteredAccounts.length > 0 ? (
-                filteredAccounts.map((account) => (
+              ) : facultyAccounts.length > 0 ? (
+                facultyAccounts.map((account) => (
                   <TableRow key={account._id}>
                     <TableCell className="font-medium text-foreground">
                       {account.name}
@@ -399,13 +402,26 @@ export default function FacultyAccountsPage() {
                 ))
               ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center">
+                    <TableCell colSpan={6} className="text-center h-24">
                         No faculty accounts found.
                     </TableCell>
                 </TableRow>
               )}
             </TableBody>
           </Table>
+        </div>
+        <div className="flex items-center justify-between pt-4">
+          <div className="text-sm text-muted-foreground">
+            Page {page} of {totalPages || 1}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                Previous
+            </Button>
+            <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                Next
+            </Button>
+          </div>
         </div>
       </div>
       <div className="mt-10">
@@ -466,7 +482,7 @@ export default function FacultyAccountsPage() {
                 </div>
                 <div>
                   <Label htmlFor="department" className="block text-sm font-medium text-foreground mb-2">Department</Label>
-                  <Select onValueChange={setDepartment} value={department} disabled={!college}>
+                  <Select onValueChange={setDepartment} value={department} disabled={!college || Object.keys(departments).length === 0}>
                     <SelectTrigger id="department">
                       <SelectValue placeholder="Select department" />
                     </SelectTrigger>
@@ -496,3 +512,5 @@ export default function FacultyAccountsPage() {
     </div>
   )
 }
+
+    
