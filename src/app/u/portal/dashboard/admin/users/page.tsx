@@ -87,7 +87,7 @@ export default function FacultyAccountsPage() {
   
   const tableRef = useRef(null);
 
-  const fetchUsers = async (currentPage: number, search: string, status: string, college: string, department: string) => {
+  const fetchUsers = async () => {
     setIsLoadingUsers(true);
     const adminToken = localStorage.getItem("token");
     if (!adminToken) {
@@ -97,14 +97,14 @@ export default function FacultyAccountsPage() {
     }
     try {
       const params = new URLSearchParams({
-        page: currentPage.toString(),
+        page: page.toString(),
         limit: limit.toString(),
-        sort: 'name', // Sort alphabetically by name
+        sort: 'name',
       });
-      if (search) params.append('search', search);
-      if (status !== 'all') params.append('isActive', status === 'active' ? 'true' : 'false');
-      if (college !== 'all') params.append('college', college);
-      if (department !== 'all') params.append('department', department);
+      if (searchTerm) params.append('search', searchTerm);
+      if (statusFilter !== 'all') params.append('isActive', statusFilter === 'active' ? 'true' : 'false');
+      if (collegeFilter !== 'all') params.append('college', collegeFilter);
+      if (departmentFilter !== 'all') params.append('department', departmentFilter);
       
       const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${adminToken}` },
@@ -126,7 +126,7 @@ export default function FacultyAccountsPage() {
 
   useEffect(() => {
     const handler = setTimeout(() => {
-        fetchUsers(page, searchTerm, statusFilter, collegeFilter, departmentFilter);
+        fetchUsers();
     }, 500); // Debounce requests
     return () => clearTimeout(handler);
   }, [page, searchTerm, statusFilter, collegeFilter, departmentFilter]);
@@ -153,12 +153,10 @@ export default function FacultyAccountsPage() {
     useEffect(() => {
     if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
       setFilteredDepartments(colleges[collegeFilter as keyof typeof colleges]);
+      setDepartmentFilter("all"); 
     } else {
       setFilteredDepartments({});
-    }
-    // Only reset department if the college changes, not on initial load
-    if (departmentFilter !== 'all') {
-      setDepartmentFilter("all"); 
+      setDepartmentFilter("all");
     }
   }, [collegeFilter]);
 
@@ -224,8 +222,9 @@ export default function FacultyAccountsPage() {
       setCollege("");
       setDepartment("");
       setRole("faculty");
-      setPage(1); // Go back to first page
-      fetchUsers(1, searchTerm, statusFilter, collegeFilter, departmentFilter);
+      if (page !== 1) setPage(1);
+      else fetchUsers();
+
     } catch (error: any) {
       showAlert(
         "Creation Failed",
