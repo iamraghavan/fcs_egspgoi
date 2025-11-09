@@ -4,20 +4,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import DashboardClientWrapper from "@/components/dashboard-client-wrapper";
 
 const LoadingSkeleton = () => (
-    <div className="flex min-h-screen bg-background">
-        <div className="hidden md:block w-64 border-r">
-            <div className="p-4 space-y-4">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
+    <div className="flex h-screen flex-col">
+        <div className="flex h-16 items-center border-b px-4">
+             <Skeleton className="h-8 w-32" />
+             <div className="ml-auto flex items-center space-x-4">
+                <Skeleton className="h-8 w-8 rounded-full" />
+             </div>
         </div>
-        <div className="flex-1">
-            <div className="border-b p-4">
-                 <Skeleton className="h-8 w-full" />
+        <div className="flex flex-1">
+            <div className="hidden md:block w-64 border-r p-4">
+                <div className="space-y-4">
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                    <Skeleton className="h-8 w-full" />
+                </div>
             </div>
-            <div className="p-4 space-y-4">
+            <div className="flex-1 p-8 space-y-4">
                 <Skeleton className="h-16" />
                 <Skeleton className="h-96" />
             </div>
