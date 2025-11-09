@@ -17,6 +17,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { colleges } from "@/lib/colleges"
 import { Search } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
@@ -52,7 +53,7 @@ export default function AppealReviewPage() {
   const { showAlert } = useAlert();
   const { toast } = useToast();
   const [allAppeals, setAllAppeals] = useState<Appeal[]>([]);
-  const [selectedAppealId, setSelectedAppealId] = useState<string | null>(null);
+  const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState("");
 
@@ -62,8 +63,6 @@ export default function AppealReviewPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
-
-  const selectedAppeal = useMemo(() => allAppeals.find(a => a.appeal._id === selectedAppealId), [allAppeals, selectedAppealId]);
 
   const fetchAppeals = async () => {
     setIsLoading(true);
@@ -90,14 +89,14 @@ export default function AppealReviewPage() {
         setAllAppeals(sortedAppeals);
         
         if (sortedAppeals.length > 0) {
-           const firstPending = sortedAppeals.find(a => a.appeal.status === 'pending');
+           const firstPending = sortedAppeals.find((a: Appeal) => a.appeal.status === 'pending');
            if (firstPending) {
-               setSelectedAppealId(firstPending.appeal._id);
+               setSelectedAppeal(firstPending);
            } else {
-               setSelectedAppealId(sortedAppeals[0].appeal._id);
+               setSelectedAppeal(sortedAppeals[0]);
            }
         } else {
-           setSelectedAppealId(null);
+           setSelectedAppeal(null);
         }
 
       } else {
@@ -147,15 +146,15 @@ export default function AppealReviewPage() {
   }, [allAppeals, statusFilter, searchTerm, collegeFilter, departmentFilter]);
   
   useEffect(() => {
-    if (filteredAppeals.length > 0 && !filteredAppeals.some(a => a.appeal._id === selectedAppealId)) {
-        setSelectedAppealId(filteredAppeals[0].appeal._id);
+    if (filteredAppeals.length > 0 && !filteredAppeals.some(a => a._id === selectedAppeal?._id)) {
+        setSelectedAppeal(filteredAppeals[0]);
     } else if (filteredAppeals.length === 0) {
-        setSelectedAppealId(null);
+        setSelectedAppeal(null);
     }
-  }, [filteredAppeals, selectedAppealId]);
+  }, [filteredAppeals, selectedAppeal]);
 
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
-    if (!selectedAppealId) {
+    if (!selectedAppeal) {
         showAlert('Error', 'No appeal selected.');
         return;
     };
@@ -167,7 +166,8 @@ export default function AppealReviewPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeal/${selectedAppealId}`, {
+        // The endpoint expects the credit ID, not the appeal ID.
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal._id}/appeal`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -212,128 +212,138 @@ export default function AppealReviewPage() {
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-grow lg:w-2/3 space-y-8">
-        <div className="bg-card p-6 rounded-lg shadow-sm">
-          <h2 className="text-2xl font-bold text-foreground">Appeal Review</h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Review and process faculty appeals for credit adjustments.
-          </p>
-        </div>
-        <div className="bg-card p-6 rounded-lg shadow-sm">
-            <div className="flex flex-col md:flex-row flex-wrap gap-4 mb-4">
-              <div className="relative flex-grow min-w-[200px] md:max-w-xs">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                    placeholder="Search by faculty, title..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <Select value={collegeFilter} onValueChange={setCollegeFilter}>
-                  <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select College" /></SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Colleges</SelectItem>
-                      {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
-                  </SelectContent>
-              </Select>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={Object.keys(filteredDepartments).length === 0}>
-                  <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select Department" /></SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Departments</SelectItem>
-                      {Object.entries(filteredDepartments).map(([group, courses]) => (
-                          <SelectGroup key={group}>
-                              <SelectLabel>{group}</SelectLabel>
-                              {courses.map(course => (
-                                  <SelectItem key={course} value={course}>{course}</SelectItem>
-                              ))}
-                          </SelectGroup>
-                      ))}
-                  </SelectContent>
-              </Select>
-              <div className="flex items-center gap-2 justify-start md:justify-end flex-grow">
-                  <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                    <SelectTrigger className="w-full md:w-[150px]"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="accepted">Accepted</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                    </SelectContent>
+      <div className="flex-grow lg:w-2/3 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Appeal Review</CardTitle>
+            <CardDescription>
+                Review and process faculty appeals for credit adjustments.
+            </CardDescription>
+          </CardHeader>
+        </Card>
+        
+        <Card>
+            <CardHeader>
+                 <div className="flex flex-col md:flex-row flex-wrap gap-4">
+                  <div className="relative flex-grow min-w-[200px] md:max-w-xs">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by faculty, title..." 
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <Select value={collegeFilter} onValueChange={setCollegeFilter}>
+                      <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select College" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">All Colleges</SelectItem>
+                          {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
+                      </SelectContent>
                   </Select>
-              </div>
-            </div>
-            <p className="text-sm text-muted-foreground mb-4">
-                Displaying {filteredAppeals.length} of {allAppeals.length} appeals.
-            </p>
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Faculty</TableHead>
-                  <TableHead>Activity</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="relative px-6 py-3">
-                    <span className="sr-only">View</span>
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {isLoading ? (
-                    <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
-                ) : filteredAppeals.length > 0 ? (
-                    filteredAppeals.map((appeal) => (
-                    <TableRow
-                        key={appeal.appeal._id}
-                        className={`cursor-pointer ${selectedAppealId === appeal.appeal._id ? "bg-primary/10" : ""}`}
-                        onClick={() => setSelectedAppealId(appeal.appeal._id)}
-                    >
-                        <TableCell>
-                        <div className="font-medium text-foreground">
-                            {appeal.faculty.name}
-                        </div>
-                        <div className="text-sm text-muted-foreground">
-                            {appeal.faculty.department}
-                        </div>
-                        </TableCell>
-                        <TableCell>{appeal.title}</TableCell>
-                        <TableCell>{new Date(appeal.appeal.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>
-                        <Badge className={getStatusColor(appeal.appeal.status)}>
-                            {appeal.appeal.status}
-                        </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                        <Button variant="link" className="text-primary">
-                            View
-                        </Button>
-                        </TableCell>
+                  <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={Object.keys(filteredDepartments).length === 0}>
+                      <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select Department" /></SelectTrigger>
+                      <SelectContent>
+                          <SelectItem value="all">All Departments</SelectItem>
+                          {Object.entries(filteredDepartments).map(([group, courses]) => (
+                              <SelectGroup key={group}>
+                                  <SelectLabel>{group}</SelectLabel>
+                                  {courses.map(course => (
+                                      <SelectItem key={course} value={course}>{course}</SelectItem>
+                                  ))}
+                              </SelectGroup>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                  <div className="flex items-center gap-2 justify-start md:justify-end flex-grow">
+                      <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
+                        <SelectTrigger className="w-full md:w-[150px]"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">All Statuses</SelectItem>
+                            <SelectItem value="pending">Pending</SelectItem>
+                            <SelectItem value="accepted">Accepted</SelectItem>
+                            <SelectItem value="rejected">Rejected</SelectItem>
+                        </SelectContent>
+                      </Select>
+                  </div>
+                </div>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground mb-4">
+                    Displaying {filteredAppeals.length} of {allAppeals.length} appeals.
+                </p>
+              <div className="overflow-x-auto border rounded-lg">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Faculty</TableHead>
+                      <TableHead>Activity</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead className="relative px-6 py-3">
+                        <span className="sr-only">View</span>
+                      </TableHead>
                     </TableRow>
-                    ))
-                ) : (
-                    <TableRow key="no-results"><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </div>
+                  </TableHeader>
+                  <TableBody>
+                    {isLoading ? (
+                        <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
+                    ) : filteredAppeals.length > 0 ? (
+                        filteredAppeals.map((appeal) => (
+                        <TableRow
+                            key={appeal.appeal._id}
+                            className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
+                            onClick={() => setSelectedAppeal(appeal)}
+                        >
+                            <TableCell>
+                            <div className="font-medium text-foreground">
+                                {appeal.faculty.name}
+                            </div>
+                            <div className="text-sm text-muted-foreground">
+                                {appeal.faculty.department}
+                            </div>
+                            </TableCell>
+                            <TableCell>{appeal.title}</TableCell>
+                            <TableCell>{new Date(appeal.appeal.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                            <Badge className={getStatusColor(appeal.appeal.status)}>
+                                {appeal.appeal.status}
+                            </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <Button variant="link" className="text-primary">
+                                View
+                            </Button>
+                            </TableCell>
+                        </TableRow>
+                        ))
+                    ) : (
+                        <TableRow key="no-results"><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+        </Card>
       </div>
       <aside className="w-full lg:w-1/3 lg:max-w-md">
-        <div className="sticky top-8 space-y-6">
+        <div className="sticky top-6 space-y-6">
           {selectedAppeal ? (
-          <div className="bg-card p-6 rounded-lg shadow-sm">
-            <div className="flex items-center gap-4 border-b pb-4 mb-4">
+          <Card>
+            <CardHeader className="flex items-center gap-4 border-b pb-4">
               <div>
                 <h3 className="text-lg font-semibold text-foreground">
                   {selectedAppeal.faculty.name}
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Appeal for: {selectedAppeal.title} ({new Date(selectedAppeal.appeal.createdAt).toLocaleDateString()})
+                  Appeal for: {selectedAppeal.title}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                    ({new Date(selectedAppeal.appeal.createdAt).toLocaleDateString()})
                 </p>
               </div>
-            </div>
-            <div className="space-y-4">
+            </CardHeader>
+            <CardContent className="p-6 space-y-4">
               <Tabs defaultValue="evidence">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="remark">Original Remark</TabsTrigger>
@@ -399,12 +409,14 @@ export default function AppealReviewPage() {
                     </div>
                 )}
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
           ) : (
-            <div className="bg-card p-6 rounded-lg shadow-sm text-center text-muted-foreground">
-                <p>{isLoading ? "Loading..." : "Select an appeal to review."}</p>
-            </div>
+            <Card className="h-96 flex items-center justify-center">
+                <CardContent className="text-center text-muted-foreground">
+                    <p>{isLoading ? "Loading..." : "Select an appeal to review."}</p>
+                </CardContent>
+            </Card>
           )}
         </div>
       </aside>
