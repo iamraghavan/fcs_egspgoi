@@ -103,7 +103,7 @@ const LoadingSkeleton = () => (
                     <Skeleton className="h-96 w-full" />
                 </div>
                 {/* Footer Skeleton */}
-                <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
+                <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4">
                     <div className="flex items-center justify-between text-xs">
                         <Skeleton className="h-4 w-1/3 bg-sidebar-accent" />
                     </div>
@@ -114,13 +114,12 @@ const LoadingSkeleton = () => (
 );
 
 const Footer = () => (
-    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
-        <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-4">
-                <span>© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
-            </div>
+    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4">
+        <div className="flex flex-col md:flex-row items-center justify-between text-xs gap-4 md:gap-0">
+            <span className="text-center md:text-left">© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
             <div className="flex items-center gap-4">
                 <Link href="#" className="hover:text-sidebar-foreground">Privacy Policy</Link>
+
                 <Link href="#" className="hover:text-sidebar-foreground">Terms</Link>
                 <button className="hover:text-sidebar-foreground">Cookie preferences</button>
             </div>
@@ -264,7 +263,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
-    <div className="grid h-screen w-full grid-rows-[auto_1fr]">
+    <div className="grid min-h-screen w-full grid-rows-[auto_1fr]">
         <Header user={user} />
         <div className="grid md:grid-cols-[auto_1fr] flex-1 overflow-hidden">
             <SidebarNav role={user.role} />
