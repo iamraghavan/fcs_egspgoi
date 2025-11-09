@@ -64,6 +64,10 @@ export function LoginScreen() {
   
   const processSuccessfulLogin = (data: any) => {
     const { token, role, id } = data;
+    if (!token || !role || !id) {
+      showAlert("Login Error", "Incomplete login data received from server.");
+      return;
+    }
 
     localStorage.setItem("token", token);
     localStorage.setItem("userRole", role);
@@ -71,9 +75,17 @@ export function LoginScreen() {
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
 
-    const redirectUrl = role === 'admin' 
-      ? `/u/portal/dashboard/admin?uid=${id}`
-      : `/u/portal/dashboard?uid=${id}`;
+    let redirectUrl;
+    switch (role) {
+      case 'admin':
+        redirectUrl = `/u/portal/dashboard/admin?uid=${id}`;
+        break;
+      case 'oa':
+        redirectUrl = `/u/portal/dashboard/oa?uid=${id}`;
+        break;
+      default:
+        redirectUrl = `/u/portal/dashboard?uid=${id}`;
+    }
     
     router.push(redirectUrl);
   };
