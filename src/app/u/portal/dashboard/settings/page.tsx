@@ -4,16 +4,15 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState, useEffect, useRef } from "react"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { colleges } from "@/lib/colleges";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Camera } from "lucide-react"
+import { Camera, ShieldCheck, Star } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
 import { MfaSettings } from "@/components/mfa-settings"
@@ -29,6 +28,9 @@ type UserProfile = {
   avatar: string;
   mfaEmailEnabled: boolean;
   mfaAppEnabled: boolean;
+  role: string;
+  facultyID: string;
+  currentCredit: number;
 };
 
 type Departments = {
@@ -80,7 +82,10 @@ export default function SettingsPage() {
           department: userData.department || "",
           avatar: getAvatarUrl(userData),
           mfaEmailEnabled: userData.mfaEmailEnabled || false,
-          mfaAppEnabled: userData.mfaAppEnabled || false
+          mfaAppEnabled: userData.mfaAppEnabled || false,
+          role: userData.role || 'N/A',
+          facultyID: userData.facultyID || 'N/A',
+          currentCredit: userData.currentCredit || 0,
         };
         setUser(userProfile);
         setPreviewImage(userProfile.avatar);
@@ -231,6 +236,26 @@ export default function SettingsPage() {
                                     <CardDescription>Update your personal details here.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
+                                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                        <div>
+                                            <Label>Role</Label>
+                                            <div className="flex items-center gap-2 mt-1">
+                                                <ShieldCheck className="w-5 h-5 text-primary" />
+                                                <p className="font-medium capitalize">{user?.role}</p>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <Label>Faculty ID</Label>
+                                            <p className="font-mono text-sm mt-2">{user?.facultyID}</p>
+                                        </div>
+                                        <div>
+                                            <Label>Current Credits</Label>
+                                             <div className="flex items-center gap-2 mt-1">
+                                                <Star className="w-5 h-5 text-yellow-500 fill-yellow-400" />
+                                                <p className="font-bold text-lg">{user?.currentCredit}</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
                                             <Label htmlFor="name">Full Name</Label>
@@ -249,7 +274,7 @@ export default function SettingsPage() {
                                         <div>
                                             <Label htmlFor="department">Department</Label>
                                             <Select onValueChange={handleDepartmentChange} value={user?.department}>
-                                                <SelectTrigger id="department">
+                                                <SelectTrigger id="department" className="mt-1">
                                                     <SelectValue placeholder="Select department" />
                                                 </SelectTrigger>
                                                 <SelectContent>
@@ -266,9 +291,9 @@ export default function SettingsPage() {
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardContent className="pt-6 border-t flex justify-end">
+                                <CardFooter className="pt-6 border-t flex justify-end">
                                     <Button type="submit" disabled={isSaving}>{isSaving ? "Saving..." : "Update Profile"}</Button>
-                                </CardContent>
+                                </CardFooter>
                             </Card>
                         </form>
                     </TabsContent>
@@ -292,9 +317,9 @@ export default function SettingsPage() {
                                     <Input id="confirm-password" placeholder="Confirm new password" type="password" />
                                 </div>
                             </CardContent>
-                             <CardContent className="pt-6 border-t flex justify-end">
+                             <CardFooter className="pt-6 border-t flex justify-end">
                                 <Button>Update Password</Button>
-                            </CardContent>
+                            </CardFooter>
                         </Card>
                     </TabsContent>
                      <TabsContent value="security">
@@ -310,5 +335,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
-    
