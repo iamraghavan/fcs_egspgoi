@@ -56,8 +56,10 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
   const [isAppSetupDialogOpen, setIsAppSetupDialogOpen] = useState(false);
 
   const handleEmailToggle = async (enabled: boolean) => {
-    await toggleEmailMfa(enabled);
-    onUpdate();
+    const result = await toggleEmailMfa(enabled);
+    if (result.success) {
+        onUpdate();
+    }
   };
 
   const handleEnableApp = async () => {
@@ -78,8 +80,10 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
   };
 
   const handleDisableAll = async () => {
-    await disableAllMfa();
-    onUpdate();
+    const result = await disableAllMfa();
+    if(result.success) {
+      onUpdate();
+    }
   }
 
   return (
@@ -140,7 +144,10 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
         </CardContent>
       )}
 
-      <Dialog open={isAppSetupDialogOpen} onOpenChange={setIsAppSetupDialogOpen}>
+      <Dialog open={isAppSetupDialogOpen} onOpenChange={(isOpen) => {
+          if (!isOpen) setQrCode(null);
+          setIsAppSetupDialogOpen(isOpen);
+      }}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Set Up Authenticator App</DialogTitle>

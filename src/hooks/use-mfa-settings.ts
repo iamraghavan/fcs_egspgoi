@@ -49,7 +49,7 @@ export function useMfaSettings() {
   };
 
   const toggleEmailMfa = async (enable: boolean) => {
-    await makeMfaRequest(
+    return await makeMfaRequest(
       "toggle-email",
       { enable },
       `Email-based MFA has been ${enable ? 'enabled' : 'disabled'}.`
@@ -78,7 +78,7 @@ export function useMfaSettings() {
   };
   
   const disableAllMfa = async () => {
-    await makeMfaRequest(
+    return await makeMfaRequest(
       "disable-all",
       {},
       "All MFA methods have been disabled."

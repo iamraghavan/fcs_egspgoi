@@ -83,22 +83,34 @@ export function LoginScreen() {
     setIsLoading(true);
 
     if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
-        // ... (OA login logic remains unchanged)
-        return;
+      // OA login logic
+      const oaUser = {
+        token: 'mock_oa_token',
+        role: 'oa',
+        id: 'oa_user_01'
+      };
+      processSuccessfulLogin(oaUser);
+      return;
     }
 
-    if (!turnstileToken) {
+    if (!mfaState.mfaRequired && !turnstileToken) {
         showAlert("Verification Failed", "Please complete the security check.");
         setIsLoading(false);
         return;
     }
 
     try {
+      const body: any = { email, password };
+      if (mfaState.mfaType === 'app') {
+        body.token = mfaCode;
+      } else {
+        body.turnstileToken = turnstileToken;
+      }
+
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        // If MFA type is 'app', send the code as 'token'
-        body: JSON.stringify({ email, password, turnstileToken, token: mfaState.mfaType === 'app' ? mfaCode : undefined }),
+        body: JSON.stringify(body),
       });
       
       const responseData = await response.json();
@@ -107,16 +119,14 @@ export function LoginScreen() {
         throw new Error(responseData.message || "Login failed");
       }
       
-      // If MFA is required, update state to show MFA form
       if (responseData.mfaRequired) {
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
-          userId: responseData.userId,
+          userId: responseData.data.id,
           message: responseData.message,
         });
       } else {
-        // Otherwise, process successful login
         processSuccessfulLogin(responseData.data);
       }
 
@@ -131,13 +141,11 @@ export function LoginScreen() {
       e.preventDefault();
       setIsLoading(true);
 
-      // App-based MFA resubmits the login form
       if (mfaState.mfaType === 'app') {
-          handleLogin(e);
+          await handleLogin(e);
           return;
       }
       
-      // Email-based MFA uses the /verify-mfa endpoint
       if (mfaState.mfaType === 'email') {
           try {
               const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
@@ -165,7 +173,6 @@ export function LoginScreen() {
   
   const showTurnstile = email && password && !mfaState.mfaRequired;
 
-  // Renders the standard login form
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
       <div>
@@ -246,7 +253,6 @@ export function LoginScreen() {
     </form>
   );
 
-  // Renders the MFA verification form
   const renderMfaForm = () => (
       <form onSubmit={handleMfaVerification} className="space-y-6">
           <p className="text-center text-sm text-muted-foreground">{mfaState.message}</p>
