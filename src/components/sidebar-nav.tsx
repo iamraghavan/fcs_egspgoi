@@ -41,6 +41,7 @@ const getAdminNav = (uid: string) => [
   { name: "Negative Remarks", href: `/u/portal/dashboard/admin/remarks?uid=${uid}`, icon: MessageSquareWarning },
   { name: "Appeals", href: `/u/portal/dashboard/admin/appeals?uid=${uid}`, icon: ShieldAlert },
   { name: "Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
+  { name: "Settings", href: `/u/portal/dashboard/admin/settings?uid=${uid}`, icon: Settings },
 ];
 
 const getOANav = (uid: string) => [
