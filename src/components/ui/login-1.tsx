@@ -23,6 +23,7 @@ type MfaState = {
     mfaRequired: boolean;
     mfaType: 'email' | 'app' | null;
     userId: string | null;
+    userRole: 'faculty' | 'admin' | 'oa' | null;
     message: string;
 };
 
@@ -40,7 +41,7 @@ export function LoginScreen() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, userId: null, message: "" });
+  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, userId: null, userRole: null, message: "" });
   const [mfaCode, setMfaCode] = useState("");
 
   const formRef = useRef(null);
@@ -62,8 +63,8 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (data: any) => {
-    const { token, role, id } = data;
+  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string}) => {
+    const { token, role, id } = loginData;
     if (!token || !role || !id) {
       showAlert("Login Error", "Incomplete login data received from server.");
       return;
@@ -136,6 +137,7 @@ export function LoginScreen() {
           mfaRequired: true,
           mfaType: responseData.mfaType,
           userId: responseData.data.id,
+          userRole: responseData.data.role, // Store role from initial response
           message: responseData.message,
         });
       } else {
@@ -170,7 +172,14 @@ export function LoginScreen() {
               if (!response.ok || !responseData.success) {
                   throw new Error(responseData.message || 'MFA verification failed.');
               }
-              processSuccessfulLogin(responseData.data);
+              
+              // Correctly process the response from /verify-mfa
+              processSuccessfulLogin({
+                  token: responseData.token, // Token is at the root
+                  id: mfaState.userId!,
+                  role: mfaState.userRole!,
+              });
+
           } catch (error: any) {
               showAlert('Verification Failed', error.message);
           } finally {
@@ -289,7 +298,7 @@ export function LoginScreen() {
           <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full">
               {isLoading ? 'Verifying...' : 'Verify'}
           </Button>
-          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, userId: null, message: "" })}>
+          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, userId: null, userRole: null, message: "" })}>
               Back to Login
           </Button>
       </form>
