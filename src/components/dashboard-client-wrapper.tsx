@@ -9,6 +9,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
+import { CookiePreferencesDialog } from "@/components/cookie-preferences-dialog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -79,7 +80,7 @@ const getPageMetadata = (pathname: string, userName: string) => {
 };
 
 const LoadingSkeleton = () => (
-    <div className="grid h-screen w-full grid-rows-[auto_1fr_auto]">
+    <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto] md:grid-cols-[16rem_1fr]">
         {/* Header Skeleton */}
         <header className="flex h-16 shrink-0 items-center border-b bg-sidebar px-4 col-span-2">
              <Skeleton className="h-8 w-32 bg-sidebar-accent" />
@@ -87,23 +88,21 @@ const LoadingSkeleton = () => (
                 <Skeleton className="h-8 w-8 rounded-full bg-sidebar-accent" />
              </div>
         </header>
-        <div className="grid md:grid-cols-[16rem_1fr] flex-1 overflow-hidden">
-            {/* Sidebar Skeleton */}
-            <aside className="hidden md:flex flex-col border-r bg-sidebar p-2">
-                <div className="p-2 space-y-2">
-                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
-                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
-                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
-                </div>
-            </aside>
-            {/* Main Content Skeleton */}
-            <main className="flex flex-col overflow-y-auto">
-                <div className="flex-1 p-8 space-y-4">
-                    <Skeleton className="h-16 w-1/2" />
-                    <Skeleton className="h-96 w-full" />
-                </div>
-            </main>
-        </div>
+        {/* Sidebar Skeleton */}
+        <aside className="hidden md:flex flex-col border-r bg-sidebar p-2">
+            <div className="p-2 space-y-2">
+                <Skeleton className="h-9 w-full bg-sidebar-accent" />
+                <Skeleton className="h-9 w-full bg-sidebar-accent" />
+                <Skeleton className="h-9 w-full bg-sidebar-accent" />
+            </div>
+        </aside>
+        {/* Main Content Skeleton */}
+        <main className="flex flex-col overflow-y-auto">
+            <div className="flex-1 p-8 space-y-4">
+                <Skeleton className="h-16 w-1/2" />
+                <Skeleton className="h-96 w-full" />
+            </div>
+        </main>
         {/* Footer Skeleton */}
         <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 col-span-2">
             <div className="flex items-center justify-between text-xs">
@@ -114,14 +113,14 @@ const LoadingSkeleton = () => (
     </div>
 );
 
-const Footer = () => (
+const Footer = ({ onCookiePreferencesClick }: { onCookiePreferencesClick: () => void }) => (
     <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 md:col-span-2">
         <div className="flex flex-col md:flex-row items-center justify-between text-xs gap-4 md:gap-0">
             <span className="text-center md:text-left">© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
             <div className="flex items-center gap-4">
                 <Link href="#" className="hover:text-sidebar-foreground">Privacy Policy</Link>
                 <Link href="#" className="hover:text-sidebar-foreground">Terms</Link>
-                <button className="hover:text-sidebar-foreground">Cookie preferences</button>
+                <button onClick={onCookiePreferencesClick} className="hover:text-sidebar-foreground">Cookie preferences</button>
             </div>
         </div>
     </footer>
@@ -134,6 +133,8 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
+  const [isCookiePrefsOpen, setIsCookiePrefsOpen] = useState(false);
+
 
   useEffect(() => {
     if (user) {
@@ -263,13 +264,16 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
+    <>
     <div className="grid min-h-screen w-full grid-rows-[auto_1fr] md:grid-cols-[auto_1fr]">
       <Header user={user} />
       <SidebarNav role={user.role} />
       <main className="overflow-y-auto p-4 md:p-6 lg:p-8">
           {children}
       </main>
-      <Footer />
+      <Footer onCookiePreferencesClick={() => setIsCookiePrefsOpen(true)} />
     </div>
+    <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />
+    </>
   );
 }
