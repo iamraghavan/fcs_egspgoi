@@ -263,14 +263,12 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
-    <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto]">
+    <div className="grid min-h-screen w-full grid-rows-[auto_1fr] md:grid-cols-[auto_1fr]">
       <Header user={user} />
-      <div className="grid md:grid-cols-[auto_1fr] flex-1 overflow-hidden">
-        <SidebarNav role={user.role} />
-        <main className="overflow-y-auto p-4 md:p-6 lg:p-8">
-            {children}
-        </main>
-      </div>
+      <SidebarNav role={user.role} />
+      <main className="overflow-y-auto p-4 md:p-6 lg:p-8">
+          {children}
+      </main>
       <Footer />
     </div>
   );
