@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 type User = {
     name: string;
@@ -25,6 +25,7 @@ type UserNavProps = {
 };
 
 export function UserNav({ user, logout }: UserNavProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const uid = searchParams.get('uid') || '';
 
@@ -40,6 +41,12 @@ export function UserNav({ user, logout }: UserNavProps) {
   }
 
   const settingsHref = getSettingsHref();
+
+  const handleLogout = () => {
+    logout();
+    const loginUrl = user.role === 'admin' ? '/u/portal/auth?admin' : '/u/portal/auth?faculty_login';
+    router.push(loginUrl);
+  };
     
   return (
     <DropdownMenu>
@@ -81,7 +88,7 @@ export function UserNav({ user, logout }: UserNavProps) {
             </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
+        <DropdownMenuItem onClick={handleLogout}>
             Log out
         </DropdownMenuItem>
       </DropdownMenuContent>

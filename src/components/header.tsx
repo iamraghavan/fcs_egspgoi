@@ -10,21 +10,9 @@ import { Input } from './ui/input';
 import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
-const SESSION_DURATION_SECONDS = 10 * 60; // 10 minutes
-const TIMEOUT_WARNING_SECONDS = 60; // 1 minute
 
 type User = {
   name: string;
@@ -39,8 +27,6 @@ export function Header({ user }: { user: User }) {
     const searchParams = useSearchParams();
     const { toast } = useToast();
     const [hasUnread, setHasUnread] = useState(false);
-    const [timeLeft, setTimeLeft] = useState(SESSION_DURATION_SECONDS);
-    const [isTimeoutWarningOpen, setIsTimeoutWarningOpen] = useState(false);
     
     const uid = searchParams.get('uid') || '';
     const notificationsHref = user.role === 'admin' 
@@ -51,37 +37,8 @@ export function Header({ user }: { user: User }) {
         localStorage.removeItem('token');
         localStorage.removeItem('userRole');
         localStorage.removeItem('sessionExpiresAt');
-        router.push('/u/portal/auth?faculty_login&reason=session_expired');
+        router.push('/u/portal/auth?faculty_login&reason=logged_out');
     };
-    
-    const resetSession = () => {
-        const newExpiryTime = Date.now() + SESSION_DURATION_SECONDS * 1000;
-        localStorage.setItem('sessionExpiresAt', newExpiryTime.toString());
-        setTimeLeft(SESSION_DURATION_SECONDS);
-        setIsTimeoutWarningOpen(false);
-    };
-
-    useEffect(() => {
-        resetSession(); // Reset on initial load/navigation
-    }, [pathname]);
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            const expiresAt = parseInt(localStorage.getItem('sessionExpiresAt') || '0', 10);
-            const remaining = Math.max(0, Math.floor((expiresAt - Date.now()) / 1000));
-            setTimeLeft(remaining);
-
-            if (remaining <= TIMEOUT_WARNING_SECONDS && remaining > 0 && !isTimeoutWarningOpen) {
-                setIsTimeoutWarningOpen(true);
-            }
-
-            if (remaining <= 0) {
-                logout();
-            }
-        }, 1000);
-
-        return () => clearInterval(interval);
-    }, [isTimeoutWarningOpen]);
     
     useEffect(() => {
         const checkNotifications = async () => {
@@ -129,11 +86,6 @@ export function Header({ user }: { user: User }) {
 
     }, [pathname, searchParams, user.role, toast]);
 
-    const formatTime = (seconds: number) => {
-        const minutes = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    };
 
   return (
     <>
@@ -180,20 +132,6 @@ export function Header({ user }: { user: User }) {
         <UserNav user={user} logout={logout} />
       </div>
     </header>
-    <AlertDialog open={isTimeoutWarningOpen} onOpenChange={setIsTimeoutWarningOpen}>
-        <AlertDialogContent>
-            <AlertDialogHeader>
-            <AlertDialogTitle>Your session is about to expire!</AlertDialogTitle>
-            <AlertDialogDescription>
-                You've been inactive for a while. For your security, you'll be logged out automatically in {formatTime(timeLeft)}.
-            </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-            <AlertDialogCancel onClick={logout}>Logout</AlertDialogCancel>
-            <AlertDialogAction onClick={resetSession}>Continue Session</AlertDialogAction>
-            </AlertDialogFooter>
-        </AlertDialogContent>
-    </AlertDialog>
     </>
   );
 }

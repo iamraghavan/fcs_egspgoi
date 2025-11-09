@@ -74,7 +74,6 @@ export function SidebarNav({ role }: SidebarNavProps) {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
-    localStorage.removeItem('sessionExpiresAt');
     const loginUrl = role === 'admin' ? '/u/portal/auth?admin' : '/u/portal/auth?faculty_login';
     router.push(loginUrl);
   };
