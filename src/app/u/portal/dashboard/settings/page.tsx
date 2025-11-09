@@ -4,7 +4,6 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Switch } from "@/components/ui/switch"
 import { Progress } from "@/components/ui/progress"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useState, useEffect, useRef } from "react"
@@ -17,6 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Camera } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
+import { MfaSettings } from "@/components/mfa-settings"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -27,10 +27,14 @@ type UserProfile = {
   college: string;
   department?: string;
   avatar: string;
+  mfaEnabled: {
+    email: boolean;
+    app: boolean;
+  }
 };
 
 type Departments = {
-    [key: string]: string[];
+    [key:string]: string[];
 };
 
 export default function SettingsPage() {
@@ -65,7 +69,8 @@ export default function SettingsPage() {
           phone: userData.phone || "",
           college: userData.college || "",
           department: userData.department || "",
-          avatar: userData.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`
+          avatar: userData.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`,
+          mfaEnabled: userData.mfaEnabled || { email: false, app: false }
         };
         setUser(userProfile);
         setPreviewImage(userProfile.avatar);
@@ -206,7 +211,7 @@ export default function SettingsPage() {
                     <TabsList className="grid w-full grid-cols-3">
                         <TabsTrigger value="profile">Profile</TabsTrigger>
                         <TabsTrigger value="password">Password</TabsTrigger>
-                        <TabsTrigger value="notifications">Notifications</TabsTrigger>
+                        <TabsTrigger value="security">Security</TabsTrigger>
                     </TabsList>
                     <TabsContent value="profile">
                         <form onSubmit={handleUpdateProfile}>
@@ -282,29 +287,11 @@ export default function SettingsPage() {
                             </CardContent>
                         </Card>
                     </TabsContent>
-                     <TabsContent value="notifications">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Notification Preferences</CardTitle>
-                                <CardDescription>Manage how you receive notifications.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-6">
-                                <div className="flex items-center justify-between p-4 rounded-lg border">
-                                    <div>
-                                        <Label htmlFor="email-notifications" className="font-medium">Email Notifications</Label>
-                                        <p className="text-sm text-muted-foreground">Receive email notifications for important updates.</p>
-                                    </div>
-                                    <Switch id="email-notifications" defaultChecked />
-                                </div>
-                                <div className="flex items-center justify-between p-4 rounded-lg border">
-                                     <div>
-                                        <Label htmlFor="app-notifications" className="font-medium">In-App Notifications</Label>
-                                        <p className="text-sm text-muted-foreground">Get in-app notifications for immediate alerts.</p>
-                                    </div>
-                                    <Switch id="app-notifications" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                     <TabsContent value="security">
+                        <MfaSettings
+                            mfaEnabled={user?.mfaEnabled || { email: false, app: false }}
+                            onUpdate={fetchUser}
+                        />
                     </TabsContent>
                 </Tabs>
             </div>
