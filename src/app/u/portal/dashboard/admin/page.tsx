@@ -96,7 +96,7 @@ export default function AdminDashboard() {
 
         const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
         const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => ({ name, value: Number(value), color: `hsl(var(--chart-${index + 1}))`})) : [];
-        const formattedTopFaculty = creditsData.topFaculty ? creditsData.topFaculty.map((f: any, i: number) => ({...f, avatar: `/avatars/0${i + 1}.png`})) : [];
+        const formattedTopFaculty = creditsData.topFaculty ? creditsData.topFaculty.map((f: any, i: number) => ({ name: f.name, credits: f.points, avatar: `/avatars/0${i + 1}.png`})) : [];
         
         const formattedRecentActivities = recentActivitiesData.success ? recentActivitiesData.items.map((item: any) => ({
              id: item._id,
@@ -249,7 +249,7 @@ export default function AdminDashboard() {
                                         <div className="flex items-center gap-3">
                                             <Avatar className="h-8 w-8">
                                                 <AvatarImage src={faculty.avatar} alt={faculty.name} />
-                                                <AvatarFallback>{faculty.name.charAt(0)}</AvatarFallback>
+                                                <AvatarFallback>{faculty.name ? faculty.name.charAt(0) : '?'}</AvatarFallback>
                                             </Avatar>
                                             <span className="font-medium">{faculty.name}</span>
                                         </div>
@@ -289,5 +289,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-
-    
