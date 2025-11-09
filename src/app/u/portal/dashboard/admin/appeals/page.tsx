@@ -52,7 +52,7 @@ export default function AppealReviewPage() {
   const { showAlert } = useAlert();
   const { toast } = useToast();
   const [allAppeals, setAllAppeals] = useState<Appeal[]>([]);
-  const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
+  const [selectedAppealId, setSelectedAppealId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState("");
 
@@ -62,6 +62,8 @@ export default function AppealReviewPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
+
+  const selectedAppeal = useMemo(() => allAppeals.find(a => a.appeal._id === selectedAppealId), [allAppeals, selectedAppealId]);
 
   const fetchAppeals = async () => {
     setIsLoading(true);
@@ -87,11 +89,15 @@ export default function AppealReviewPage() {
         const sortedAppeals = data.negativeAppeals.sort((a: Appeal, b: Appeal) => new Date(b.appeal.createdAt).getTime() - new Date(a.appeal.createdAt).getTime());
         setAllAppeals(sortedAppeals);
         
-        // Set the initial selection after fetching
         if (sortedAppeals.length > 0) {
-           setSelectedAppeal(sortedAppeals.find(a => a.appeal.status === 'pending') || sortedAppeals[0]);
+           const firstPending = sortedAppeals.find(a => a.appeal.status === 'pending');
+           if (firstPending) {
+               setSelectedAppealId(firstPending.appeal._id);
+           } else {
+               setSelectedAppealId(sortedAppeals[0].appeal._id);
+           }
         } else {
-           setSelectedAppeal(null);
+           setSelectedAppealId(null);
         }
 
       } else {
@@ -140,9 +146,17 @@ export default function AppealReviewPage() {
     });
   }, [allAppeals, statusFilter, searchTerm, collegeFilter, departmentFilter]);
   
+  useEffect(() => {
+    if (filteredAppeals.length > 0 && !filteredAppeals.some(a => a.appeal._id === selectedAppealId)) {
+        setSelectedAppealId(filteredAppeals[0].appeal._id);
+    } else if (filteredAppeals.length === 0) {
+        setSelectedAppealId(null);
+    }
+  }, [filteredAppeals, selectedAppealId]);
+
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
-    if (!selectedAppeal || !selectedAppeal.appeal?._id) {
-        showAlert('Error', 'No appeal or appeal ID found.');
+    if (!selectedAppealId) {
+        showAlert('Error', 'No appeal selected.');
         return;
     };
 
@@ -153,7 +167,7 @@ export default function AppealReviewPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeal/${selectedAppeal.appeal._id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeal/${selectedAppealId}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -177,7 +191,6 @@ export default function AppealReviewPage() {
 
         toast({ title: "Decision Submitted", description: `The appeal has been marked as ${decision}.`});
         
-        // Refetch all appeals to get the latest state
         await fetchAppeals(); 
         
         setComments("");
@@ -270,11 +283,11 @@ export default function AppealReviewPage() {
                 {isLoading ? (
                     <TableRow key="loading-row"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
                 ) : filteredAppeals.length > 0 ? (
-                    filteredAppeals.map((appeal, index) => (
+                    filteredAppeals.map((appeal) => (
                     <TableRow
-                        key={`${appeal._id}-${index}`}
-                        className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
-                        onClick={() => setSelectedAppeal(appeal)}
+                        key={appeal.appeal._id}
+                        className={`cursor-pointer ${selectedAppealId === appeal.appeal._id ? "bg-primary/10" : ""}`}
+                        onClick={() => setSelectedAppealId(appeal.appeal._id)}
                     >
                         <TableCell>
                         <div className="font-medium text-foreground">
@@ -398,3 +411,5 @@ export default function AppealReviewPage() {
     </div>
   )
 }
+
+    
