@@ -281,7 +281,7 @@ export default function AppealReviewPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                    <TableRow><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
+                    <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
                 ) : filteredAppeals.length > 0 ? (
                     filteredAppeals.map((appeal) => (
                     <TableRow
@@ -312,7 +312,7 @@ export default function AppealReviewPage() {
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
+                    <TableRow key="no-results"><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
