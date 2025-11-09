@@ -27,35 +27,16 @@ import { Users, FolderKanban, ShieldAlert, BarChartHorizontal } from 'lucide-rea
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
-// --- MOCK DATA (to be replaced with API calls) ---
-const userGrowthData = [
-  { month: 'Jan', users: 4 },
-  { month: 'Feb', users: 3 },
-  { month: 'Mar', users: 5 },
-  { month: 'Apr', users: 8 },
-  { month: 'May', users: 7 },
-  { month: 'Jun', users: 12 },
-];
-
-const topFacultyData = [
-    { name: "Dr. Evelyn Reed", credits: 145, avatar: "/avatars/01.png" },
-    { name: "Prof. Samuel Cruz", credits: 132, avatar: "/avatars/02.png" },
-    { name: "Dr. Isabella Hayes", credits: 128, avatar: "/avatars/03.png" },
-    { name: "Prof. Liam Steiner", credits: 110, avatar: "/avatars/04.png" },
-    { name: "Dr. Olivia Chen", credits: 98, avatar: "/avatars/05.png" },
-];
-
-const recentActivitiesData = [
-    { id: 1, description: "Dr. Smith's submission for 'Research Grant' was approved.", user: "Dr. Smith", date: "2023-10-26" },
-    { id: 2, description: "A new appeal was filed by Prof. Jane Doe regarding a performance remark.", user: "Prof. Jane Doe", date: "2023-10-25" },
-    { id: 3, description: "Bulk credit import for 'Semester Results' completed successfully.", user: "System", date: "2023-10-24" },
-];
-
-const creditStatusData = [
-  { name: 'Approved', value: 240, color: 'hsl(var(--chart-2))' },
-  { name: 'Pending', value: 50, color: 'hsl(var(--chart-3))' },
-  { name: 'Rejected', value: 22, color: 'hsl(var(--chart-5))' },
-];
+type AnalyticsData = {
+    totalUsers: number;
+    totalCredits: number;
+    pendingSubmissions: number;
+    activeAppeals: number;
+    userGrowth: { month: string; users: number }[];
+    topFaculty: { name: string; credits: number; avatar: string }[];
+    recentActivities: { id: string; description: string; user: string; date: string }[];
+    creditStatus: { name: string; value: number; color: string }[];
+};
 
 const getCurrentAcademicYear = () => {
     const today = new Date();
@@ -87,11 +68,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlert();
   
-  // States for analytics data
-  const [totalUsers, setTotalUsers] = useState(0);
-  const [totalCredits, setTotalCredits] = useState(0);
-  const [pendingSubmissions, setPendingSubmissions] = useState(0);
-  const [activeAppeals, setActiveAppeals] = useState(0);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -103,21 +80,41 @@ export default function AdminDashboard() {
         return;
       }
       try {
-        // In a real app, these would be separate analytics endpoints
-        const usersRes = await fetch(`${API_BASE_URL}/api/v1/users?limit=1`, { headers: { Authorization: `Bearer ${token}` } });
+        const [usersRes, creditsRes, recentActivitiesRes] = await Promise.all([
+             fetch(`${API_BASE_URL}/api/v1/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
+             fetch(`${API_BASE_URL}/api/v1/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
+             fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=5&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } })
+        ]);
+
         const usersData = await usersRes.json();
-        if (usersData.success) setTotalUsers(usersData.total);
-        
-        const creditsRes = await fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=1`, { headers: { Authorization: `Bearer ${token}` } });
         const creditsData = await creditsRes.json();
-        if (creditsData.success) {
-            setTotalCredits(creditsData.total);
-            setPendingSubmissions(creditsData.total); // Assuming total is pending for now
+        const recentActivitiesData = await recentActivitiesRes.json();
+
+        if (!usersData.success || !creditsData.success) {
+            throw new Error(usersData.message || creditsData.message || 'Failed to fetch analytics');
         }
+
+        const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
+        const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => ({ name, value: Number(value), color: `hsl(var(--chart-${index + 1}))`})) : [];
+        const formattedTopFaculty = creditsData.topFaculty ? creditsData.topFaculty.map((f: any, i: number) => ({...f, avatar: `/avatars/0${i + 1}.png`})) : [];
         
-        const appealsRes = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeals/all?status=pending`, { headers: { Authorization: `Bearer ${token}` } });
-        const appealsData = await appealsRes.json();
-        if (appealsData.success) setActiveAppeals(appealsData.negativeAppeals?.length || 0);
+        const formattedRecentActivities = recentActivitiesData.success ? recentActivitiesData.items.map((item: any) => ({
+             id: item._id,
+             description: `New submission: "${item.title}"`,
+             user: item.faculty.name,
+             date: new Date(item.createdAt).toISOString().split('T')[0]
+        })) : [];
+
+        setAnalytics({
+            totalUsers: usersData.totalUsers,
+            totalCredits: creditsData.totalCredits,
+            pendingSubmissions: creditsData.byStatus?.pending || 0,
+            activeAppeals: creditsData.appealStats?.totalAppeals || 0,
+            userGrowth: formattedUserGrowth,
+            creditStatus: formattedCreditStatus,
+            topFaculty: formattedTopFaculty,
+            recentActivities: formattedRecentActivities,
+        });
 
       } catch (error: any) {
         showAlert("Failed to load dashboard data", error.message);
@@ -126,7 +123,7 @@ export default function AdminDashboard() {
       }
     };
     fetchAnalytics();
-  }, []);
+  }, [academicYear]);
 
   useEffect(() => {
     if (!loading && containerRef.current) {
@@ -139,10 +136,10 @@ export default function AdminDashboard() {
   }, [loading]);
 
   const overviewCards = [
-    { title: "Total Users", value: totalUsers, icon: Users },
-    { title: "Total Credits Submitted", value: totalCredits, icon: BarChartHorizontal },
-    { title: "Pending Submissions", value: pendingSubmissions, icon: FolderKanban },
-    { title: "Active Appeals", value: activeAppeals, icon: ShieldAlert },
+    { title: "Total Users", value: analytics?.totalUsers ?? 0, icon: Users },
+    { title: "Total Credits Submitted", value: analytics?.totalCredits ?? 0, icon: BarChartHorizontal },
+    { title: "Pending Submissions", value: analytics?.pendingSubmissions ?? 0, icon: FolderKanban },
+    { title: "Active Appeals", value: analytics?.activeAppeals ?? 0, icon: ShieldAlert },
   ];
 
   return (
@@ -150,7 +147,7 @@ export default function AdminDashboard() {
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold text-foreground">Admin Dashboard</h2>
-          <p className="text-muted-foreground">An overview of the faculty credit system.</p>
+          <p className="text-muted-foreground">An overview of the faculty credit system for the academic year {academicYear}.</p>
         </div>
         <Select value={academicYear} onValueChange={setAcademicYear}>
           <SelectTrigger className="w-full sm:w-[220px]">
@@ -182,16 +179,16 @@ export default function AdminDashboard() {
           <Card className="lg:col-span-3 dashboard-card">
               <CardHeader>
                   <CardTitle>User Growth</CardTitle>
-                  <CardDescription>New user registrations over the last 6 months.</CardDescription>
+                  <CardDescription>New user registrations over time.</CardDescription>
               </CardHeader>
               <CardContent>
                 {loading ? <Skeleton className="h-[250px] w-full" /> : 
                   <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={userGrowthData}>
+                      <LineChart data={analytics?.userGrowth}>
                           <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                           <Tooltip />
-                          <Line type="monotone" dataKey="users" stroke="hsl(var(--primary))" strokeWidth={2} />
+                          <Line type="monotone" dataKey="users" name="New Users" stroke="hsl(var(--primary))" strokeWidth={2} />
                       </LineChart>
                   </ResponsiveContainer>}
               </CardContent>
@@ -206,7 +203,7 @@ export default function AdminDashboard() {
                   <ResponsiveContainer width="100%" height={250}>
                       <PieChart>
                           <Pie
-                            data={creditStatusData}
+                            data={analytics?.creditStatus}
                             cx="50%"
                             cy="50%"
                             labelLine={false}
@@ -215,7 +212,7 @@ export default function AdminDashboard() {
                             dataKey="value"
                             nameKey="name"
                           >
-                            {creditStatusData.map((entry, index) => (
+                            {analytics?.creditStatus.map((entry, index) => (
                               <Cell key={`cell-${index}`} fill={entry.color} />
                             ))}
                           </Pie>
@@ -245,7 +242,7 @@ export default function AdminDashboard() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {topFacultyData.map((faculty, index) => (
+                            {analytics?.topFaculty.map((faculty, index) => (
                                 <TableRow key={faculty.name}>
                                     <TableCell className="font-medium">{index + 1}</TableCell>
                                     <TableCell>
@@ -273,14 +270,14 @@ export default function AdminDashboard() {
               <CardContent>
                 {loading ? <Skeleton className="h-[280px] w-full" /> : 
                   <div className="space-y-4">
-                    {recentActivitiesData.map((activity) => (
+                    {analytics?.recentActivities.map((activity) => (
                       <div key={activity.id} className="flex items-start gap-4">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <Users className="h-4 w-4" />
+                          <FolderKanban className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">{activity.date}</p>
+                          <p className="text-sm font-medium leading-snug">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground">{activity.user} &middot; {activity.date}</p>
                         </div>
                       </div>
                     ))}
