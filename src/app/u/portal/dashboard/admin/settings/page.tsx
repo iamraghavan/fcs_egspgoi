@@ -51,11 +51,22 @@ export default function AdminSettingsPage() {
       const responseData = await response.json();
       if (responseData.success) {
         const userData = responseData.user;
+
+        const getAvatarUrl = (userPayload: any) => {
+            if (userPayload.profileImage) {
+                if (userPayload.profileImage.startsWith('http')) {
+                    return userPayload.profileImage;
+                }
+                return `${API_BASE_URL}${userPayload.profileImage.startsWith('/') ? '' : '/'}${userPayload.profileImage}`;
+            }
+            return `https://ui-avatars.com/api/?name=${encodeURIComponent(userPayload.name)}&background=random`;
+        };
+        
         const userProfile: UserProfile = {
           name: userData.name || "",
           email: userData.email || "",
           phone: userData.phone || "",
-          avatar: userData.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`,
+          avatar: getAvatarUrl(userData),
           mfaEmailEnabled: userData.mfaEmailEnabled || false,
           mfaAppEnabled: userData.mfaAppEnabled || false
         };
