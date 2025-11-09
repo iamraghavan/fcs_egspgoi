@@ -80,7 +80,7 @@ const getPageMetadata = (pathname: string, userName: string) => {
 };
 
 const LoadingSkeleton = () => (
-    <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto] md:grid-cols-[16rem_1fr]">
+    <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto]">
         {/* Header Skeleton */}
         <header className="flex h-16 shrink-0 items-center border-b bg-sidebar px-4 col-span-2">
              <Skeleton className="h-8 w-32 bg-sidebar-accent" />
@@ -114,12 +114,12 @@ const LoadingSkeleton = () => (
 );
 
 const Footer = ({ onCookiePreferencesClick }: { onCookiePreferencesClick: () => void }) => (
-    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 md:col-span-2">
+    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 col-span-full">
         <div className="flex flex-col md:flex-row items-center justify-between text-xs gap-4 md:gap-0">
             <span className="text-center md:text-left">© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
             <div className="flex items-center gap-4">
-                <Link href="#" className="hover:text-sidebar-foreground">Privacy Policy</Link>
-                <Link href="#" className="hover:text-sidebar-foreground">Terms</Link>
+                <Link href="/u/portal/privacy-policy" className="hover:text-sidebar-foreground">Privacy Policy</Link>
+                <Link href="/u/portal/terms" className="hover:text-sidebar-foreground">Terms</Link>
                 <button onClick={onCookiePreferencesClick} className="hover:text-sidebar-foreground">Cookie preferences</button>
             </div>
         </div>
@@ -265,7 +265,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   
   return (
     <>
-    <div className="grid min-h-screen w-full grid-rows-[auto_1fr] md:grid-cols-[auto_1fr]">
+    <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto] md:grid-cols-[auto_1fr]">
       <Header user={user} />
       <SidebarNav role={user.role} />
       <main className="overflow-y-auto p-4 md:p-6 lg:p-8">
