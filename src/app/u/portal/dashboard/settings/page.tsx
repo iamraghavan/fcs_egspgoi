@@ -48,6 +48,13 @@ export default function SettingsPage() {
   const [departments, setDepartments] = useState<Departments>({});
   const containerRef = useRef(null);
 
+  // State for password change
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+
+
   const fetchUser = async () => {
     setLoading(true);
     const token = localStorage.getItem("token");
@@ -177,6 +184,54 @@ export default function SettingsPage() {
         setIsSaving(false);
     }
   };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+        showAlert("Password Mismatch", "New password and confirmation do not match.");
+        return;
+    }
+    if (newPassword.length < 8) {
+        showAlert("Password Too Short", "New password must be at least 8 characters long.");
+        return;
+    }
+
+    setIsChangingPassword(true);
+    const token = localStorage.getItem("token");
+    
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
+        method: 'POST',
+        headers: {
+            "Authorization": `Bearer ${token}`,
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            currentPassword,
+            newPassword,
+            confirmPassword,
+        }),
+      });
+
+      const responseData = await response.json();
+      if (!response.ok || !responseData.success) {
+        throw new Error(responseData.message || "Failed to change password.");
+      }
+
+      toast({
+        title: "Password Updated",
+        description: "Your password has been changed successfully.",
+      });
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+
+    } catch (error: any) {
+        showAlert("Password Change Failed", error.message);
+    } finally {
+        setIsChangingPassword(false);
+    }
+  };
   
   if (loading) {
       return (
@@ -298,29 +353,33 @@ export default function SettingsPage() {
                         </form>
                     </TabsContent>
                     <TabsContent value="password">
-                         <Card>
-                            <CardHeader>
-                                <CardTitle>Change Password</CardTitle>
-                                <CardDescription>For security, choose a strong password.</CardDescription>
-                            </CardHeader>
-                            <CardContent className="space-y-4">
-                                <div>
-                                    <Label htmlFor="current-password">Current Password</Label>
-                                    <Input id="current-password" placeholder="Enter current password" type="password" />
-                                </div>
-                                <div>
-                                    <Label htmlFor="new-password">New Password</Label>
-                                    <Input id="new-password" placeholder="Enter new password" type="password" />
-                                </div>
-                                <div>
-                                    <Label htmlFor="confirm-password">Confirm New Password</Label>
-                                    <Input id="confirm-password" placeholder="Confirm new password" type="password" />
-                                </div>
-                            </CardContent>
-                             <CardFooter className="pt-6 border-t flex justify-end">
-                                <Button>Update Password</Button>
-                            </CardFooter>
-                        </Card>
+                         <form onSubmit={handleChangePassword}>
+                             <Card>
+                                <CardHeader>
+                                    <CardTitle>Change Password</CardTitle>
+                                    <CardDescription>For security, choose a strong password.</CardDescription>
+                                </CardHeader>
+                                <CardContent className="space-y-4">
+                                    <div>
+                                        <Label htmlFor="current-password">Current Password</Label>
+                                        <Input id="current-password" placeholder="Enter current password" type="password" value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} required />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="new-password">New Password</Label>
+                                        <Input id="new-password" placeholder="Enter new password" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required />
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="confirm-password">Confirm New Password</Label>
+                                        <Input id="confirm-password" placeholder="Confirm new password" type="password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required />
+                                    </div>
+                                </CardContent>
+                                 <CardFooter className="pt-6 border-t flex justify-end">
+                                    <Button type="submit" disabled={isChangingPassword}>
+                                        {isChangingPassword ? "Updating..." : "Update Password"}
+                                    </Button>
+                                </CardFooter>
+                            </Card>
+                        </form>
                     </TabsContent>
                      <TabsContent value="security">
                         <MfaSettings
@@ -335,3 +394,5 @@ export default function SettingsPage() {
     </div>
   )
 }
+
+    
