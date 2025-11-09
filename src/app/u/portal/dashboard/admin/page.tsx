@@ -243,7 +243,7 @@ export default function AdminDashboard() {
                         </TableHeader>
                         <TableBody>
                             {analytics?.topFaculty.map((faculty, index) => (
-                                <TableRow key={faculty.name}>
+                                <TableRow key={`${faculty.name}-${index}`}>
                                     <TableCell className="font-medium">{index + 1}</TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
