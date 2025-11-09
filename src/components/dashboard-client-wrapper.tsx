@@ -102,16 +102,10 @@ const Footer = () => (
     <footer className="sticky bottom-0 z-10 w-full bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
         <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
-                 <button className="flex items-center gap-2 hover:text-sidebar-foreground">
-                    <span className="material-symbols-outlined text-base">terminal</span>
-                    CloudShell
-                 </button>
-                 <button className="hover:text-sidebar-foreground">Feedback</button>
-                 <button className="hover:text-sidebar-foreground">Console Mobile App</button>
+                <span>© {new Date().getFullYear()}, EGS Pillay Group of Institutions, Inc. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-4">
-                <span>© 2024, EGS Pillay Group of Institutions, Inc. or its affiliates. All rights reserved.</span>
-                <Link href="#" className="hover:text-sidebar-foreground">Privacy</Link>
+                <Link href="#" className="hover:text-sidebar-foreground">Privacy Policy</Link>
                 <Link href="#" className="hover:text-sidebar-foreground">Terms</Link>
                 <button className="hover:text-sidebar-foreground">Cookie preferences</button>
             </div>
