@@ -166,7 +166,6 @@ export default function AppealReviewPage() {
     }
 
     try {
-        // The endpoint expects the credit ID, not the appeal ID.
         const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal._id}/appeal`, {
             method: 'PUT',
             headers: {
