@@ -33,6 +33,8 @@ body {
     --chart-3: 211 41% 75%;
     --chart-4: 211 41% 85%;
     --chart-5: 211 41% 95%;
+
+    /* Sidebar specific dark theme */
     --sidebar-background: 222 29% 10%; /* Dark sidebar background */
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 223 74% 62%;
@@ -68,7 +70,9 @@ body {
     --chart-3: 212 77% 41%;
     --chart-4: 212 77% 31%;
     --chart-5: 212 77% 21%;
-    --sidebar-background: 222 29% 8%; /* Consistent dark sidebar */
+
+    /* Sidebar specific dark theme remains same in dark mode */
+    --sidebar-background: 222 29% 8%; 
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 212 77% 61%;
     --sidebar-primary-foreground: 0 0% 100%;

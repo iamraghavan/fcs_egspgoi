@@ -137,13 +137,15 @@ export function Header({ user }: { user: User }) {
 
   return (
     <>
-    <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-sidebar text-sidebar-foreground px-4 md:px-6">
+    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-4 border-b bg-sidebar text-sidebar-foreground px-4 md:px-6 col-span-2">
       <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent" />
-         <Link href="#" className="font-bold text-lg">
-             EGSP
+         <Link href="#" className="font-bold text-lg hidden md:block">
+             CreditWise
          </Link>
-        <div className="hidden md:flex relative w-full max-w-sm items-center ml-4">
+      </div>
+      <div className="flex w-full items-center justify-center">
+         <div className="hidden md:flex relative w-full max-w-sm items-center">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
@@ -151,7 +153,7 @@ export function Header({ user }: { user: User }) {
             />
         </div>
       </div>
-      <div className="flex w-full items-center justify-end gap-2">
+      <div className="flex items-center justify-end gap-2">
           {(user.role === 'faculty') && (
             <Link href={notificationsHref}>
                 <Button variant="ghost" size="icon" className="rounded-full relative text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
@@ -169,9 +171,11 @@ export function Header({ user }: { user: User }) {
           <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
               <span className="material-symbols-outlined">help</span>
           </Button>
-          <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
-              <span className="material-symbols-outlined">settings</span>
-          </Button>
+          <Link href={user.role === 'admin' ? `/u/portal/dashboard/admin/settings?uid=${uid}` : `/u/portal/dashboard/settings?uid=${uid}`}>
+            <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
+                <span className="material-symbols-outlined">settings</span>
+            </Button>
+          </Link>
 
         <UserNav user={user} logout={logout} />
       </div>

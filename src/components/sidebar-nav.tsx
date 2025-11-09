@@ -26,11 +26,10 @@ type SidebarNavProps = {
 const getFacultyNav = (uid: string) => [
   { name: "Dashboard", href: `/u/portal/dashboard?uid=${uid}`, icon: LayoutDashboard },
   { name: "Good Works", href: `/u/portal/dashboard/good-works?uid=${uid}`, icon: Award },
-  { name: "Submit", href: `/u/portal/dashboard/good-works/submit?uid=${uid}`, icon: Files },
+  { name: "Submit Work", href: `/u/portal/dashboard/good-works/submit?uid=${uid}`, icon: Files },
   { name: "Negative Remarks", href: `/u/portal/dashboard/remarks?uid=${uid}`, icon: MessageSquareWarning },
-  { name: "Appeals", href: `/u/portal/dashboard/appeals?uid=${uid}`, icon: ShieldCheck },
+  { name: "My Appeals", href: `/u/portal/dashboard/appeals?uid=${uid}`, icon: ShieldCheck },
   { name: "Notifications", href: `/u/portal/dashboard/notifications?uid=${uid}`, icon: Bell },
-  { name: "Settings", href: `/u/portal/dashboard/settings?uid=${uid}`, icon: Settings },
 ];
 
 const getAdminNav = (uid: string) => [
@@ -42,7 +41,6 @@ const getAdminNav = (uid: string) => [
   { name: "Negative Remarks", href: `/u/portal/dashboard/admin/remarks?uid=${uid}`, icon: MessageSquareWarning },
   { name: "Appeals", href: `/u/portal/dashboard/admin/appeals?uid=${uid}`, icon: ShieldAlert },
   { name: "Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
-  { name: "Settings", href: `/u/portal/dashboard/admin/settings?uid=${uid}`, icon: Settings },
 ];
 
 const getOANav = (uid: string) => [
@@ -80,17 +78,21 @@ export function SidebarNav({ role }: SidebarNavProps) {
     const loginUrl = role === 'admin' ? '/u/portal/auth?admin' : '/u/portal/auth?faculty_login';
     router.push(loginUrl);
   };
+  
+  const getSettingsHref = () => {
+    switch(role) {
+        case 'admin':
+            return `/u/portal/dashboard/admin/settings?uid=${uid}`;
+        case 'faculty':
+            return `/u/portal/dashboard/settings?uid=${uid}`;
+        default:
+            return '#'; 
+    }
+  }
+  const settingsHref = getSettingsHref();
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader className="p-2 border-b">
-         <div className="flex items-center justify-center h-10 group-data-[collapsible=icon]:hidden">
-             <span className="font-semibold text-lg">CreditWise</span>
-         </div>
-         <div className="hidden items-center justify-center h-10 group-data-[collapsible=icon]:flex">
-             <SidebarTrigger />
-         </div>
-      </SidebarHeader>
+    <Sidebar>
       <SidebarContent className="p-2">
         <SidebarMenu>
           {navItems.map((item) => {
@@ -115,12 +117,16 @@ export function SidebarNav({ role }: SidebarNavProps) {
       <SidebarFooter className="p-2">
         <SidebarSeparator />
          <SidebarMenu>
-            <SidebarMenuItem>
-                <SidebarMenuButton tooltip="Logout" className="justify-start" onClick={handleLogout}>
-                    <LogOut className="h-5 w-5" />
-                    <span className="group-data-[collapsible=icon]:hidden">Logout</span>
-                </SidebarMenuButton>
-            </SidebarMenuItem>
+            {role !== 'oa' && (
+                <SidebarMenuItem>
+                    <Link href={settingsHref}>
+                        <SidebarMenuButton tooltip="Settings" className="justify-start" isActive={pathname.includes('/settings')}>
+                            <Settings className="h-5 w-5" />
+                            <span className="group-data-[collapsible=icon]:hidden">Settings</span>
+                        </SidebarMenuButton>
+                    </Link>
+                </SidebarMenuItem>
+            )}
          </SidebarMenu>
       </SidebarFooter>
     </Sidebar>

@@ -1,14 +1,14 @@
 
 "use client";
 
-import { SidebarProvider, SidebarInset, Sidebar } from "@/components/ui/sidebar";
+import { Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import React, { useState, useEffect, type ReactNode } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
+import { Skeleton } from "./ui/skeleton";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -79,30 +79,45 @@ const getPageMetadata = (pathname: string, userName: string) => {
 };
 
 const LoadingSkeleton = () => (
-    <div className="flex min-h-screen">
-        <div className="hidden md:block w-64 h-full bg-card border-r">
-            <div className="p-4 space-y-4">
-                <Skeleton className="h-8 w-32" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-                <Skeleton className="h-8 w-full" />
-            </div>
+    <div className="grid h-screen w-full grid-rows-[auto_1fr_auto]">
+        {/* Header Skeleton */}
+        <div className="flex h-16 shrink-0 items-center border-b bg-sidebar px-4 col-span-2">
+             <Skeleton className="h-8 w-32 bg-sidebar-accent" />
+             <div className="ml-auto flex items-center space-x-4">
+                <Skeleton className="h-8 w-8 rounded-full bg-sidebar-accent" />
+             </div>
         </div>
-        <div className="flex-1">
-            <div className="h-16 border-b p-4"><Skeleton className="h-8 w-full" /></div>
-            <div className="p-4 space-y-4">
-                <Skeleton className="h-16" />
-                <Skeleton className="h-96" />
+        <div className="grid md:grid-cols-[16rem_1fr] flex-1 overflow-hidden">
+            {/* Sidebar Skeleton */}
+            <div className="hidden md:flex flex-col border-r bg-sidebar p-2">
+                <div className="p-2 space-y-2">
+                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
+                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
+                    <Skeleton className="h-9 w-full bg-sidebar-accent" />
+                </div>
             </div>
+            {/* Main Content Skeleton */}
+            <main className="flex flex-col overflow-y-auto">
+                <div className="flex-1 p-8 space-y-4">
+                    <Skeleton className="h-16 w-1/2" />
+                    <Skeleton className="h-96 w-full" />
+                </div>
+                {/* Footer Skeleton */}
+                <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
+                    <div className="flex items-center justify-between text-xs">
+                        <Skeleton className="h-4 w-1/3 bg-sidebar-accent" />
+                    </div>
+                </footer>
+            </main>
         </div>
     </div>
 );
 
 const Footer = () => (
-    <footer className="sticky bottom-0 z-10 w-full bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
+    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
         <div className="flex items-center justify-between text-xs">
             <div className="flex items-center gap-4">
-                <span>© {new Date().getFullYear()}, EGS Pillay Group of Institutions, Inc. All rights reserved.</span>
+                <span>© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
             </div>
             <div className="flex items-center gap-4">
                 <Link href="#" className="hover:text-sidebar-foreground">Privacy Policy</Link>
@@ -249,11 +264,11 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
-    <div className="flex h-screen flex-col">
+    <div className="grid h-screen w-full grid-rows-[auto_1fr]">
         <Header user={user} />
-        <div className="flex flex-1 overflow-hidden">
+        <div className="grid md:grid-cols-[auto_1fr] flex-1 overflow-hidden">
             <SidebarNav role={user.role} />
-            <main className="flex flex-1 flex-col overflow-y-auto">
+            <main className="flex flex-col overflow-y-auto">
                 <div className="flex-1 p-4 md:p-6 lg:p-8">
                     {children}
                 </div>
