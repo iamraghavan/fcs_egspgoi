@@ -35,6 +35,7 @@ type Appeal = {
   title: string;
   notes: string; // Original notes of the negative credit
   appeal: {
+    _id: string; // This is the appeal ID
     by: string;
     reason: string;
     status: 'pending' | 'accepted' | 'rejected';
@@ -140,7 +141,7 @@ export default function AppealReviewPage() {
   }, [allAppeals, statusFilter, searchTerm, collegeFilter, departmentFilter]);
   
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
-    if (!selectedAppeal || !selectedAppeal._id) {
+    if (!selectedAppeal || !selectedAppeal.appeal?._id) {
         showAlert('Error', 'No appeal or appeal ID found.');
         return;
     };
@@ -152,7 +153,7 @@ export default function AppealReviewPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal._id}/appeal`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeal/${selectedAppeal.appeal._id}`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
