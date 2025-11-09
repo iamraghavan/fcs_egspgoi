@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Line, LineChart, PieChart, Pie, Cell, Legend } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Line, LineChart, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
 import {
   Card,
   CardContent,
@@ -10,14 +10,6 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -33,9 +25,14 @@ type AnalyticsData = {
     pendingSubmissions: number;
     activeAppeals: number;
     userGrowth: { month: string; users: number }[];
-    topFaculty: { name: string; credits: number; avatar: string }[];
     recentActivities: { id: string; description: string; user: string; date: string }[];
     creditStatus: { name: string; value: number; color: string }[];
+};
+
+type CreditTrendData = {
+  daily: { date: string; pending: number; approved: number; rejected: number }[];
+  weekly: { week: string; pending: number; approved: number; rejected: number }[];
+  monthly: { month: string; pending: number; approved: number; rejected: number }[];
 };
 
 const getCurrentAcademicYear = () => {
@@ -69,6 +66,8 @@ export default function AdminDashboard() {
   const { showAlert } = useAlert();
   
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [creditTrends, setCreditTrends] = useState<CreditTrendData | null>(null);
+  const [trendsTimescale, setTrendsTimescale] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -80,23 +79,25 @@ export default function AdminDashboard() {
         return;
       }
       try {
-        const [usersRes, creditsRes, recentActivitiesRes] = await Promise.all([
+        const [usersRes, creditsRes, recentActivitiesRes, trendsRes] = await Promise.all([
              fetch(`${API_BASE_URL}/api/v1/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
              fetch(`${API_BASE_URL}/api/v1/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
-             fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=5&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } })
+             fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=5&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } }),
+             fetch(`${API_BASE_URL}/api/v1/analytics/credit-trends`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
 
         const usersData = await usersRes.json();
         const creditsData = await creditsRes.json();
         const recentActivitiesData = await recentActivitiesRes.json();
+        const trendsData = await trendsRes.json();
 
-        if (!usersData.success || !creditsData.success) {
-            throw new Error(usersData.message || creditsData.message || 'Failed to fetch analytics');
+
+        if (!usersData.success || !creditsData.success || !trendsData.success) {
+            throw new Error(usersData.message || creditsData.message || trendsData.message || 'Failed to fetch analytics');
         }
 
         const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
         const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => ({ name, value: Number(value), color: `hsl(var(--chart-${index + 1}))`})) : [];
-        const formattedTopFaculty = creditsData.topFaculty ? creditsData.topFaculty.map((f: any, i: number) => ({ name: f.name, credits: f.points, avatar: `/avatars/0${i + 1}.png`})) : [];
         
         const formattedRecentActivities = recentActivitiesData.success ? recentActivitiesData.items.map((item: any) => ({
              id: item._id,
@@ -112,9 +113,10 @@ export default function AdminDashboard() {
             activeAppeals: creditsData.appealStats?.totalAppeals || 0,
             userGrowth: formattedUserGrowth,
             creditStatus: formattedCreditStatus,
-            topFaculty: formattedTopFaculty,
             recentActivities: formattedRecentActivities,
         });
+
+        setCreditTrends(trendsData.data);
 
       } catch (error: any) {
         showAlert("Failed to load dashboard data", error.message);
@@ -123,7 +125,7 @@ export default function AdminDashboard() {
       }
     };
     fetchAnalytics();
-  }, [academicYear]);
+  }, [academicYear, showAlert]);
 
   useEffect(() => {
     if (!loading && containerRef.current) {
@@ -141,6 +143,13 @@ export default function AdminDashboard() {
     { title: "Pending Submissions", value: analytics?.pendingSubmissions ?? 0, icon: FolderKanban },
     { title: "Active Appeals", value: analytics?.activeAppeals ?? 0, icon: ShieldAlert },
   ];
+
+  const trendData = useMemo(() => {
+    if (!creditTrends) return [];
+    const data = creditTrends[trendsTimescale];
+    const key = trendsTimescale === 'daily' ? 'date' : trendsTimescale === 'weekly' ? 'week' : 'month';
+    return data.map(item => ({...item, name: item[key as keyof typeof item]}));
+  }, [creditTrends, trendsTimescale]);
 
   return (
     <div className="space-y-8" ref={containerRef}>
@@ -185,6 +194,7 @@ export default function AdminDashboard() {
                 {loading ? <Skeleton className="h-[250px] w-full" /> : 
                   <ResponsiveContainer width="100%" height={250}>
                       <LineChart data={analytics?.userGrowth}>
+                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
                           <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                           <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                           <Tooltip />
@@ -226,42 +236,38 @@ export default function AdminDashboard() {
 
        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <Card className="lg:col-span-3 dashboard-card">
-              <CardHeader>
-                  <CardTitle>Top Faculty</CardTitle>
-                  <CardDescription>Leaderboard of faculty with the most credits.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                 {loading ? <Skeleton className="h-[280px] w-full" /> : 
-                  <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[80px]">Rank</TableHead>
-                                <TableHead>Name</TableHead>
-                                <TableHead className="text-right">Credits</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {analytics?.topFaculty.map((faculty, index) => (
-                                <TableRow key={`${faculty.name}-${index}`}>
-                                    <TableCell className="font-medium">{index + 1}</TableCell>
-                                    <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={faculty.avatar} alt={faculty.name} />
-                                                <AvatarFallback>{faculty.name ? faculty.name.charAt(0) : '?'}</AvatarFallback>
-                                            </Avatar>
-                                            <span className="font-medium">{faculty.name}</span>
-                                        </div>
-                                    </TableCell>
-                                    <TableCell className="text-right font-bold text-primary">{faculty.credits}</TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                      </Table>
-                  </div>}
-              </CardContent>
-          </Card>
+                <CardHeader className="flex flex-row items-center justify-between">
+                    <div>
+                        <CardTitle>Credit Request Trends</CardTitle>
+                        <CardDescription>Trends for pending, approved, and rejected credits.</CardDescription>
+                    </div>
+                     <Select value={trendsTimescale} onValueChange={(v) => setTrendsTimescale(v as any)}>
+                        <SelectTrigger className="w-[120px]">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="daily">Daily</SelectItem>
+                            <SelectItem value="weekly">Weekly</SelectItem>
+                            <SelectItem value="monthly">Monthly</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </CardHeader>
+                <CardContent>
+                    {loading ? <Skeleton className="h-[280px] w-full" /> :
+                    <ResponsiveContainer width="100%" height={280}>
+                        <LineChart data={trendData}>
+                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
+                            <Tooltip />
+                            <Legend />
+                            <Line type="monotone" dataKey="pending" stroke="#f59e0b" name="Pending" />
+                            <Line type="monotone" dataKey="approved" stroke="#10b981" name="Approved" />
+                            <Line type="monotone" dataKey="rejected" stroke="#ef4444" name="Rejected" />
+                        </LineChart>
+                    </ResponsiveContainer>}
+                </CardContent>
+            </Card>
           <Card className="lg:col-span-2 dashboard-card">
               <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
