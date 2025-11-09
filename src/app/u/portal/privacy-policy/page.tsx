@@ -72,7 +72,7 @@ export default function PrivacyPolicyPage() {
             <h2 className="mt-8">6. Changes to This Privacy Policy</h2>
             <p>
                 We may update this Privacy Policy from time to time in order to reflect, for example, changes to our practices or for other operational, legal, or regulatory reasons. We will notify you of any changes by posting the new Privacy Policy on this page.
-            p>
+            </p>
 
             <h2 className="mt-8">7. Contact Us</h2>
             <p>
