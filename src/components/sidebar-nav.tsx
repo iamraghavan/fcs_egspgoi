@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
-import { Award, BarChart3, BotMessageSquare, GanttChart, LayoutDashboard, ShieldCheck, Users, Files, LogOut, Settings, Bell, History, MessageSquareWarning, FolderKanban, ShieldAlert, ListPlus, UploadCloud } from "lucide-react";
+import { Award, BarChart3, BotMessageSquare, GanttChart, LayoutDashboard, ShieldCheck, Users, Files, LogOut, Settings, Bell, History, MessageSquareWarning, FolderKanban, ShieldAlert, ListPlus, UploadCloud, PanelLeft } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import {
@@ -15,6 +15,7 @@ import {
   SidebarMenuButton,
   SidebarFooter,
   SidebarSeparator,
+  SidebarTrigger,
 } from "@/components/ui/sidebar";
 import { Logo, LogoAdmin } from "@/components/icons";
 
@@ -82,12 +83,13 @@ export function SidebarNav({ role }: SidebarNavProps) {
 
   return (
     <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader>
-        <Link href={getBaseUrl()} className="flex items-center gap-2">
-          <span className="text-lg font-semibold font-headline text-sidebar-foreground">
-            EGSPGOI
-          </span>
-        </Link>
+      <SidebarHeader className="p-2 border-b">
+         <div className="flex items-center justify-center h-10 group-data-[collapsible=icon]:hidden">
+             <span className="font-semibold text-lg">CreditWise</span>
+         </div>
+         <div className="hidden items-center justify-center h-10 group-data-[collapsible=icon]:flex">
+             <SidebarTrigger />
+         </div>
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>

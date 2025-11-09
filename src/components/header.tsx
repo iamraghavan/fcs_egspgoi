@@ -138,9 +138,12 @@ export function Header({ user }: { user: User }) {
   return (
     <>
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between gap-4 border-b bg-sidebar text-sidebar-foreground px-4 md:px-6">
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <SidebarTrigger className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent" />
-        <div className="hidden md:flex relative w-full max-w-sm items-center">
+         <Link href="#" className="font-bold text-lg">
+             EGSP
+         </Link>
+        <div className="hidden md:flex relative w-full max-w-sm items-center ml-4">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search..."
@@ -148,11 +151,7 @@ export function Header({ user }: { user: User }) {
             />
         </div>
       </div>
-      <div className="flex w-full items-center justify-end gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <span className="material-symbols-outlined text-base">timer</span>
-            <span>{formatTime(timeLeft)}</span>
-          </div>
+      <div className="flex w-full items-center justify-end gap-2">
           {(user.role === 'faculty') && (
             <Link href={notificationsHref}>
                 <Button variant="ghost" size="icon" className="rounded-full relative text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
@@ -167,6 +166,13 @@ export function Header({ user }: { user: User }) {
                 </Button>
             </Link>
           )}
+          <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
+              <span className="material-symbols-outlined">help</span>
+          </Button>
+          <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
+              <span className="material-symbols-outlined">settings</span>
+          </Button>
+
         <UserNav user={user} logout={logout} />
       </div>
     </header>

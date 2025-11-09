@@ -1,13 +1,14 @@
 
 "use client";
 
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarInset, Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import React, { useState, useEffect, type ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAlert } from "@/context/alert-context";
+import Link from "next/link";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -77,10 +78,9 @@ const getPageMetadata = (pathname: string, userName: string) => {
     };
 };
 
-
 const LoadingSkeleton = () => (
     <div className="flex min-h-screen">
-        <div className="hidden md:block w-64 h-full bg-white dark:bg-card border-r">
+        <div className="hidden md:block w-64 h-full bg-card border-r">
             <div className="p-4 space-y-4">
                 <Skeleton className="h-8 w-32" />
                 <Skeleton className="h-8 w-full" />
@@ -88,12 +88,36 @@ const LoadingSkeleton = () => (
                 <Skeleton className="h-8 w-full" />
             </div>
         </div>
-        <div className="flex-1 p-4 space-y-4">
-            <Skeleton className="h-16" />
-            <Skeleton className="h-96" />
+        <div className="flex-1">
+            <div className="h-16 border-b p-4"><Skeleton className="h-8 w-full" /></div>
+            <div className="p-4 space-y-4">
+                <Skeleton className="h-16" />
+                <Skeleton className="h-96" />
+            </div>
         </div>
     </div>
 );
+
+const Footer = () => (
+    <footer className="sticky bottom-0 z-10 w-full bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-2">
+        <div className="flex items-center justify-between text-xs">
+            <div className="flex items-center gap-4">
+                 <button className="flex items-center gap-2 hover:text-sidebar-foreground">
+                    <span className="material-symbols-outlined text-base">terminal</span>
+                    CloudShell
+                 </button>
+                 <button className="hover:text-sidebar-foreground">Feedback</button>
+                 <button className="hover:text-sidebar-foreground">Console Mobile App</button>
+            </div>
+            <div className="flex items-center gap-4">
+                <span>© 2024, EGS Pillay Group of Institutions, Inc. or its affiliates. All rights reserved.</span>
+                <Link href="#" className="hover:text-sidebar-foreground">Privacy</Link>
+                <Link href="#" className="hover:text-sidebar-foreground">Terms</Link>
+                <button className="hover:text-sidebar-foreground">Cookie preferences</button>
+            </div>
+        </div>
+    </footer>
+)
 
 export default function DashboardClientWrapper({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -128,7 +152,6 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
     }
 
     const fetchUser = async () => {
-      // Special handling for hardcoded OA user to prevent API call
       if (role === 'oa' && token === 'mock_oa_token') {
           const oaUser: User = {
               id: 'oa_user_01',
@@ -201,10 +224,9 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         }
         
         const expectedPathPrefix = getExpectedPath();
-        const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
-
-        // Enforce strict routing for roles
+        
         if (userPayload.id !== uid) {
+          const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
           router.replace(expectedUrl);
         } else if (userPayload.role === 'oa' && !pathname.startsWith('/u/portal/dashboard/oa')) {
             router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
@@ -233,16 +255,17 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
-    <>
-      <SidebarNav role={user.role} />
-      <SidebarInset className="flex flex-col h-screen">
+    <div className="flex h-screen flex-col">
         <Header user={user} />
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
-          {children}
-        </main>
-      </SidebarInset>
-    </>
+        <div className="flex flex-1 overflow-hidden">
+            <SidebarNav role={user.role} />
+            <main className="flex flex-1 flex-col overflow-y-auto">
+                <div className="flex-1 p-4 md:p-6 lg:p-8">
+                    {children}
+                </div>
+                <Footer />
+            </main>
+        </div>
+    </div>
   );
 }
-
-    
