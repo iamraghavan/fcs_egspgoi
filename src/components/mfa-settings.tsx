@@ -33,14 +33,12 @@ import { useAlert } from "@/context/alert-context";
 import { Loader2 } from "lucide-react";
 
 type MfaSettingsProps = {
-  mfaEnabled: {
-    email: boolean;
-    app: boolean;
-  };
+  mfaEmailEnabled: boolean;
+  mfaAppEnabled: boolean;
   onUpdate: () => void;
 };
 
-export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
+export function MfaSettings({ mfaEmailEnabled, mfaAppEnabled, onUpdate }: MfaSettingsProps) {
   const { showAlert } = useAlert();
   const {
     toggleEmailMfa,
@@ -100,7 +98,7 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
           </div>
           <Switch
             id="email-mfa"
-            checked={mfaEnabled.email}
+            checked={mfaEmailEnabled}
             onCheckedChange={handleEmailToggle}
             disabled={isLoading}
           />
@@ -110,7 +108,7 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
             <Label className="font-medium">Authenticator App</Label>
             <p className="text-sm text-muted-foreground">Use an app like Google Authenticator.</p>
           </div>
-          {mfaEnabled.app ? (
+          {mfaAppEnabled ? (
             <p className="text-sm font-medium text-green-600">Enabled</p>
           ) : (
             <Button onClick={handleEnableApp} disabled={isLoading}>
@@ -120,7 +118,7 @@ export function MfaSettings({ mfaEnabled, onUpdate }: MfaSettingsProps) {
           )}
         </div>
       </CardContent>
-      {(mfaEnabled.email || mfaEnabled.app) && (
+      {(mfaEmailEnabled || mfaAppEnabled) && (
         <CardContent className="pt-6 border-t">
           <AlertDialog>
             <AlertDialogTrigger asChild>

@@ -27,10 +27,8 @@ type UserProfile = {
   college: string;
   department?: string;
   avatar: string;
-  mfaEnabled: {
-    email: boolean;
-    app: boolean;
-  }
+  mfaEmailEnabled: boolean;
+  mfaAppEnabled: boolean;
 };
 
 type Departments = {
@@ -70,7 +68,8 @@ export default function SettingsPage() {
           college: userData.college || "",
           department: userData.department || "",
           avatar: userData.profileImage || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name)}&background=random`,
-          mfaEnabled: userData.mfaEnabled || { email: false, app: false }
+          mfaEmailEnabled: userData.mfaEmailEnabled || false,
+          mfaAppEnabled: userData.mfaAppEnabled || false
         };
         setUser(userProfile);
         setPreviewImage(userProfile.avatar);
@@ -289,7 +288,8 @@ export default function SettingsPage() {
                     </TabsContent>
                      <TabsContent value="security">
                         <MfaSettings
-                            mfaEnabled={user?.mfaEnabled || { email: false, app: false }}
+                            mfaEmailEnabled={user?.mfaEmailEnabled || false}
+                            mfaAppEnabled={user?.mfaAppEnabled || false}
                             onUpdate={fetchUser}
                         />
                     </TabsContent>
