@@ -45,12 +45,12 @@ export default function AdminSettingsPage() {
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const responseData = await response.json();
       if (responseData.success) {
-        const userData = responseData.data;
+        const userData = responseData.user;
         const userProfile: UserProfile = {
           name: userData.name || "",
           email: userData.email || "",
@@ -255,3 +255,5 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
+
+    

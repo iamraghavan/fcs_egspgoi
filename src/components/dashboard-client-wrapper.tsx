@@ -147,7 +147,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
       }
 
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
           headers: {
             "Authorization": `Bearer ${token}`
           }
@@ -166,7 +166,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           throw new Error(responseData.message || "Failed to fetch user data");
         }
 
-        const userData = responseData.data;
+        const userData = responseData.user;
         
         const getAvatarUrl = (user: any) => {
             if (user.profileImage) {
@@ -244,3 +244,5 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
     </>
   );
 }
+
+    
