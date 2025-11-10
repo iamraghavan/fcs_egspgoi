@@ -40,7 +40,7 @@ import { PlusCircle, Eye, Search } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
-import { Combobox } from "@/components/ui/combobox";
+import { Combobox, ComboboxOption } from "@/components/ui/combobox";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -61,7 +61,6 @@ type NegativeRemark = {
   _id: string;
   faculty: {
     _id: string;
-    name: string;
     profileImage?: string;
   };
   facultySnapshot: {
@@ -367,13 +366,14 @@ export default function ManageRemarksPage() {
     [facultyList]
   );
   
-  const creditTitleOptions = useMemo(() =>
-    creditTitles
-      .slice()
-      .sort((a, b) => a.title.localeCompare(b.title))
-      .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })),
-    [creditTitles]
-  );
+  const creditTitleOptions: ComboboxOption[] = useMemo(() => {
+    const sortedTitles = creditTitles
+        .slice()
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
+    
+    return [{ value: 'all', label: 'All Templates' }, ...sortedTitles];
+}, [creditTitles]);
 
 
   return (
@@ -414,7 +414,7 @@ export default function ManageRemarksPage() {
                     <div>
                         <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
                          <Combobox
-                            options={creditTitleOptions}
+                            options={creditTitles.map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }))}
                             value={creditTitleId}
                             onValueChange={setCreditTitleId}
                             placeholder="Select a template..."
@@ -476,11 +476,11 @@ export default function ManageRemarksPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
-              <Combobox
-                    options={creditTitleOptions.length > 0 ? [{ value: 'all', label: 'All Templates' }, ...creditTitleOptions] : []}
+               <Combobox
+                    options={creditTitleOptions}
                     value={creditTitleFilter}
                     onValueChange={setCreditTitleFilter}
-                    placeholder="Select Template..."
+                    placeholder="Filter by template..."
                     searchPlaceholder="Search templates..."
                     emptyPlaceholder="No templates found."
                 />
@@ -619,3 +619,5 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
+
+    
