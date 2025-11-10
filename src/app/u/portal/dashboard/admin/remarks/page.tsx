@@ -192,7 +192,7 @@ export default function ManageRemarksPage() {
 
           if (searchTerm) params.append('search', searchTerm);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
-          if (creditTitleFilter !== 'all') params.append('creditTitleId', creditTitleFilter);
+          if (creditTitleFilter !== 'all') params.append('templateId', creditTitleFilter);
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
