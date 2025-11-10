@@ -85,6 +85,9 @@ export default function AppealReviewPage() {
         sort: '-createdAt'
       });
       
+      if (statusFilter !== 'all') {
+        params.append('appealStatus', statusFilter);
+      }
       if (searchTerm) {
         params.append('search', searchTerm);
       }
@@ -95,7 +98,7 @@ export default function AppealReviewPage() {
         params.append('department', departmentFilter);
       }
       
-      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/${statusFilter}?${params.toString()}`;
+      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals?${params.toString()}`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -438,5 +441,3 @@ export default function AppealReviewPage() {
     </div>
   )
 }
-
-    
