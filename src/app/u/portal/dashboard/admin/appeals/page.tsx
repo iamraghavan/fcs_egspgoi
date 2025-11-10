@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import {
@@ -290,7 +291,7 @@ export default function AppealReviewPage() {
                     ) : filteredAppeals.length > 0 ? (
                         filteredAppeals.map((appeal) => (
                         <TableRow
-                            key={appeal.appeal._id}
+                            key={appeal._id}
                             className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                             onClick={() => setSelectedAppeal(appeal)}
                         >
