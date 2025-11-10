@@ -27,8 +27,8 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgr
 
 type Appeal = {
   _id: string;
+  creditId: string;
   faculty: {
-    _id: string;
     name: string;
     college: string;
     department: string;
@@ -36,11 +36,9 @@ type Appeal = {
   title: string;
   notes?: string; 
   appeal: {
-    _id?: string;
-    by?: string;
-    reason: string;
     status: 'pending' | 'accepted' | 'rejected';
-    createdAt: string;
+    reason: string;
+    submittedAt: string;
   };
   createdAt: string; 
 };
@@ -100,7 +98,7 @@ export default function AppealReviewPage() {
 
       const data = await response.json();
       if (data.success) {
-        const sortedAppeals = data.items.sort((a: Appeal, b: Appeal) => new Date(b.appeal.createdAt).getTime() - new Date(a.appeal.createdAt).getTime());
+        const sortedAppeals = data.items.sort((a: Appeal, b: Appeal) => new Date(b.appeal.submittedAt).getTime() - new Date(a.appeal.submittedAt).getTime());
         setAllAppeals(sortedAppeals);
         setTotal(data.total);
         
@@ -154,7 +152,7 @@ export default function AppealReviewPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal._id}/appeal`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal.creditId}/appeal`, {
             method: 'PUT',
             headers: {
                 'Authorization': `Bearer ${token}`,
@@ -291,7 +289,7 @@ export default function AppealReviewPage() {
                             </div>
                             </TableCell>
                             <TableCell>{appeal.title}</TableCell>
-                            <TableCell>{new Date(appeal.appeal.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>{new Date(appeal.appeal.submittedAt).toLocaleDateString()}</TableCell>
                             <TableCell>
                             <Badge className={getStatusColor(appeal.appeal.status)}>
                                 {appeal.appeal.status}
@@ -339,7 +337,7 @@ export default function AppealReviewPage() {
                   Appeal for: {selectedAppeal.title}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                    ({new Date(selectedAppeal.appeal.createdAt).toLocaleDateString()})
+                    ({new Date(selectedAppeal.appeal.submittedAt).toLocaleDateString()})
                 </p>
               </div>
             </CardHeader>
@@ -423,5 +421,3 @@ export default function AppealReviewPage() {
     </div>
   )
 }
-
-    
