@@ -12,7 +12,6 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { useEffect, useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
@@ -83,7 +82,11 @@ export default function AppealReviewPage() {
         sort: '-createdAt'
       });
       
-      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/${statusFilter}?${params.toString()}`;
+      if (statusFilter !== 'all') {
+        params.append('appealStatus', statusFilter);
+      }
+
+      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals?${params.toString()}`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -91,7 +94,16 @@ export default function AppealReviewPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(JSON.parse(errorText).message || `Failed to fetch appeals. Status: ${response.status}`);
+        // Check if the error is HTML (like a 404 page)
+        if (errorText.trim().startsWith("<!DOCTYPE")) {
+            throw new Error(`API endpoint not found or returned an invalid response. Status: ${response.status}`);
+        }
+        try {
+            const errorJson = JSON.parse(errorText);
+            throw new Error(errorJson.message || `Failed to fetch appeals. Status: ${response.status}`);
+        } catch (e) {
+            throw new Error(`An unexpected error occurred: ${errorText}`);
+        }
       }
 
       const data = await response.json();
@@ -274,7 +286,7 @@ export default function AppealReviewPage() {
                     ) : allAppeals.length > 0 ? (
                         allAppeals.map((appeal, index) => (
                         <TableRow
-                            key={`${appeal._id}-${index}`}
+                            key={`${appeal.creditId}-${index}`}
                             className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                             onClick={() => setSelectedAppeal(appeal)}
                         >
