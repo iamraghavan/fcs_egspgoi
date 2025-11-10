@@ -94,7 +94,7 @@ export default function AppealReviewPage() {
       if (departmentFilter !== 'all') {
         params.append('department', departmentFilter);
       }
-
+      
       const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/${statusFilter}?${params.toString()}`;
 
       const response = await fetch(url, {
@@ -289,11 +289,11 @@ export default function AppealReviewPage() {
                   </TableHeader>
                   <TableBody>
                     {isLoading ? (
-                        <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
                     ) : allAppeals.length > 0 ? (
-                        allAppeals.map((appeal, index) => (
+                        allAppeals.map((appeal) => (
                         <TableRow
-                            key={`${appeal._id}-${index}`}
+                            key={appeal._id}
                             className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                             onClick={() => setSelectedAppeal(appeal)}
                         >
@@ -320,7 +320,7 @@ export default function AppealReviewPage() {
                         </TableRow>
                         ))
                     ) : (
-                        <TableRow key="no-results"><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -438,3 +438,5 @@ export default function AppealReviewPage() {
     </div>
   )
 }
+
+    
