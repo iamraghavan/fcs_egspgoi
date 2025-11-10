@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import {
@@ -18,7 +17,7 @@ import { useEffect, useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { colleges } from "@/lib/colleges"
 import { Search } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
@@ -27,7 +26,7 @@ import { useToast } from "@/hooks/use-toast"
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
 type Appeal = {
-  _id: string; // This is the credit ID
+  _id: string;
   faculty: {
     _id: string;
     name: string;
@@ -35,15 +34,15 @@ type Appeal = {
     department: string;
   };
   title: string;
-  notes: string; // Original notes of the negative credit
+  notes?: string; 
   appeal: {
-    _id: string; // This is the appeal ID
-    by: string;
+    _id?: string;
+    by?: string;
     reason: string;
     status: 'pending' | 'accepted' | 'rejected';
     createdAt: string;
   };
-  createdAt: string; // Credit creation date
+  createdAt: string; 
 };
 
 type Departments = {
@@ -57,6 +56,9 @@ export default function AppealReviewPage() {
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [comments, setComments] = useState("");
+  const [page, setPage] = useState(1);
+  const [limit] = useState(10);
+  const [total, setTotal] = useState(0);
 
   // Filtering and searching state
   const [statusFilter, setStatusFilter] = useState<'pending' | 'accepted' | 'rejected' | 'all'>('pending');
@@ -64,8 +66,10 @@ export default function AppealReviewPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
+  
+  const totalPages = Math.ceil(total / limit);
 
-  const fetchAppeals = async () => {
+  const fetchAppeals = async (currentPage: number) => {
     setIsLoading(true);
     const token = localStorage.getItem("token");
     if (!token) {
@@ -75,7 +79,17 @@ export default function AppealReviewPage() {
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeals/all`, {
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: limit.toString(),
+        sort: '-createdAt'
+      });
+      if(statusFilter !== 'all') params.append('appealStatus', statusFilter);
+      if(collegeFilter !== 'all') params.append('college', collegeFilter);
+      if(departmentFilter !== 'all') params.append('department', departmentFilter);
+      if(searchTerm) params.append('search', searchTerm);
+
+      const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/appeals?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -85,23 +99,20 @@ export default function AppealReviewPage() {
       }
 
       const data = await response.json();
-      if (data.negativeAppeals) {
-        const sortedAppeals = data.negativeAppeals.sort((a: Appeal, b: Appeal) => new Date(b.appeal.createdAt).getTime() - new Date(a.appeal.createdAt).getTime());
+      if (data.success) {
+        const sortedAppeals = data.items.sort((a: Appeal, b: Appeal) => new Date(b.appeal.createdAt).getTime() - new Date(a.appeal.createdAt).getTime());
         setAllAppeals(sortedAppeals);
+        setTotal(data.total);
         
         if (sortedAppeals.length > 0) {
-           const firstPending = sortedAppeals.find((a: Appeal) => a.appeal.status === 'pending');
-           if (firstPending) {
-               setSelectedAppeal(firstPending);
-           } else {
-               setSelectedAppeal(sortedAppeals[0]);
-           }
+           const currentSelection = sortedAppeals.find((a: Appeal) => a._id === selectedAppeal?._id);
+           setSelectedAppeal(currentSelection || sortedAppeals[0]);
         } else {
            setSelectedAppeal(null);
         }
 
       } else {
-        throw new Error('Failed to fetch appeals, unexpected response structure.');
+        throw new Error(data.message || 'Failed to fetch appeals, unexpected response structure.');
       }
     } catch (err: any) {
       showAlert('Error fetching appeals', err.message);
@@ -112,8 +123,13 @@ export default function AppealReviewPage() {
   }
 
   useEffect(() => {
-    fetchAppeals();
-  }, []);
+    const debounceTimer = setTimeout(() => fetchAppeals(page), 500);
+    return () => clearTimeout(debounceTimer);
+  }, [page, statusFilter, collegeFilter, departmentFilter, searchTerm]);
+
+  useEffect(() => {
+    setPage(1);
+  }, [statusFilter, collegeFilter, departmentFilter, searchTerm]);
 
   useEffect(() => {
     if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
@@ -121,38 +137,9 @@ export default function AppealReviewPage() {
     } else {
       setFilteredDepartments({});
     }
-    setDepartmentFilter("all"); // Reset department filter when college changes
+    setDepartmentFilter("all"); 
   }, [collegeFilter]);
 
-  const filteredAppeals = useMemo(() => {
-    return allAppeals.filter(appeal => {
-      if (statusFilter !== 'all' && appeal.appeal.status !== statusFilter) {
-        return false;
-      }
-      if (collegeFilter !== 'all' && appeal.faculty.college !== collegeFilter) {
-        return false;
-      }
-      if (departmentFilter !== 'all' && appeal.faculty.department !== departmentFilter) {
-        return false;
-      }
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matches = appeal.faculty.name.toLowerCase().includes(term) ||
-                        appeal.faculty._id.toLowerCase().includes(term) ||
-                        appeal.title.toLowerCase().includes(term);
-        if (!matches) return false;
-      }
-      return true;
-    });
-  }, [allAppeals, statusFilter, searchTerm, collegeFilter, departmentFilter]);
-  
-  useEffect(() => {
-    if (filteredAppeals.length > 0 && !filteredAppeals.some(a => a._id === selectedAppeal?._id)) {
-        setSelectedAppeal(filteredAppeals[0]);
-    } else if (filteredAppeals.length === 0) {
-        setSelectedAppeal(null);
-    }
-  }, [filteredAppeals, selectedAppeal]);
 
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
     if (!selectedAppeal) {
@@ -191,7 +178,7 @@ export default function AppealReviewPage() {
 
         toast({ title: "Decision Submitted", description: `The appeal has been marked as ${decision}.`});
         
-        await fetchAppeals(); 
+        fetchAppeals(page);
         
         setComments("");
 
@@ -270,7 +257,7 @@ export default function AppealReviewPage() {
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-muted-foreground mb-4">
-                    Displaying {filteredAppeals.length} of {allAppeals.length} appeals.
+                    Displaying {allAppeals.length} of {total} appeals.
                 </p>
               <div className="overflow-x-auto border rounded-lg">
                 <Table>
@@ -288,8 +275,8 @@ export default function AppealReviewPage() {
                   <TableBody>
                     {isLoading ? (
                         <TableRow key="loading"><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
-                    ) : filteredAppeals.length > 0 ? (
-                        filteredAppeals.map((appeal, index) => (
+                    ) : allAppeals.length > 0 ? (
+                        allAppeals.map((appeal, index) => (
                         <TableRow
                             key={`${appeal._id}-${index}`}
                             className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
@@ -324,6 +311,19 @@ export default function AppealReviewPage() {
                 </Table>
               </div>
             </CardContent>
+             <CardFooter className="flex items-center justify-between">
+                <div className="text-sm text-muted-foreground">
+                    Page {page} of {totalPages || 1}
+                </div>
+                <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                        Previous
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                        Next
+                    </Button>
+                </div>
+            </CardFooter>
         </Card>
       </div>
       <aside className="w-full lg:w-1/3 lg:max-w-md">
@@ -424,5 +424,4 @@ export default function AppealReviewPage() {
   )
 }
 
-    
     
