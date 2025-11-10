@@ -74,6 +74,31 @@ export default function AdmissionEnquiryPage() {
   const addressRef = useRef<HTMLInputElement>(null);
   const { loaded, error } = useGooglePlaces();
 
+  const parseAddressComponents = (place: google.maps.places.PlaceResult): string => {
+    if (!place.address_components) {
+        return place.formatted_address || place.name || '';
+    }
+
+    const componentMap: { [key: string]: string } = {};
+    place.address_components.forEach(component => {
+        const type = component.types[0];
+        componentMap[type] = component.long_name;
+    });
+    
+    // Construct a detailed address string. You can adjust the format as needed.
+    const address_line_1 = [componentMap.street_number, componentMap.route].filter(Boolean).join(' ');
+    const address_line_2 = [componentMap.sublocality_level_2, componentMap.sublocality_level_1].filter(Boolean).join(', ');
+    const city = componentMap.locality || '';
+    const district = componentMap.administrative_area_level_2 || '';
+    const state = componentMap.administrative_area_level_1 || '';
+    const postalCode = componentMap.postal_code || '';
+    const country = componentMap.country || '';
+
+    const parts = [address_line_1, address_line_2, city, district, state, postalCode, country].filter(part => part && part.trim() !== '');
+
+    return parts.join(', ');
+  }
+
   useEffect(() => {
     if (loaded && addressRef.current) {
       const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current, {
@@ -84,10 +109,12 @@ export default function AdmissionEnquiryPage() {
 
       autocomplete.addListener('place_changed', () => {
         const place = autocomplete.getPlace();
-        if (place && place.formatted_address) {
-            setFullAddress(place.formatted_address);
-        } else if (place && place.name) {
-            setFullAddress(place.name);
+        if (place) {
+            const detailedAddress = parseAddressComponents(place);
+            setFullAddress(detailedAddress);
+            if (addressRef.current) {
+                addressRef.current.value = detailedAddress;
+            }
         }
       });
     }
@@ -212,6 +239,7 @@ export default function AdmissionEnquiryPage() {
                   placeholder={loaded ? "Start typing your address..." : "Loading map..."}
                   disabled={!loaded}
                   className="pl-10"
+                  onChange={(e) => setFullAddress(e.target.value)}
                 />
                 {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
               </div>
@@ -228,5 +256,3 @@ export default function AdmissionEnquiryPage() {
     </ThemeProvider>
   );
 }
-
-    
