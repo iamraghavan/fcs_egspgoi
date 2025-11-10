@@ -48,6 +48,7 @@
     "genkit": "^1.14.1",
     "gsap": "^3.12.5",
     "lucide-react": "^0.475.0",
+    "mui-tel-input": "^5.1.2",
     "next": "15.3.3",
     "patch-package": "^8.0.0",
     "react": "^18.3.1",

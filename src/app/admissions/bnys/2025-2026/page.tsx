@@ -10,17 +10,62 @@ import { useToast } from '@/hooks/use-toast';
 import { useAlert } from '@/context/alert-context';
 import { Loader2, Mail, User, Phone, University, BookOpen, MapPin, CheckCircle } from 'lucide-react';
 import { useGooglePlaces } from '@/hooks/use-google-places';
-import { PhoneInput } from '@/components/ui/phone-input';
 import Image from 'next/image';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import { saveAdmissionEnquiry } from '@/lib/admissions';
+import { MuiTelInput } from 'mui-tel-input';
+import { createTheme, ThemeProvider } from '@mui/material/styles';
+
+const muiTheme = createTheme({
+  components: {
+    MuiTextField: {
+      styleOverrides: {
+        root: {
+          '--TextField-brandBorderColor': 'hsl(var(--input))',
+          '--TextField-brandBorderHoverColor': 'hsl(var(--ring))',
+          '--TextField-brandBorderFocusedColor': 'hsl(var(--ring))',
+          '& label.Mui-focused': {
+            color: 'hsl(var(--foreground))',
+          },
+        },
+      },
+    },
+     MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+            fontFamily: 'inherit',
+            color: 'hsl(var(--foreground))',
+            borderRadius: 'var(--radius)',
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'var(--TextField-brandBorderHoverColor)',
+            },
+            '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                borderColor: 'var(--TextField-brandBorderFocusedColor)',
+                borderWidth: '2px',
+            },
+        },
+        notchedOutline: {
+            borderColor: 'var(--TextField-brandBorderColor)',
+        }
+      },
+    },
+    MuiMenu: {
+      styleOverrides: {
+        paper: {
+           backgroundColor: 'hsl(var(--card))',
+           color: 'hsl(var(--card-foreground))',
+        }
+      }
+    }
+  },
+});
+
 
 export default function AdmissionEnquiryPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [countryCode, setCountryCode] = useState('91');
   const [email, setEmail] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
@@ -49,7 +94,7 @@ export default function AdmissionEnquiryPage() {
     try {
         const formData = {
             name,
-            phone: `+${countryCode} ${phone}`,
+            phone,
             email,
             college: "EGS Pillay Naturopathy and Yoga Science",
             course: "BNYS - Bachelor of Naturopathy and Yogic Sciences",
@@ -75,7 +120,7 @@ export default function AdmissionEnquiryPage() {
   if (isSubmitted) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 p-4">
-            <Card className="w-full max-w-md text-center border">
+            <Card className="w-full max-w-md text-center">
                 <CardHeader>
                     <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
                     <CardTitle className="text-2xl">Thank You!</CardTitle>
@@ -90,8 +135,9 @@ export default function AdmissionEnquiryPage() {
   }
 
   return (
+    <ThemeProvider theme={muiTheme}>
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <Card className="w-full max-w-2xl border">
+      <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
             <Image src={EgspgoiLogo} alt="College Logo" width={80} height={80} className="mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Admission Enquiry: 2025-2026</CardTitle>
@@ -124,13 +170,17 @@ export default function AdmissionEnquiryPage() {
             </div>
              <div>
                 <Label htmlFor="phone">Phone Number</Label>
-                <PhoneInput 
-                    countryCode={countryCode}
-                    onCountryCodeChange={setCountryCode}
-                    phone={phone}
-                    onPhoneChange={setPhone}
-                    placeholder="Enter your phone number"
-                />
+                <div className="relative mt-2">
+                    <MuiTelInput
+                        value={phone}
+                        onChange={(newValue) => setPhone(newValue)}
+                        defaultCountry="IN"
+                        onlyCountries={['IN', 'US', 'GB', 'AU', 'AE']}
+                        fullWidth
+                        variant="outlined"
+                        required
+                    />
+                </div>
             </div>
              <div>
               <Label htmlFor="email">Email Address (Optional)</Label>
@@ -162,5 +212,6 @@ export default function AdmissionEnquiryPage() {
         </CardContent>
       </Card>
     </div>
+    </ThemeProvider>
   );
 }
