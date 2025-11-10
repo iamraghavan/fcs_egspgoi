@@ -39,6 +39,10 @@ type NegativeCredit = {
   points: number;
   notes: string;
   proofUrl?: string;
+  faculty: { // Corrected type
+    _id: string;
+    name: string;
+  };
   appeal?: {
     by: string;
     reason: string;

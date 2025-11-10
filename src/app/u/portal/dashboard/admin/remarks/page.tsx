@@ -64,6 +64,9 @@ type NegativeRemark = {
     name: string;
     profileImage?: string;
   };
+  facultySnapshot: {
+      name: string;
+  };
   title: string;
   points: number;
   status: string;
@@ -534,7 +537,7 @@ export default function ManageRemarksPage() {
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => (
                   <TableRow key={remark._id}>
-                    <TableCell className="font-medium text-foreground">{remark.faculty.name}</TableCell>
+                    <TableCell className="font-medium text-foreground">{remark.facultySnapshot.name}</TableCell>
                     <TableCell>{remark.title}</TableCell>
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
@@ -560,15 +563,15 @@ export default function ManageRemarksPage() {
                                 <DialogHeader>
                                 <DialogTitle>Remark Details</DialogTitle>
                                 </DialogHeader>
-                                {selectedRemark && selectedRemark.faculty && (
+                                {selectedRemark && (
                                 <div className="space-y-4 py-4">
                                     <div className="flex items-center gap-4">
                                         <Avatar className="h-12 w-12">
                                             <AvatarImage src={selectedRemark.faculty.profileImage} />
-                                            <AvatarFallback>{selectedRemark.faculty.name?.charAt(0) ?? '?'}</AvatarFallback>
+                                            <AvatarFallback>{selectedRemark.facultySnapshot.name?.charAt(0) ?? '?'}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="font-semibold">{selectedRemark.faculty.name}</p>
+                                            <p className="font-semibold">{selectedRemark.facultySnapshot.name}</p>
                                             <p className="text-sm text-muted-foreground">{selectedRemark.academicYear}</p>
                                         </div>
                                     </div>
