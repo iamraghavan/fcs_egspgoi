@@ -104,6 +104,14 @@ export default function AppealReviewPage() {
         headers: { Authorization: `Bearer ${token}` }
       });
 
+      if (response.status === 404) {
+        setAllAppeals([]);
+        setTotal(0);
+        setSelectedAppeal(null);
+        setIsLoading(false);
+        return;
+      }
+      
       if (!response.ok) {
         const errorText = await response.text();
         if (errorText.trim().startsWith("<!DOCTYPE")) {
