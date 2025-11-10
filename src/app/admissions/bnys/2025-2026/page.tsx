@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
 import { useAlert } from '@/context/alert-context';
 import { Loader2, Mail, User, Phone, University, BookOpen, MapPin, CheckCircle } from 'lucide-react';
@@ -76,7 +75,7 @@ export default function AdmissionEnquiryPage() {
   if (isSubmitted) {
     return (
         <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 p-4">
-            <Card className="w-full max-w-md text-center shadow-lg">
+            <Card className="w-full max-w-md text-center border">
                 <CardHeader>
                     <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
                     <CardTitle className="text-2xl">Thank You!</CardTitle>
@@ -92,7 +91,7 @@ export default function AdmissionEnquiryPage() {
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
-      <Card className="w-full max-w-2xl shadow-xl">
+      <Card className="w-full max-w-2xl border">
         <CardHeader className="text-center">
             <Image src={EgspgoiLogo} alt="College Logo" width={80} height={80} className="mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Admission Enquiry: 2025-2026</CardTitle>
