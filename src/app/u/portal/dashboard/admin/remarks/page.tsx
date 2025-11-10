@@ -58,21 +58,37 @@ type CreditTitle = {
 };
 
 type NegativeRemark = {
-  _id: string;
-  faculty: {
     _id: string;
-    profileImage?: string;
-  };
-  facultySnapshot: {
-      name: string;
-  };
-  title: string;
-  points: number;
-  status: string;
-  notes?: string;
-  proofUrl?: string;
-  createdAt: string;
-  academicYear: string;
+    academicYear: string;
+    appealCount?: number;
+    createdAt: string;
+    creditTitle?: string;
+    faculty: string;
+    facultySnapshot: {
+        name: string;
+        college: string;
+        facultyID: string;
+        department: string;
+        profileImage?: string;
+    };
+    issuedBy: string;
+    notes?: string;
+    points: number;
+    proofMeta?: {
+        fileName: string;
+        size: string;
+    };
+    proofUrl?: string;
+    status: 'pending' | 'approved' | 'rejected' | 'appealed';
+    title: string;
+    type: 'negative';
+    updatedAt: string;
+    appeal?: {
+      by: string;
+      reason: string;
+      status: 'pending' | 'accepted' | 'rejected';
+      createdAt: string;
+    };
 };
 
 type Departments = {
@@ -366,7 +382,7 @@ export default function ManageRemarksPage() {
     [facultyList]
   );
   
-  const creditTitleOptions: ComboboxOption[] = useMemo(() => {
+ const creditTitleOptions: ComboboxOption[] = useMemo(() => {
     const sortedTitles = creditTitles
         .slice()
         .sort((a, b) => a.title.localeCompare(b.title))
@@ -479,7 +495,7 @@ export default function ManageRemarksPage() {
                <Combobox
                     options={creditTitleOptions}
                     value={creditTitleFilter}
-                    onValueChange={setCreditTitleFilter}
+                    onValueChange={(value) => setCreditTitleFilter(value === "all" ? "all" : value)}
                     placeholder="Filter by template..."
                     searchPlaceholder="Search templates..."
                     emptyPlaceholder="No templates found."
@@ -524,6 +540,8 @@ export default function ManageRemarksPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Faculty</TableHead>
+                  <TableHead>Faculty ID</TableHead>
+                  <TableHead>Department</TableHead>
                   <TableHead>Remark Title</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Points</TableHead>
@@ -532,11 +550,13 @@ export default function ManageRemarksPage() {
               </TableHeader>
               <TableBody>
                 {isLoadingRemarks ? (
-                   <TableRow><TableCell colSpan={5} className="text-center h-24">Loading remarks...</TableCell></TableRow>
+                   <TableRow><TableCell colSpan={7} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => (
                   <TableRow key={remark._id}>
                     <TableCell className="font-medium text-foreground">{remark.facultySnapshot.name}</TableCell>
+                    <TableCell>{remark.facultySnapshot.facultyID}</TableCell>
+                    <TableCell>{remark.facultySnapshot.department}</TableCell>
                     <TableCell>{remark.title}</TableCell>
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
@@ -558,37 +578,89 @@ export default function ManageRemarksPage() {
                                     <Eye className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
-                             <DialogContent>
+                             <DialogContent className="max-w-3xl">
                                 <DialogHeader>
                                 <DialogTitle>Remark Details</DialogTitle>
+                                <DialogDescription>A complete overview of the recorded remark.</DialogDescription>
                                 </DialogHeader>
                                 {selectedRemark && (
-                                <div className="space-y-4 py-4">
-                                    <div className="flex items-center gap-4">
-                                        <Avatar className="h-12 w-12">
-                                            <AvatarImage src={selectedRemark.faculty.profileImage} />
-                                            <AvatarFallback>{selectedRemark.facultySnapshot.name?.charAt(0) ?? '?'}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-semibold">{selectedRemark.facultySnapshot.name}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedRemark.academicYear}</p>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p><strong className="font-medium text-muted-foreground">Title:</strong> {selectedRemark.title}</p>
-                                        <p><strong className="font-medium text-muted-foreground">Points:</strong> <span className="font-semibold text-destructive">{selectedRemark.points}</span></p>
-                                        <p><strong className="font-medium text-muted-foreground">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                                        <p><strong className="font-medium text-muted-foreground">Notes:</strong> {selectedRemark.notes || 'N/A'}</p>
-                                    </div>
-                                    {selectedRemark.proofUrl && (
-                                        <Button asChild variant="link" className="p-0 h-auto">
-                                            <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Proof Document</a>
-                                        </Button>
-                                    )}
+                                <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                                     {/* Faculty Info */}
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-lg">Faculty Information</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <div className="flex items-center gap-4 col-span-full">
+                                                <Avatar className="h-16 w-16">
+                                                    <AvatarImage src={selectedRemark.facultySnapshot?.profileImage} />
+                                                    <AvatarFallback>{selectedRemark.facultySnapshot.name?.charAt(0) ?? '?'}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-bold text-base">{selectedRemark.facultySnapshot.name}</p>
+                                                    <p className="text-muted-foreground">{selectedRemark.facultySnapshot.facultyID}</p>
+                                                </div>
+                                            </div>
+                                            <p><strong className="font-medium text-muted-foreground block">College:</strong> {selectedRemark.facultySnapshot.college}</p>
+                                            <p><strong className="font-medium text-muted-foreground block">Department:</strong> {selectedRemark.facultySnapshot.department}</p>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Remark Details */}
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-lg">Remark Details</CardTitle></CardHeader>
+                                        <CardContent className="space-y-3 text-sm">
+                                            <p><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</p>
+                                            <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
+                                            <p><strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong></p>
+                                            <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Status & Appeal Info */}
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-lg">Status & History</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                            <p><strong className="font-medium text-muted-foreground block">Status:</strong> <span className="font-semibold capitalize">{selectedRemark.status}</span></p>
+                                            <p><strong className="font-medium text-muted-foreground block">Academic Year:</strong> {selectedRemark.academicYear}</p>
+                                            <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                                            <p><strong className="font-medium text-muted-foreground block">Last Updated:</strong> {new Date(selectedRemark.updatedAt).toLocaleString()}</p>
+                                            <p><strong className="font-medium text-muted-foreground block">Appeal Count:</strong> {selectedRemark.appealCount || 0}</p>
+                                            {selectedRemark.appeal && (
+                                                <div className="col-span-full border-t pt-4 mt-4">
+                                                    <p className="font-semibold text-base mb-2">Appeal Information</p>
+                                                    <p><strong className="font-medium text-muted-foreground block">Appeal Status:</strong> <span className="font-semibold capitalize">{selectedRemark.appeal.status}</span></p>
+                                                    <p><strong className="font-medium text-muted-foreground block">Appeal Reason:</strong> {selectedRemark.appeal.reason}</p>
+                                                </div>
+                                            )}
+                                        </CardContent>
+                                    </Card>
+
+                                    {/* Proof & System IDs */}
+                                    <Card>
+                                        <CardHeader><CardTitle className="text-lg">System & Proof</CardTitle></CardHeader>
+                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                             <div>
+                                                <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
+                                                {selectedRemark.proofUrl ? (
+                                                     <Button asChild variant="link" className="p-0 h-auto">
+                                                        <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                    </Button>
+                                                ) : "Not Provided"}
+                                            </div>
+                                            {selectedRemark.proofMeta && (
+                                                <p><strong className="font-medium text-muted-foreground block">File Name:</strong> {selectedRemark.proofMeta.fileName}</p>
+                                            )}
+                                            <p className="col-span-full"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemark._id}</span></p>
+                                            <p><strong className="font-medium text-muted-foreground block">Faculty ID:</strong> <span className="font-mono text-xs">{selectedRemark.faculty}</span></p>
+                                            <p><strong className="font-medium text-muted-foreground block">Issued By ID:</strong> <span className="font-mono text-xs">{selectedRemark.issuedBy}</span></p>
+                                            {selectedRemark.creditTitle && (
+                                                 <p><strong className="font-medium text-muted-foreground block">Template ID:</strong> <span className="font-mono text-xs">{selectedRemark.creditTitle}</span></p>
+                                            )}
+                                        </CardContent>
+                                    </Card>
                                 </div>
                                 )}
                                 <DialogFooter>
-                                    <DialogClose asChild><Button>Close</Button></DialogClose>
+                                    <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
@@ -596,7 +668,7 @@ export default function ManageRemarksPage() {
                   </TableRow>
                 ))
                 ) : (
-                    <TableRow><TableCell colSpan={5} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -619,3 +691,5 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
+
+    
