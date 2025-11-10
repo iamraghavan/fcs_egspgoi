@@ -67,6 +67,7 @@ export default function AdmissionEnquiryPage() {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
+  const [fullAddress, setFullAddress] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   
@@ -78,6 +79,16 @@ export default function AdmissionEnquiryPage() {
       const autocomplete = new window.google.maps.places.Autocomplete(addressRef.current, {
         types: ['address'],
         componentRestrictions: { country: 'in' },
+        fields: ['address_components', 'geometry', 'icon', 'name', 'formatted_address']
+      });
+
+      autocomplete.addListener('place_changed', () => {
+        const place = autocomplete.getPlace();
+        if (place && place.formatted_address) {
+            setFullAddress(place.formatted_address);
+        } else if (place && place.name) {
+            setFullAddress(place.name);
+        }
       });
     }
   }, [loaded]);
@@ -90,6 +101,8 @@ export default function AdmissionEnquiryPage() {
         return;
     }
 
+    const finalAddress = fullAddress || addressRef.current?.value || '';
+
     setIsSubmitting(true);
     try {
         const formData = {
@@ -98,7 +111,7 @@ export default function AdmissionEnquiryPage() {
             email,
             college: "EGS Pillay Naturopathy and Yoga Science",
             course: "BNYS - Bachelor of Naturopathy and Yogic Sciences",
-            address: addressRef.current?.value || '',
+            address: finalAddress,
             enquiryDate: new Date().toISOString()
         };
 
@@ -215,3 +228,5 @@ export default function AdmissionEnquiryPage() {
     </ThemeProvider>
   );
 }
+
+    
