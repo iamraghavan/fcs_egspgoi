@@ -476,15 +476,14 @@ export default function ManageRemarksPage() {
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
-               <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}>
-                  <SelectTrigger>
-                      <SelectValue placeholder="Select Template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                      <SelectItem value="all">All Templates</SelectItem>
-                      {creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title}</SelectItem>))}
-                  </SelectContent>
-              </Select>
+              <Combobox
+                    options={creditTitleOptions.length > 0 ? [{ value: 'all', label: 'All Templates' }, ...creditTitleOptions] : []}
+                    value={creditTitleFilter}
+                    onValueChange={setCreditTitleFilter}
+                    placeholder="Select Template..."
+                    searchPlaceholder="Search templates..."
+                    emptyPlaceholder="No templates found."
+                />
               <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                   <SelectTrigger>
                       <SelectValue placeholder="Select Year" />
