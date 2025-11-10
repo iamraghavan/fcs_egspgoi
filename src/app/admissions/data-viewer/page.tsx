@@ -1,7 +1,6 @@
-
 "use client";
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import {
   Table,
@@ -33,7 +32,7 @@ type Enquiry = {
 
 const SECRET_TOKEN = process.env.NEXT_PUBLIC_DATA_ACCESS_TOKEN || '3a9e7b1f-8c6d-4a5b-9f1c-2d0b8e6a5c4d';
 
-export default function DataViewerPage() {
+function DataViewer() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
 
@@ -232,5 +231,13 @@ export default function DataViewerPage() {
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+export default function DataViewerPage() {
+    return (
+        <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+            <DataViewer />
+        </Suspense>
     );
 }

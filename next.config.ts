@@ -10,11 +10,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-  experimental: {
-    allowedDevOrigins: [
-        "*.cloudworkstations.dev"
-    ]
-  },
   images: {
     remotePatterns: [
       {
@@ -30,31 +25,4 @@ const nextConfig: NextConfig = {
         pathname: '/**',
       },
       {
-        protocol: 'https',
-        hostname: 'picsum.photos',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'egspgroup.in',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'i.ibb.co',
-        port: '',
-        pathname: '/**',
-      },
-      {
-        protocol: 'https',
-        hostname: 'fcs.egspgroup.in',
-        port: '',
-        pathname: '/**',
-      }
-    ],
-  },
-};
-
-export default nextConfig;
+        protocol: 'https'
