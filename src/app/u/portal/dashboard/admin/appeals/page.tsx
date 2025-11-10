@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { useEffect, useState, useMemo } from "react"
+import React, { useEffect, useState, useMemo } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
@@ -21,6 +21,7 @@ import { colleges } from "@/lib/colleges"
 import { Search } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -31,6 +32,8 @@ type Appeal = {
     name: string;
     college: string;
     department: string;
+    facultyID: string;
+    profileImage?: string;
   };
   title: string;
   notes?: string; 
@@ -82,11 +85,17 @@ export default function AppealReviewPage() {
         sort: '-createdAt'
       });
       
-      if (statusFilter !== 'all') {
-        params.append('appealStatus', statusFilter);
+      if (searchTerm) {
+        params.append('search', searchTerm);
+      }
+       if (collegeFilter !== 'all') {
+        params.append('college', collegeFilter);
+      }
+      if (departmentFilter !== 'all') {
+        params.append('department', departmentFilter);
       }
 
-      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals?${params.toString()}`;
+      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/${statusFilter}?${params.toString()}`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -94,7 +103,6 @@ export default function AppealReviewPage() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        // Check if the error is HTML (like a 404 page)
         if (errorText.trim().startsWith("<!DOCTYPE")) {
             throw new Error(`API endpoint not found or returned an invalid response. Status: ${response.status}`);
         }
@@ -108,13 +116,12 @@ export default function AppealReviewPage() {
 
       const data = await response.json();
       if (data.success) {
-        const sortedAppeals = data.items.sort((a: Appeal, b: Appeal) => new Date(b.appeal.submittedAt).getTime() - new Date(a.appeal.submittedAt).getTime());
-        setAllAppeals(sortedAppeals);
+        setAllAppeals(data.items);
         setTotal(data.total);
         
-        if (sortedAppeals.length > 0) {
-           const currentSelection = sortedAppeals.find((a: Appeal) => a._id === selectedAppeal?._id);
-           setSelectedAppeal(currentSelection || sortedAppeals[0]);
+        if (data.items.length > 0) {
+           const currentSelection = data.items.find((a: Appeal) => a._id === selectedAppeal?._id);
+           setSelectedAppeal(currentSelection || data.items[0]);
         } else {
            setSelectedAppeal(null);
         }
@@ -286,7 +293,7 @@ export default function AppealReviewPage() {
                     ) : allAppeals.length > 0 ? (
                         allAppeals.map((appeal, index) => (
                         <TableRow
-                            key={`${appeal.creditId}-${index}`}
+                            key={`${appeal._id}-${index}`}
                             className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
                             onClick={() => setSelectedAppeal(appeal)}
                         >
