@@ -18,10 +18,11 @@ import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { colleges } from "@/lib/colleges"
-import { Search } from "lucide-react"
+import { Search, File as FileIcon } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -36,13 +37,16 @@ type Appeal = {
     profileImage?: string;
   };
   title: string;
-  notes?: string; 
+  notes?: string;
+  proofUrl?: string;
+  points: number;
   appeal: {
     status: 'pending' | 'accepted' | 'rejected';
     reason: string;
     submittedAt: string;
   };
-  createdAt: string; 
+  createdAt: string;
+  [key: string]: any; // Allow for other properties
 };
 
 type Departments = {
@@ -98,7 +102,7 @@ export default function AppealReviewPage() {
         params.append('department', departmentFilter);
       }
       
-      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/all?${params.toString()}`;
+      const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals?${params.toString()}`;
 
       const response = await fetch(url, {
         headers: { Authorization: `Bearer ${token}` }
@@ -222,6 +226,11 @@ export default function AppealReviewPage() {
       }
   };
 
+  const getProofUrl = (url: string) => {
+    if (!url) return '#';
+    if (url.startsWith('http')) return url;
+    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
 
   return (
     <div className="flex flex-col lg:flex-row gap-6">
@@ -356,40 +365,66 @@ export default function AppealReviewPage() {
         <div className="sticky top-6 space-y-6">
           {selectedAppeal ? (
           <Card>
-            <CardHeader className="flex items-center gap-4 border-b pb-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">
-                  {selectedAppeal.faculty.name}
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Appeal for: {selectedAppeal.title}
-                </p>
-                <p className="text-xs text-muted-foreground">
-                    ({new Date(selectedAppeal.appeal.submittedAt).toLocaleDateString()})
-                </p>
-              </div>
+            <CardHeader>
+                <div className="flex items-start gap-4">
+                     <Avatar className="h-12 w-12 border">
+                        <AvatarImage src={selectedAppeal.faculty?.profileImage} />
+                        <AvatarFallback>{selectedAppeal.faculty?.name?.charAt(0) ?? '?'}</AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <p className="font-semibold text-lg">{selectedAppeal.faculty.name}</p>
+                        <p className="text-sm text-muted-foreground">{selectedAppeal.faculty.facultyID}</p>
+                         <p className="text-xs text-muted-foreground">{selectedAppeal.faculty.department}</p>
+                    </div>
+                </div>
+                 <div className="pt-4">
+                    <h3 className="font-semibold text-base">Appeal for: {selectedAppeal.title}</h3>
+                    <p className="text-sm text-destructive font-semibold">({selectedAppeal.points} points)</p>
+                </div>
             </CardHeader>
-            <CardContent className="p-6 space-y-4">
-              <Tabs defaultValue="evidence">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="remark">Original Remark</TabsTrigger>
-                  <TabsTrigger value="evidence">Faculty's Reason</TabsTrigger>
+            <CardContent className="p-0">
+              <Tabs defaultValue="appeal">
+                <TabsList className="grid w-full grid-cols-3">
+                  <TabsTrigger value="appeal">Appeal</TabsTrigger>
+                  <TabsTrigger value="remark">Remark</TabsTrigger>
+                  <TabsTrigger value="details">Full Details</TabsTrigger>
                 </TabsList>
-                <TabsContent value="remark" className="py-5">
-                    <p className="text-sm text-muted-foreground italic">
-                      "{selectedAppeal.notes}"
-                    </p>
-                </TabsContent>
-                <TabsContent value="evidence" className="py-5">
-                   <p className="text-sm text-muted-foreground italic">
-                     "{selectedAppeal.appeal.reason}"
-                  </p>
-                   {/* This should ideally link to the proof of the original credit */}
-                   <Button variant="link" className="p-0 h-auto">View Original Document</Button>
-                </TabsContent>
+                <div className="p-6">
+                    <TabsContent value="appeal">
+                        <div className="space-y-2">
+                             <p className="text-sm font-medium text-muted-foreground">Faculty's Reason:</p>
+                             <p className="text-sm italic bg-muted/50 p-3 rounded-md">"{selectedAppeal.appeal.reason}"</p>
+                             <p className="text-xs text-muted-foreground pt-2">
+                                Submitted on: {new Date(selectedAppeal.appeal.submittedAt).toLocaleString()}
+                             </p>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="remark">
+                         <div className="space-y-2">
+                             <p className="text-sm font-medium text-muted-foreground">Original Admin Notes:</p>
+                             <p className="text-sm italic bg-muted/50 p-3 rounded-md">"{selectedAppeal.notes || 'No notes provided.'}"</p>
+                              {selectedAppeal.proofUrl && (
+                                <Button asChild variant="link" className="p-0 h-auto">
+                                    <a href={getProofUrl(selectedAppeal.proofUrl)} target="_blank" rel="noopener noreferrer">
+                                        <FileIcon className="mr-2 h-4 w-4" />
+                                        View Original Proof
+                                    </a>
+                                </Button>
+                             )}
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="details">
+                        <div className="space-y-2 text-xs overflow-x-auto">
+                            <h4 className="font-semibold mb-2">System Data</h4>
+                            <pre className="bg-muted/50 p-3 rounded-md">
+                                {JSON.stringify(selectedAppeal, (key, value) => key === 'faculty' ? undefined : value, 2)}
+                            </pre>
+                        </div>
+                    </TabsContent>
+                </div>
               </Tabs>
-              <div className="space-y-4">
-                <h4 className="text-md font-semibold text-foreground">
+              <div className="p-6 border-t">
+                <h4 className="text-md font-semibold text-foreground mb-4">
                   Decision
                 </h4>
                 <div>
@@ -412,7 +447,7 @@ export default function AppealReviewPage() {
                     </div>
                 </div>
                 {selectedAppeal.appeal.status === 'pending' ? (
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-4 mt-4">
                     <Button
                         className="w-full bg-green-600 hover:bg-green-700 text-white"
                         type="button"
@@ -430,7 +465,7 @@ export default function AppealReviewPage() {
                     </Button>
                     </div>
                 ) : (
-                    <div className="text-center text-muted-foreground p-4 border rounded-md">
+                    <div className="text-center text-muted-foreground p-4 border rounded-md mt-4">
                         This appeal has already been {selectedAppeal.appeal.status}.
                     </div>
                 )}
@@ -449,3 +484,5 @@ export default function AppealReviewPage() {
     </div>
   )
 }
+
+    
