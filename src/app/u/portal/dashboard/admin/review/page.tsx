@@ -12,13 +12,14 @@ import {
 import { Button } from "@/components/ui/button"
 import React, { useState, useEffect } from "react"
 import { Badge } from "@/components/ui/badge"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { useSearchParams } from "next/navigation"
 import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
+import { colleges } from "@/lib/colleges"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -38,6 +39,10 @@ type Submission = {
   status: "pending" | "approved" | "rejected";
   createdAt: string;
   points: number;
+};
+
+type Departments = {
+    [key: string]: string[];
 };
 
 const getCurrentAcademicYear = () => {
@@ -71,12 +76,21 @@ export default function ReviewSubmissionsPage() {
     const [submissions, setSubmissions] = useState<Submission[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [selectedSubmission, setSelectedSubmission] = useState<Submission | null>(null);
+    
+    // Filter states
     const [statusFilter, setStatusFilter] = useState("pending");
     const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+    const [searchTerm, setSearchTerm] = useState("");
+    const [collegeFilter, setCollegeFilter] = useState("all");
+    const [departmentFilter, setDepartmentFilter] = useState("all");
+    
+    // Dynamic filter options
+    const [availableColleges, setAvailableColleges] = useState<string[]>([]);
+    const [availableDepartments, setAvailableDepartments] = useState<Departments>({});
+
     const [page, setPage] = useState(1);
     const [limit] = useState(10);
     const [total, setTotal] = useState(0);
-    const [searchTerm, setSearchTerm] = useState("");
 
     const [isSubmitting, setIsSubmitting] = useState(false);
     
@@ -84,6 +98,17 @@ export default function ReviewSubmissionsPage() {
 
     const yearOptions = generateYearOptions();
     const totalPages = Math.ceil(total / limit);
+    
+    useEffect(() => {
+        if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
+          setAvailableDepartments(colleges[collegeFilter as keyof typeof colleges]);
+          setDepartmentFilter("all"); // Reset department when college changes
+        } else {
+          setAvailableDepartments({});
+          setDepartmentFilter("all");
+        }
+    }, [collegeFilter]);
+
 
     const fetchSubmissions = async (status: string, year: string, currentPage: number, search: string) => {
         setIsLoading(true);
@@ -97,14 +122,14 @@ export default function ReviewSubmissionsPage() {
         try {
             const params = new URLSearchParams({
                 status: status,
-                academicYear: year,
                 page: currentPage.toString(),
                 limit: limit.toString(),
                 sort: '-createdAt'
             });
-            if (search) {
-              params.append('search', search);
-            }
+            if (year && year !== 'all') params.append('academicYear', year);
+            if (search) params.append('search', search);
+            if (collegeFilter !== 'all') params.append('college', collegeFilter);
+            if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
             const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?${params.toString()}`, {
                 headers: { "Authorization": `Bearer ${token}` },
@@ -115,6 +140,11 @@ export default function ReviewSubmissionsPage() {
             if (data.success) {
                 setSubmissions(data.items);
                 setTotal(data.total);
+
+                if (data.filters?.colleges) {
+                    setAvailableColleges(data.filters.colleges);
+                }
+
                 if (data.items.length > 0) {
                     if (selectedSubmission) {
                         const updatedSelection = data.items.find((s: Submission) => s._id === selectedSubmission._id);
@@ -142,7 +172,7 @@ export default function ReviewSubmissionsPage() {
             fetchSubmissions(statusFilter, academicYear, page, searchTerm);
         }, 500); // Debounce search to avoid rapid API calls
         return () => clearTimeout(debounceTimer);
-    }, [statusFilter, academicYear, page, searchTerm]);
+    }, [statusFilter, academicYear, page, searchTerm, collegeFilter, departmentFilter]);
 
     const handleUpdateStatus = async (newStatus: "approved" | "rejected") => {
         if (!selectedSubmission) return;
@@ -211,8 +241,8 @@ export default function ReviewSubmissionsPage() {
           </div>
         </div>
 
-        <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative col-span-1 lg:col-span-2">
                 <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">search</span>
                 <Input 
                     placeholder="Search by faculty name or ID..."
@@ -224,14 +254,29 @@ export default function ReviewSubmissionsPage() {
                     className="pl-10"
                 />
             </div>
-            <Select onValueChange={(value) => { setAcademicYear(value); setPage(1); }} value={academicYear}>
-                <SelectTrigger className="w-full sm:w-[240px]">
-                    <SelectValue placeholder="Select Academic Year" />
+             <Select onValueChange={(value) => { setCollegeFilter(value); setPage(1); }} value={collegeFilter}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select College" />
                 </SelectTrigger>
                 <SelectContent>
-                    {yearOptions.map(year => (
-                        <SelectItem key={year} value={year}>{year}</SelectItem>
+                    <SelectItem value="all">All Colleges</SelectItem>
+                    {Object.keys(colleges).map((college) => (
+                      <SelectItem key={college} value={college}>{college}</SelectItem>
                     ))}
+                </SelectContent>
+            </Select>
+            <Select onValueChange={(value) => { setDepartmentFilter(value); setPage(1); }} value={departmentFilter} disabled={!availableDepartments || Object.keys(availableDepartments).length === 0}>
+                <SelectTrigger>
+                    <SelectValue placeholder="Select Department" />
+                </SelectTrigger>
+                <SelectContent>
+                     <SelectItem value="all">All Departments</SelectItem>
+                     {Object.entries(availableDepartments).map(([group, courses]) => (
+                        <SelectGroup key={group}>
+                          <SelectLabel>{group}</SelectLabel>
+                          {courses.map(course => <SelectItem key={course} value={course}>{course}</SelectItem>)}
+                        </SelectGroup>
+                      ))}
                 </SelectContent>
             </Select>
         </div>
