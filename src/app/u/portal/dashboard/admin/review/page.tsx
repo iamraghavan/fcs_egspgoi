@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import {
@@ -66,8 +67,10 @@ type Submission = {
 
 type Aggregates = {
     countsByStatus: { [key: string]: number };
-    totalPoints: number;
-    avgPoints: number;
+    points: {
+        totalPoints: number;
+        avgPoints: number;
+    }
 }
 
 const buildQueryString = (filters: any) => {
@@ -200,7 +203,7 @@ export default function ReviewSubmissionsPage() {
                 throw new Error(data.message || 'Failed to update status');
             }
         } catch (error: any) {
-             showAlert("Update Failed", error.message);
+            showAlert("Update Failed", error.message);
         } finally {
             setIsSubmitting(false);
         }
@@ -239,15 +242,15 @@ export default function ReviewSubmissionsPage() {
             </Card>
             <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Pending</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold">{aggregates?.countsByStatus.pending || 0}</p></CardContent>
+                <CardContent><p className="text-2xl font-bold">{aggregates?.countsByStatus?.pending || 0}</p></CardContent>
             </Card>
             <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Avg. Points</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold">{aggregates?.avgPoints.toFixed(1) || 0}</p></CardContent>
+                <CardContent><p className="text-2xl font-bold">{aggregates?.points?.avgPoints.toFixed(1) || 0}</p></CardContent>
             </Card>
              <Card>
                 <CardHeader className="pb-2"><CardTitle className="text-sm font-medium">Total Points</CardTitle></CardHeader>
-                <CardContent><p className="text-2xl font-bold">{aggregates?.totalPoints || 0}</p></CardContent>
+                <CardContent><p className="text-2xl font-bold">{aggregates?.points?.totalPoints || 0}</p></CardContent>
             </Card>
         </div>
     );
