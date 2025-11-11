@@ -48,6 +48,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgr
 type User = {
   _id: string;
   name: string;
+  department?: string;
 };
 
 type CreditTitle = {
@@ -378,7 +379,7 @@ export default function ManageRemarksPage() {
     facultyList
         .slice()
         .sort((a, b) => a.name.localeCompare(b.name))
-        .map(f => ({ value: f._id, label: f.name })),
+        .map(f => ({ value: f._id, label: `${f.name} (${f.department || 'N/A'})` })),
     [facultyList]
   );
   
@@ -691,5 +692,3 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
-
-    
