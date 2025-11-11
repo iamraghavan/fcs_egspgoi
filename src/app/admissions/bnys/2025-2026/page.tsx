@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import Head from 'next/head';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -175,6 +176,29 @@ export default function AdmissionEnquiryPage() {
   }
 
   return (
+    <>
+    <Head>
+        <script
+            dangerouslySetInnerHTML={{
+              __html: `
+                !function(f,b,e,v,n,t,s)
+                {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+                n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+                if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+                n.queue=[];t=b.createElement(e);t.async=!0;
+                t.src=v;s=b.getElementsByTagName(e)[0];
+                s.parentNode.insertBefore(t,s)}(window,document,'script',
+                'https://connect.facebook.net/en_US/fbevents.js');
+                fbq('init', '660713297027148'); 
+                fbq('track', 'PageView');
+              `,
+            }}
+        />
+        <noscript>
+            <img height="1" width="1" style={{display: 'none'}}
+            src="https://www.facebook.com/tr?id=660713297027148&ev=PageView&noscript=1"/>
+        </noscript>
+    </Head>
     <ThemeProvider theme={muiTheme}>
     <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <Card className="w-full max-w-2xl">
@@ -254,5 +278,6 @@ export default function AdmissionEnquiryPage() {
       </Card>
     </div>
     </ThemeProvider>
+    </>
   );
 }
