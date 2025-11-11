@@ -50,9 +50,15 @@ export function LoginScreen() {
     setIsClient(true);
     const isAdmin = searchParams.has('admin');
     const urlEmail = searchParams.get('email');
-    if (urlEmail) {
-      setEmail(urlEmail);
+    
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+        setEmail(savedEmail);
+        setRememberMe(true);
+    } else if (urlEmail) {
+        setEmail(urlEmail);
     }
+    
     setIsLogin(!isAdmin);
 
      if (formRef.current) {
@@ -68,6 +74,12 @@ export function LoginScreen() {
     if (!token || !role || !id) {
       showAlert("Login Error", "Incomplete login data received from server.");
       return;
+    }
+
+    if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+    } else {
+        localStorage.removeItem("rememberedEmail");
     }
 
     localStorage.setItem("token", token);
