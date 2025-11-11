@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/apply/bnys',
+        source: '/bnys-1',
         destination: '/admissions/bnys/2025-2026',
         permanent: true,
       },
