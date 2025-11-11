@@ -31,6 +31,12 @@ type Submission = {
     department: string;
     college: string;
     profileImage?: string;
+  } | string;
+  facultySnapshot?: {
+    name: string;
+    department: string;
+    college: string;
+    profileImage?: string;
   };
   title: string;
   categories: { _id: string; title: string; }[];
@@ -139,9 +145,9 @@ export default function ReviewSubmissionsPage() {
             const data = await response.json();
             if (data.success) {
                 setSubmissions(data.items);
-                setTotal(data.total);
+                setTotal(data.meta.total);
 
-                if (data.filters?.colleges) {
+                if (data.filters?.colleges) { // Assuming filters are still sent like this
                     setAvailableColleges(data.filters.colleges);
                 }
 
@@ -219,6 +225,16 @@ export default function ReviewSubmissionsPage() {
       if (userConfirmation) {
         window.open(selectedSubmission.proofUrl, '_blank', 'noopener,noreferrer');
       }
+    };
+
+    const getFacultyDetails = (submission: Submission) => {
+        if (submission.facultySnapshot) {
+            return submission.facultySnapshot;
+        }
+        if (typeof submission.faculty === 'object' && submission.faculty !== null) {
+            return submission.faculty;
+        }
+        return { name: 'N/A', department: 'N/A', college: 'N/A' };
     };
 
 
@@ -299,46 +315,49 @@ export default function ReviewSubmissionsPage() {
                         <TableCell colSpan={5} className="text-center">Loading submissions...</TableCell>
                     </TableRow>
                 ) : submissions.length > 0 ? (
-                    submissions.map((submission) => (
-                    <TableRow
-                        key={submission._id}
-                        className={`cursor-pointer ${selectedSubmission?._id === submission._id ? "bg-primary/10" : ""}`}
-                        onClick={() => setSelectedSubmission(submission)}
-                    >
-                        <TableCell className="font-medium text-foreground">
-                        {submission.faculty?.name || "N/A"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {submission.faculty?.college || "N/A"}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {new Date(submission.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                        <Badge
-                            variant={
-                            submission.status === "approved"
-                                ? "default"
-                                : submission.status === "pending"
-                                ? "secondary"
-                                : "destructive"
-                            }
-                            className={
-                            submission.status === "approved" ? "bg-green-100 text-green-800" :
-                            submission.status === "pending" ? "bg-yellow-100 text-yellow-800" :
-                            "bg-red-100 text-red-800"
-                            }
+                    submissions.map((submission) => {
+                      const facultyDetails = getFacultyDetails(submission);
+                      return (
+                        <TableRow
+                            key={submission._id}
+                            className={`cursor-pointer ${selectedSubmission?._id === submission._id ? "bg-primary/10" : ""}`}
+                            onClick={() => setSelectedSubmission(submission)}
                         >
-                            {submission.status}
-                        </Badge>
-                        </TableCell>
-                        <TableCell className="text-right">
-                        <span className="material-symbols-outlined text-muted-foreground">
-                            chevron_right
-                        </span>
-                        </TableCell>
-                    </TableRow>
-                    ))
+                            <TableCell className="font-medium text-foreground">
+                            {facultyDetails.name}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {facultyDetails.college}
+                            </TableCell>
+                            <TableCell className="text-muted-foreground">
+                              {new Date(submission.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                            <Badge
+                                variant={
+                                submission.status === "approved"
+                                    ? "default"
+                                    : submission.status === "pending"
+                                    ? "secondary"
+                                    : "destructive"
+                                }
+                                className={
+                                submission.status === "approved" ? "bg-green-100 text-green-800" :
+                                submission.status === "pending" ? "bg-yellow-100 text-yellow-800" :
+                                "bg-red-100 text-red-800"
+                                }
+                            >
+                                {submission.status}
+                            </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                            <span className="material-symbols-outlined text-muted-foreground">
+                                chevron_right
+                            </span>
+                            </TableCell>
+                        </TableRow>
+                      )
+                    })
                 ) : (
                     <TableRow key="no-submissions">
                         <TableCell colSpan={5} className="text-center">No submissions found for this filter.</TableCell>
@@ -372,13 +391,13 @@ export default function ReviewSubmissionsPage() {
               <CardContent>
                 <div className="flex items-center gap-4">
                   <Avatar>
-                    <AvatarImage src={selectedSubmission.faculty?.profileImage} />
-                    <AvatarFallback>{selectedSubmission.faculty?.name?.charAt(0) ?? '?'}</AvatarFallback>
+                    <AvatarImage src={getFacultyDetails(selectedSubmission)?.profileImage} />
+                    <AvatarFallback>{getFacultyDetails(selectedSubmission)?.name?.charAt(0) ?? '?'}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold">{selectedSubmission.faculty?.name || 'N/A'}</p>
-                    <p className="text-sm text-muted-foreground">{selectedSubmission.faculty?.department || 'N/A'}</p>
-                    <p className="text-xs text-muted-foreground">{selectedSubmission.faculty?.college || 'N/A'}</p>
+                    <p className="font-semibold">{getFacultyDetails(selectedSubmission)?.name || 'N/A'}</p>
+                    <p className="text-sm text-muted-foreground">{getFacultyDetails(selectedSubmission)?.department || 'N/A'}</p>
+                    <p className="text-xs text-muted-foreground">{getFacultyDetails(selectedSubmission)?.college || 'N/A'}</p>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground mt-4">
