@@ -45,6 +45,7 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { colleges } from "@/lib/colleges";
+import { cn } from "@/lib/utils";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -70,7 +71,7 @@ type IssuedRemark = {
     notes?: string;
     points: number;
     proofUrl?: string;
-    status: 'pending' | 'approved' | 'rejected' | 'appealed';
+    status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
     type: 'negative';
     updatedAt: string;
     creditTitle?: string;
@@ -235,6 +236,7 @@ export default function IssuedHistoryPage() {
             className = 'bg-green-100 text-green-800';
             break;
         case 'rejected':
+        case 'deleted':
             variant = 'destructive';
             className = 'bg-red-100 text-red-800';
             break;
@@ -289,6 +291,7 @@ export default function IssuedHistoryPage() {
                       <SelectItem value="approved">Approved</SelectItem>
                       <SelectItem value="rejected">Rejected</SelectItem>
                       <SelectItem value="appealed">Appealed</SelectItem>
+                      <SelectItem value="deleted">Deleted</SelectItem>
                   </SelectContent>
                 </Select>
                  <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
@@ -352,7 +355,7 @@ export default function IssuedHistoryPage() {
                    <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => (
-                  <TableRow key={remark._id}>
+                  <TableRow key={remark._id} className={cn(remark.status === 'deleted' && 'bg-red-50/50 text-muted-foreground')}>
                     <TableCell>
                         <div className="font-medium text-foreground">{remark.facultySnapshot.name}</div>
                         <div className="text-sm text-muted-foreground">{remark.facultySnapshot.facultyID}</div>
@@ -413,7 +416,7 @@ export default function IssuedHistoryPage() {
                         </Dialog>
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={remark.status === 'deleted'}>
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
                             </AlertDialogTrigger>
@@ -458,3 +461,5 @@ export default function IssuedHistoryPage() {
     </div>
   )
 }
+
+    
