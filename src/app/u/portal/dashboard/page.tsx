@@ -277,7 +277,7 @@ export default function FacultyDashboard() {
                 <Minus className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-red-600">-{userProfileStats?.stats?.currentYearStats?.negativePoints ?? 0}</div>
+                <div className="text-2xl font-bold text-red-600">{userProfileStats?.stats?.currentYearStats?.negativePoints ?? 0}</div>
                  <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
             </CardContent>
         </Card>
@@ -364,7 +364,7 @@ export default function FacultyDashboard() {
                     <TableCell className="text-right font-semibold">
                        {shouldShowPoints(activity) ? (
                         <span className={activity.type === 'positive' ? 'text-green-600' : 'text-red-600'}>
-                          {activity.type === 'positive' ? `+${activity.points}` : `-${activity.points}`}
+                          {activity.type === 'positive' ? `+${activity.points}` : `${activity.points}`}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">-</span>
@@ -383,3 +383,5 @@ export default function FacultyDashboard() {
     </div>
   );
 }
+
+    
