@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { ArrowDown, ArrowUp, Minus, Plus } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
@@ -49,10 +49,16 @@ type UserProfileStats = {
         totalNegativeCount: number;
         currentYearStats: {
             academicYear: string;
-            totalPositive: number;
-            totalNegative: number;
+            positivePoints: number;
+            negativePoints: number;
             netForYear: number;
         } | null;
+        series: {
+            period: string;
+            positivePoints: number;
+            negativePoints: number;
+            net: number;
+        }[];
     };
 };
 
@@ -134,6 +140,17 @@ export default function FacultyDashboard() {
         const statsData = await statsResponse.json();
         if (statsData.success) {
           setUserProfileStats(statsData.data);
+          
+          // Process series data for charts
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+          const chartData = (statsData.data.stats.series || []).map((s: any) => ({
+              month: monthNames[new Date(s.period).getMonth()],
+              netCredits: s.net,
+              positive: s.positivePoints,
+              negative: s.negativePoints,
+          }));
+          setCreditHistory(chartData);
+
         } else {
            throw new Error(statsData.message || "Failed to fetch user stats.");
         }
@@ -144,48 +161,6 @@ export default function FacultyDashboard() {
         } else {
             throw new Error(activitiesData.message || "Failed to fetch recent activities.");
         }
-        
-        // Process credit history from full activities list for chart
-        const allActivitiesData = await (await fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}?limit=100`, { headers: { "Authorization": `Bearer ${token}` }})).json();
-        if(allActivitiesData.success) {
-            const monthlyCredits: { [key: string]: { positive: number, negative: number } } = {};
-            const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-
-            allActivitiesData.items.forEach((item: CreditActivity) => {
-                if(shouldShowPoints(item)) {
-                    const date = new Date(item.createdAt);
-                    const monthKey = `${monthNames[date.getMonth()]} ${date.getFullYear()}`;
-                    if(!monthlyCredits[monthKey]) {
-                        monthlyCredits[monthKey] = { positive: 0, negative: 0 };
-                    }
-                    if (item.type === 'positive') {
-                       monthlyCredits[monthKey].positive += item.points;
-                    } else {
-                       monthlyCredits[monthKey].negative += item.points;
-                    }
-                }
-            });
-
-            const last6Months = [];
-            let currentDate = new Date();
-            for (let i = 0; i < 6; i++) {
-                const monthKey = `${monthNames[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-                const shortMonthKey = monthNames[currentDate.getMonth()];
-                const data = monthlyCredits[monthKey] || { positive: 0, negative: 0 };
-                last6Months.unshift({ 
-                    month: shortMonthKey,
-                    netCredits: data.positive - data.negative,
-                    positive: data.positive,
-                    negative: -data.negative, // Show as positive value for chart
-                });
-                currentDate.setMonth(currentDate.getMonth() - 1);
-            }
-            setCreditHistory(last6Months);
-
-        } else {
-            throw new Error(allActivitiesData.message || "Failed to fetch credit history.");
-        }
-
 
       } catch (error: any) {
         showAlert(
@@ -292,7 +267,7 @@ export default function FacultyDashboard() {
                 <Plus className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-green-600">+{userProfileStats?.stats?.currentYearStats?.totalPositive ?? 0}</div>
+                <div className="text-2xl font-bold text-green-600">+{userProfileStats?.stats?.currentYearStats?.positivePoints ?? 0}</div>
                  <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
             </CardContent>
         </Card>
@@ -302,7 +277,7 @@ export default function FacultyDashboard() {
                 <Minus className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
-                <div className="text-2xl font-bold text-red-600">-{userProfileStats?.stats?.currentYearStats?.totalNegative ?? 0}</div>
+                <div className="text-2xl font-bold text-red-600">-{userProfileStats?.stats?.currentYearStats?.negativePoints ?? 0}</div>
                  <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
             </CardContent>
         </Card>
@@ -310,7 +285,7 @@ export default function FacultyDashboard() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="dashboard-card">
             <CardHeader>
-                <CardTitle>Net Credit Change (Last 6 Months)</CardTitle>
+                <CardTitle>Net Credit Change</CardTitle>
                 <CardDescription>
                 Your net credit balance changes over time.
                 </CardDescription>
@@ -408,5 +383,3 @@ export default function FacultyDashboard() {
     </div>
   );
 }
-
-    
