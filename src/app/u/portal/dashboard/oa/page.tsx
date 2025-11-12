@@ -15,9 +15,11 @@ import { Button } from "@/components/ui/button"
 import { useToast } from "@/hooks/use-toast";
 import { FileUpload } from "@/components/file-upload";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, History } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import { Combobox } from "@/components/ui/combobox";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -61,6 +63,7 @@ const generateYearOptions = () => {
 export default function OADashboardPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
+  const searchParams = useSearchParams();
 
   // Form state
   const [facultyId, setFacultyId] = useState("");
@@ -76,6 +79,7 @@ export default function OADashboardPage() {
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+  const uid = searchParams.get('uid');
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
@@ -235,17 +239,23 @@ export default function OADashboardPage() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            OA Dashboard
+            Issue Remark
           </h1>
           <p className="mt-1 text-muted-foreground">
             Issue negative credit adjustments for faculty members.
           </p>
         </div>
+         <Button variant="outline" asChild>
+            <Link href={`/u/portal/dashboard/oa/history?uid=${uid}`}>
+                <History className="mr-2 h-4 w-4" />
+                View Issued History
+            </Link>
+        </Button>
       </header>
         
       <Card>
         <CardHeader>
-            <CardTitle>Issue New Remark</CardTitle>
+            <CardTitle>New Negative Remark Form</CardTitle>
             <CardDescription>Fill out the details below to issue a negative credit to a faculty member.</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
