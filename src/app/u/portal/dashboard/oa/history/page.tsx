@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -28,6 +29,7 @@ import { useAlert } from "@/context/alert-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -134,6 +136,31 @@ export default function IssuedHistoryPage() {
     return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
+  const getStatusBadge = (status: IssuedRemark['status']) => {
+    let variant: "default" | "secondary" | "destructive" = "secondary";
+    let className = "";
+    switch (status) {
+        case 'approved': 
+            variant = 'default';
+            className = 'bg-green-100 text-green-800';
+            break;
+        case 'rejected':
+            variant = 'destructive';
+            className = 'bg-red-100 text-red-800';
+            break;
+        case 'appealed':
+            variant = 'default';
+            className = 'bg-blue-100 text-blue-800';
+            break;
+        case 'pending':
+        default:
+            variant = 'secondary';
+            className = 'bg-yellow-100 text-yellow-800';
+            break;
+    }
+    return <Badge variant={variant} className={className}>{status}</Badge>;
+  };
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -171,6 +198,7 @@ export default function IssuedHistoryPage() {
                 <TableRow>
                   <TableHead>Faculty</TableHead>
                   <TableHead>Remark Title</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Points</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
@@ -178,7 +206,7 @@ export default function IssuedHistoryPage() {
               </TableHeader>
               <TableBody>
                 {isLoadingRemarks ? (
-                   <TableRow><TableCell colSpan={5} className="text-center h-24">Loading remarks...</TableCell></TableRow>
+                   <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => (
                   <TableRow key={remark._id}>
@@ -188,6 +216,7 @@ export default function IssuedHistoryPage() {
                         <div className="text-xs text-muted-foreground">{remark.facultySnapshot.department}</div>
                     </TableCell>
                     <TableCell>{remark.title}</TableCell>
+                    <TableCell>{getStatusBadge(remark.status)}</TableCell>
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
@@ -242,7 +271,7 @@ export default function IssuedHistoryPage() {
                   </TableRow>
                 ))
                 ) : (
-                    <TableRow><TableCell colSpan={5} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -265,3 +294,5 @@ export default function IssuedHistoryPage() {
     </div>
   )
 }
+
+    
