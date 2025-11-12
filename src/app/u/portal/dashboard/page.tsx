@@ -20,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, FileText, TrendingUp, TrendingDown, Star } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
@@ -45,6 +45,7 @@ type UserProfileStats = {
     facultyID: string;
     currentCredit: number;
     stats: {
+        totalCreditsCount: number;
         totalPositiveCount: number;
         totalNegativeCount: number;
         currentYearStats: {
@@ -141,7 +142,6 @@ export default function FacultyDashboard() {
         if (statsData.success) {
           setUserProfileStats(statsData.data);
           
-          // Process series data for charts
           const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
           const chartData = (statsData.data.stats.series || []).map((s: any) => ({
               month: monthNames[new Date(s.period).getMonth()],
@@ -180,7 +180,7 @@ export default function FacultyDashboard() {
         gsap.fromTo(
             ".dashboard-card",
             { opacity: 0, y: 20 },
-            { opacity: 1, y: 0, stagger: 0.15, duration: 0.6, ease: "power3.out" }
+            { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, ease: "power3.out" }
         );
     }
   }, [loading]);
@@ -193,38 +193,18 @@ export default function FacultyDashboard() {
                 <Skeleton className="h-10 w-48" />
             </div>
              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                <Card className="dashboard-card"><CardHeader><Skeleton className="h-5 w-24" /></CardHeader><CardContent><Skeleton className="h-12 w-20" /></CardContent></Card>
-                <Card className="dashboard-card"><CardHeader><Skeleton className="h-5 w-32" /></CardHeader><CardContent><Skeleton className="h-12 w-16" /></CardContent></Card>
-                <Card className="dashboard-card"><CardHeader><Skeleton className="h-5 w-32" /></CardHeader><CardContent><Skeleton className="h-12 w-16" /></CardContent></Card>
+                <Skeleton className="h-24 dashboard-card" />
+                <Skeleton className="h-24 dashboard-card" />
+                <Skeleton className="h-24 dashboard-card" />
+                <Skeleton className="h-24 dashboard-card" />
+                <Skeleton className="h-24 dashboard-card" />
+                <Skeleton className="h-24 dashboard-card" />
              </div>
              <div className="grid gap-6 md:grid-cols-2">
-                <Card className="dashboard-card">
-                      <CardHeader>
-                          <Skeleton className="h-5 w-48" />
-                          <Skeleton className="h-4 w-64" />
-                      </CardHeader>
-                      <CardContent className="pl-2">
-                          <Skeleton className="h-[200px] w-full" />
-                      </CardContent>
-                  </Card>
-                   <Card className="dashboard-card">
-                      <CardHeader>
-                          <Skeleton className="h-5 w-48" />
-                          <Skeleton className="h-4 w-64" />
-                      </CardHeader>
-                      <CardContent className="pl-2">
-                          <Skeleton className="h-[200px] w-full" />
-                      </CardContent>
-                  </Card>
+                <Card className="dashboard-card"><CardHeader><Skeleton className="h-5 w-48" /><Skeleton className="h-4 w-64" /></CardHeader><CardContent><Skeleton className="h-[200px] w-full" /></CardContent></Card>
+                <Card className="dashboard-card"><CardHeader><Skeleton className="h-5 w-48" /><Skeleton className="h-4 w-64" /></CardHeader><CardContent><Skeleton className="h-[200px] w-full" /></CardContent></Card>
              </div>
-             <Card className="md:col-span-2 lg:col-span-3 dashboard-card">
-                 <CardHeader><Skeleton className="h-5 w-32" /></CardHeader>
-                 <CardContent className="space-y-2">
-                     <Skeleton className="h-10 w-full" />
-                     <Skeleton className="h-10 w-full" />
-                     <Skeleton className="h-10 w-full" />
-                 </CardContent>
-             </Card>
+             <Card className="md:col-span-2 lg:col-span-3 dashboard-card"><CardHeader><Skeleton className="h-5 w-32" /></CardHeader><CardContent className="space-y-2"><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /><Skeleton className="h-10 w-full" /></CardContent></Card>
         </div>
     )
   }
@@ -246,40 +226,72 @@ export default function FacultyDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="lg:col-span-1 dashboard-card">
-          <CardHeader>
-            <CardTitle className="text-lg font-medium text-muted-foreground">
-              Total Credits
-            </CardTitle>
+        <Card className="dashboard-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net Credit Balance</CardTitle>
+            <Star className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-5xl font-bold text-primary">
-              {userProfileStats?.currentCredit ?? 0}
-            </div>
-             <p className="text-xs text-muted-foreground mt-2">
-              Overall credit balance
-            </p>
+            <div className="text-2xl font-bold text-primary">{userProfileStats?.currentCredit ?? 0}</div>
+            <p className="text-xs text-muted-foreground">Overall credit balance</p>
+          </CardContent>
+        </Card>
+        <Card className="dashboard-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Net For Year ({userProfileStats?.stats.currentYearStats?.academicYear})</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold ${userProfileStats?.stats?.currentYearStats?.netForYear ?? 0 >= 0 ? 'text-blue-600' : 'text-orange-600'}`}>{userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</div>
+            <p className="text-xs text-muted-foreground">Net change for current year</p>
           </CardContent>
         </Card>
         <Card className="dashboard-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Positive Credits (This Year)</CardTitle>
-                <Plus className="h-4 w-4 text-green-500" />
+                <CardTitle className="text-sm font-medium">Positive Points (Year)</CardTitle>
+                <TrendingUp className="h-4 w-4 text-green-500" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold text-green-600">+{userProfileStats?.stats?.currentYearStats?.positivePoints ?? 0}</div>
-                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
+                 <p className="text-xs text-muted-foreground">{userProfileStats?.stats?.currentYearStats?.totalPositive ?? 0} activities this year</p>
             </CardContent>
         </Card>
         <Card className="dashboard-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Negative Credits (This Year)</CardTitle>
-                <Minus className="h-4 w-4 text-red-500" />
+                <CardTitle className="text-sm font-medium">Negative Points (Year)</CardTitle>
+                <TrendingDown className="h-4 w-4 text-red-500" />
             </CardHeader>
             <CardContent>
                 <div className="text-2xl font-bold text-red-600">{userProfileStats?.stats?.currentYearStats?.negativePoints ?? 0}</div>
-                 <p className="text-xs text-muted-foreground">Net for year: {userProfileStats?.stats?.currentYearStats?.netForYear ?? 0}</p>
+                 <p className="text-xs text-muted-foreground">{userProfileStats?.stats?.currentYearStats?.totalNegative ?? 0} remarks this year</p>
             </CardContent>
+        </Card>
+        <Card className="dashboard-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Activities</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{userProfileStats?.stats.totalCreditsCount ?? 0}</div>
+            <p className="text-xs text-muted-foreground">Lifetime submissions & remarks</p>
+          </CardContent>
+        </Card>
+        <Card className="dashboard-card">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Positive vs Negative</CardTitle>
+             <div className="flex gap-2">
+                <TrendingUp className="h-4 w-4 text-green-500" />
+                <TrendingDown className="h-4 w-4 text-red-500" />
+             </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+                <span className="text-green-600">{userProfileStats?.stats.totalPositiveCount ?? 0}</span>
+                <span className="text-muted-foreground mx-2">/</span>
+                <span className="text-red-600">{userProfileStats?.stats.totalNegativeCount ?? 0}</span>
+            </div>
+            <p className="text-xs text-muted-foreground">Total positive vs. negative activities</p>
+          </CardContent>
         </Card>
       </div>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
