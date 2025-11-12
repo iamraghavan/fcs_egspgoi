@@ -21,10 +21,21 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Eye, Calendar as CalendarIcon } from "lucide-react";
+import { Search, Eye, Calendar as CalendarIcon, Trash2 } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +71,6 @@ type IssuedRemark = {
     points: number;
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed';
-    title: string;
     type: 'negative';
     updatedAt: string;
     creditTitle?: string;
@@ -96,6 +106,7 @@ const generateYearOptions = () => {
 
 export default function IssuedHistoryPage() {
   const { showAlert } = useAlert();
+  const { toast } = useToast();
   const searchParams = useSearchParams();
 
   // Data for table
@@ -185,6 +196,30 @@ export default function IssuedHistoryPage() {
     }
     setDepartmentFilter("all"); 
   }, [collegeFilter]);
+
+  const handleDelete = async (id: string) => {
+    if (!adminToken) {
+        showAlert("Authentication Error", "Admin token not found.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/admin/oa/credits/issued/${id}?soft=true`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${adminToken}` },
+        });
+
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to delete remark.");
+        }
+
+        toast({ title: "Remark Deleted", description: "The remark has been successfully (soft) deleted." });
+        fetchRemarks(page);
+    } catch (error: any) {
+        showAlert("Delete Failed", error.message);
+    }
+  };
   
   const getProofUrl = (url: string) => {
     if (!url) return '#';
@@ -328,6 +363,7 @@ export default function IssuedHistoryPage() {
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
                         <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={(isOpen) => {
                             if (isOpen) {
                                 setSelectedRemark(remark);
@@ -375,6 +411,26 @@ export default function IssuedHistoryPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+                         <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                                <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    This action will mark the remark as deleted. It can be recovered by an administrator, but will be hidden from most views.
+                                </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                            </AlertDialogContent>
+                        </AlertDialog>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -402,5 +458,3 @@ export default function IssuedHistoryPage() {
     </div>
   )
 }
-
-    
