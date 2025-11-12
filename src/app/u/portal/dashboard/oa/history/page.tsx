@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -18,18 +17,23 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogFooter,
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Eye } from "lucide-react";
+import { Search, Eye, Calendar as CalendarIcon } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { DateRange } from "react-day-picker";
+import { format } from "date-fns";
+import { colleges } from "@/lib/colleges";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -62,17 +66,53 @@ type IssuedRemark = {
     creditTitle?: string;
 };
 
+type Departments = {
+    [key: string]: string[];
+};
+
+const getCurrentAcademicYear = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    if (currentMonth >= 5) { // June or later
+      return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
+    }
+    return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+};
+
+const generateYearOptions = () => {
+    const currentYearString = getCurrentAcademicYear();
+    const [startCurrentYear] = currentYearString.split('-').map(Number);
+    
+    const years = [];
+    for (let i = 0; i < 5; i++) {
+        const startYear = startCurrentYear - i;
+        const endYear = (startYear + 1).toString().slice(-2);
+        years.push(`${startYear}-${endYear}`);
+    }
+    return years;
+};
+
+
 export default function IssuedHistoryPage() {
   const { showAlert } = useAlert();
   const searchParams = useSearchParams();
 
-  // Data for table and filters
+  // Data for table
   const [remarks, setRemarks] = useState<IssuedRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+
+  // Filters
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [academicYearFilter, setAcademicYearFilter] = useState("all");
+  const [collegeFilter, setCollegeFilter] = useState("all");
+  const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+  const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
   // Details view state
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
@@ -97,6 +137,12 @@ export default function IssuedHistoryPage() {
           });
 
           if (searchTerm) params.append('search', searchTerm);
+          if (statusFilter !== 'all') params.append('status', statusFilter);
+          if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
+          if (collegeFilter !== 'all') params.append('college', collegeFilter);
+          if (departmentFilter !== 'all') params.append('department', departmentFilter);
+          if (dateRange?.from) params.append('fromDate', format(dateRange.from, 'yyyy-MM-dd'));
+          if (dateRange?.to) params.append('toDate', format(dateRange.to, 'yyyy-MM-dd'));
 
           const response = await fetch(`${API_BASE_URL}/api/v1/admin/oa/credits/issued?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
@@ -125,11 +171,20 @@ export default function IssuedHistoryPage() {
         }
     }, 500);
     return () => clearTimeout(timer);
-  }, [page, adminToken, searchTerm]);
+  }, [page, adminToken, searchTerm, statusFilter, academicYearFilter, collegeFilter, departmentFilter, dateRange]);
   
   useEffect(() => {
     setPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, statusFilter, academicYearFilter, collegeFilter, departmentFilter, dateRange]);
+
+  useEffect(() => {
+    if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
+      setFilteredDepartments(colleges[collegeFilter as keyof typeof colleges]);
+    } else {
+      setFilteredDepartments({});
+    }
+    setDepartmentFilter("all"); 
+  }, [collegeFilter]);
   
   const getProofUrl = (url: string) => {
     if (!url) return '#';
@@ -181,14 +236,67 @@ export default function IssuedHistoryPage() {
         
       <Card>
         <CardHeader>
-            <div className="relative lg:col-span-1">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                    placeholder="Search by title, faculty name, notes..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="relative col-span-1 lg:col-span-3">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                        placeholder="Search by title, faculty name, notes..." 
+                        className="pl-10"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                 <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger><SelectValue placeholder="Filter by status..." /></SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Statuses</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="approved">Approved</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="appealed">Appealed</SelectItem>
+                  </SelectContent>
+                </Select>
+                 <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
+                    <SelectTrigger><SelectValue placeholder="Filter by year..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Years</SelectItem>
+                        {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
+                    </SelectContent>
+                </Select>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant={"outline"} className="w-full justify-start text-left font-normal">
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {dateRange?.from ? (
+                          dateRange.to ? ( <> {format(dateRange.from, "LLL dd, y")} - {format(dateRange.to, "LLL dd, y")} </> ) : ( format(dateRange.from, "LLL dd, y") )
+                        ) : ( <span>Pick a date range</span> )}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
+                    </PopoverContent>
+                  </Popover>
+
+                <Select value={collegeFilter} onValueChange={setCollegeFilter}>
+                  <SelectTrigger><SelectValue placeholder="Filter by college..." /></SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="all">All Colleges</SelectItem>
+                      {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
+                  </SelectContent>
+                </Select>
+                <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={!filteredDepartments || Object.keys(filteredDepartments).length === 0}>
+                    <SelectTrigger><SelectValue placeholder="Filter by department..." /></SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Departments</SelectItem>
+                        {Object.entries(filteredDepartments).map(([group, courses]) => (
+                            <SelectGroup key={group}>
+                                <SelectLabel>{group}</SelectLabel>
+                                {courses.map(course => (<SelectItem key={course} value={course}>{course}</SelectItem>))}
+                            </SelectGroup>
+                        ))}
+                    </SelectContent>
+                </Select>
+                
             </div>
         </CardHeader>
         <CardContent>
