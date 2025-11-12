@@ -182,7 +182,11 @@ export default function IssuedHistoryPage() {
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => (
                   <TableRow key={remark._id}>
-                    <TableCell className="font-medium text-foreground">{remark.facultySnapshot.name}</TableCell>
+                    <TableCell>
+                        <div className="font-medium text-foreground">{remark.facultySnapshot.name}</div>
+                        <div className="text-sm text-muted-foreground">{remark.facultySnapshot.facultyID}</div>
+                        <div className="text-xs text-muted-foreground">{remark.facultySnapshot.department}</div>
+                    </TableCell>
                     <TableCell>{remark.title}</TableCell>
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
