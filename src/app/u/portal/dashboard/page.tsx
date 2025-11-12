@@ -53,6 +53,8 @@ type UserProfileStats = {
             positivePoints: number;
             negativePoints: number;
             netForYear: number;
+            totalPositive: number;
+            totalNegative: number;
         } | null;
         series: {
             period: string;
@@ -314,7 +316,13 @@ export default function FacultyDashboard() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
-                        <Tooltip />
+                        <Tooltip
+                            contentStyle={{
+                                background: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: 'var(--radius)',
+                            }}
+                        />
                         <Area type="monotone" dataKey="netCredits" name="Net Credits" stroke="hsl(var(--primary))" strokeWidth={2} fill="url(#chart-gradient)" />
                     </AreaChart>
                 </ResponsiveContainer>
@@ -331,7 +339,13 @@ export default function FacultyDashboard() {
                         <CartesianGrid strokeDasharray="3 3" vertical={false} />
                         <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                         <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                        <Tooltip />
+                        <Tooltip
+                             contentStyle={{
+                                background: 'hsl(var(--background))',
+                                border: '1px solid hsl(var(--border))',
+                                borderRadius: 'var(--radius)',
+                            }}
+                        />
                         <Legend />
                         <Bar dataKey="positive" fill="#16a34a" name="Positive" radius={[4, 4, 0, 0]} />
                         <Bar dataKey="negative" fill="#dc2626" name="Negative" radius={[4, 4, 0, 0]} />
@@ -396,4 +410,3 @@ export default function FacultyDashboard() {
   );
 }
 
-    
