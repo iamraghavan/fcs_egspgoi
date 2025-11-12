@@ -1,3 +1,4 @@
+
 export const colleges = {
   "E.G.S.Pillay Arts and Science College": {
     "Undergraduate": [
@@ -38,6 +39,9 @@ export const colleges = {
       "M.Sc – Bio Chemistry",
       "M.Sc – Bio Technology",
       "M.Sc – Food Science & Nutrition"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   },
   "E.G.S.Pillay Polytechnic College": {
@@ -47,17 +51,26 @@ export const colleges = {
       "Diploma in Electrical and Electronics Engineering",
       "Diploma in Electronics and Communication Engineering",
       "Diploma in Computer Engineering"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   },
   "E.G.S. Pillay College and School of Nursing": {
     "Courses": [
       "B.Sc – Nursing",
       "DGNM – (Diploma in General Nursing & Midwifery)"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   },
   "E.G.S.Pillay College of Education": {
     "Courses": [
       "All Subjects"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   },
   "E.G.S. Pillay College of Pharmacy": {
@@ -66,6 +79,9 @@ export const colleges = {
       "B.Pharm",
       "M.Pharm",
       "Pharm.D"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   },
   "EGS Pillay Engineering College": {
@@ -88,6 +104,9 @@ export const colleges = {
       "M.E (Environmental Engineering)",
       "MCA – Master of Computer Applications",
       "MBA – Master of Business Administration"
+    ],
+    "Common": [
+      "Training and Placement"
     ]
   }
 };
