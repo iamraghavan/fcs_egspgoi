@@ -171,7 +171,12 @@ export default function BulkAddUsersPage() {
                         </div>
                     </div>
                     <div className="pl-14 pt-6 space-y-4">
-                        <FileUpload onFileSelect={handleFileSelect} disabled={isLoading} />
+                        <FileUpload 
+                            onFileSelect={handleFileSelect} 
+                            disabled={isLoading}
+                            accept=".xlsx, .xls, .csv"
+                            description="Excel or CSV files only"
+                        />
                         <div className="flex items-center space-x-2">
                             <Checkbox id="send-emails" checked={sendEmails} onCheckedChange={(checked) => setSendEmails(checked as boolean)} disabled={isLoading} />
                             <Label htmlFor="send-emails" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
