@@ -292,7 +292,7 @@ export default function NegativeRemarksPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-                <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal</label>
+                <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal <span className="text-red-500">*</span></label>
                 <Textarea 
                     id="reason" 
                     placeholder="Explain why you are appealing this remark..."
@@ -303,7 +303,7 @@ export default function NegativeRemarksPage() {
                 />
             </div>
             <div className="space-y-2">
-                <label htmlFor="proof" className="text-sm font-medium">Proof Document</label>
+                <label htmlFor="proof" className="text-sm font-medium">Proof Document <span className="text-red-500">*</span></label>
                 <FileUpload onFileSelect={setAppealProof} />
                 <div className="flex items-start gap-2 text-sm text-destructive p-3 bg-destructive/10 rounded-md" role="alert">
                     <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
