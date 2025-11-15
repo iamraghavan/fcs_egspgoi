@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, FileText, MessageSquareWarning, ShieldCheck, User, Lock, Fingerprint, LayoutDashboard } from 'lucide-react';
 import Link from 'next/link';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { cn } from '@/lib/utils';
 
 const sections = [
   { id: 'dashboard', title: 'Dashboard Concepts', icon: LayoutDashboard },
@@ -17,16 +18,42 @@ const sections = [
 ];
 
 export default function HelpPage() {
+  const [activeSection, setActiveSection] = useState('dashboard');
   const sectionRefs = useRef<Record<string, HTMLElement | null>>({});
 
   useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setActiveSection(entry.target.id);
+          }
+        });
+      },
+      { rootMargin: '-20% 0px -80% 0px' }
+    );
+
     sections.forEach(section => {
-      sectionRefs.current[section.id] = document.getElementById(section.id);
+      const el = document.getElementById(section.id);
+      if (el) {
+        sectionRefs.current[section.id] = el;
+        observer.observe(el);
+      }
     });
+
+    return () => {
+      Object.values(sectionRefs.current).forEach(el => {
+        if (el) observer.unobserve(el);
+      });
+    };
   }, []);
 
   const scrollToSection = (id: string) => {
-    sectionRefs.current[id]?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    sectionRefs.current[id]?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+    setActiveSection(id);
   };
   
   return (
@@ -40,40 +67,42 @@ export default function HelpPage() {
             </p>
         </header>
 
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-        <aside className="md:col-span-1 md:sticky top-20 h-fit">
+      <div className="grid grid-cols-1 lg:grid-cols-4 lg:gap-12">
+        <aside className="lg:col-span-1 lg:sticky top-20 h-fit mb-8 lg:mb-0">
           <nav>
-            <p className="mb-2 text-sm font-semibold text-muted-foreground">On this page</p>
+            <p className="mb-3 text-sm font-semibold text-muted-foreground uppercase tracking-wider">On this page</p>
             <ul className="space-y-2">
               {sections.map(section => (
                 <li key={section.id}>
                   <Button 
                     variant="ghost" 
-                    className="w-full justify-start gap-2"
+                    className={cn(
+                        "w-full justify-start gap-3 pl-3",
+                        activeSection === section.id ? "bg-accent text-accent-foreground" : ""
+                    )}
                     onClick={() => scrollToSection(section.id)}
                   >
-                    <section.icon className="h-4 w-4" />
-                    {section.title}
+                    <section.icon className="h-5 w-5" />
+                    <span className="font-medium">{section.title}</span>
                   </Button>
                 </li>
               ))}
             </ul>
-             <div className="mt-8 text-center">
-                <Button asChild>
-                    <Link href="/u/portal/dashboard">Back to Dashboard</Link>
-                </Button>
-            </div>
           </nav>
         </aside>
 
-        <main className="md:col-span-3 space-y-10">
+        <main className="lg:col-span-3 space-y-12">
           <section id="dashboard" ref={el => sectionRefs.current['dashboard'] = el}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <LayoutDashboard className="h-8 w-8 text-primary" />
-                <CardTitle className="text-2xl">Dashboard Concepts</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <LayoutDashboard className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Dashboard Concepts</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none text-foreground">
+              <CardContent className="prose prose-lg max-w-none text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                 <p>The main dashboard provides an at-a-glance overview of your performance and credit status. It includes key metrics like:</p>
                 <ul>
                   <li><strong>Net Credit Balance:</strong> Your all-time total credit score, reflecting the sum of all positive and negative points you have ever received.</li>
@@ -86,12 +115,16 @@ export default function HelpPage() {
           </section>
 
           <section id="good-works" ref={el => sectionRefs.current['good-works'] = el}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <Award className="h-8 w-8 text-primary" />
-                <CardTitle className="text-2xl">Good Works</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <Award className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Good Works</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none text-foreground">
+              <CardContent className="prose prose-lg max-w-none text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                 <p>The "Good Works" section is where you can view all your submitted achievements for positive credits. You can track their status and see the points awarded for each approved submission.</p>
                  <ul>
                     <li><strong>Pending:</strong> Your submission is awaiting review by an administrator.</li>
@@ -103,12 +136,16 @@ export default function HelpPage() {
           </section>
 
           <section id="submit-work" ref={el => sectionRefs.current['submit-work'] = el}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <FileText className="h-8 w-8 text-primary" />
-                <CardTitle className="text-2xl">Submitting New Work</CardTitle>
+            <Card className="shadow-sm">
+               <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <FileText className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Submitting New Work</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none text-foreground">
+              <CardContent className="prose prose-lg max-w-none text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                 <p>To get credit for your achievements, you need to submit them for review. Follow these steps:</p>
                 <ol>
                   <li>Navigate to the <strong>"Good Works"</strong> page from the sidebar and click the <strong>"Submit New Work"</strong> button.</li>
@@ -123,24 +160,32 @@ export default function HelpPage() {
           </section>
 
           <section id="remarks" ref={el => sectionRefs.current['remarks'] = el}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <MessageSquareWarning className="h-8 w-8 text-destructive" />
-                <CardTitle className="text-2xl">Negative Remarks</CardTitle>
+            <Card className="shadow-sm">
+               <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
+                    <MessageSquareWarning className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Negative Remarks</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none text-foreground">
+              <CardContent className="prose prose-lg max-w-none text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                 <p>If you receive a negative remark from an administrator, it will appear on the "Negative Remarks" page. This section lists all such remarks, the points deducted, the date they were issued, and provides the option to appeal.</p>
               </CardContent>
             </Card>
           </section>
           
           <section id="appeals" ref={el => sectionRefs.current['appeals'] = el}>
-             <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <ShieldCheck className="h-8 w-8 text-blue-600" />
-                <CardTitle className="text-2xl">Filing an Appeal</CardTitle>
+             <Card className="shadow-sm">
+               <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600">
+                    <ShieldCheck className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Filing an Appeal</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none text-foreground">
+              <CardContent className="prose prose-lg max-w-none text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                   <p>If you believe a negative remark was issued in error, you have the right to appeal. You can only appeal a remark once, and it must be done within the specified time frame.</p>
                   <ol>
                       <li>On the "Negative Remarks" page, click the <strong>"Appeal"</strong> button next to the relevant remark.</li>
@@ -156,12 +201,16 @@ export default function HelpPage() {
           </section>
 
           <section id="settings" ref={el => sectionRefs.current['settings'] = el}>
-            <Card>
-              <CardHeader className="flex flex-row items-center gap-4">
-                <User className="h-8 w-8 text-primary" />
-                <CardTitle className="text-2xl">Account Settings</CardTitle>
+            <Card className="shadow-sm">
+              <CardHeader>
+                <div className="flex items-center gap-4">
+                  <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                    <User className="h-6 w-6" />
+                  </div>
+                  <CardTitle className="text-2xl">Account Settings</CardTitle>
+                </div>
               </CardHeader>
-              <CardContent className="prose prose-lg max-w-none space-y-4 text-foreground">
+              <CardContent className="prose prose-lg max-w-none space-y-4 text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                   <div className="flex items-start gap-4">
                     <User className="h-6 w-6 mt-1 text-muted-foreground"/>
                     <div>
