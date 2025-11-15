@@ -34,7 +34,7 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge, AlertTriangle } from "lucide-react";
+import { Eye, Badge, AlertTriangle, Info } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -212,12 +212,12 @@ export default function NegativeRemarksPage() {
 
   const getStatusBadge = (status: NegativeCredit['status']) => {
     switch (status) {
-        case 'approved': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800">Approved</div>
-        case 'rejected': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-800">Rejected</div>
-        case 'appealed': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800">Appealed</div>
+        case 'approved': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800" role="status">Approved</div>
+        case 'rejected': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-800" role="status">Rejected</div>
+        case 'appealed': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800" role="status">Appealed</div>
         case 'pending':
         default:
-            return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800">Pending</div>
+            return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800" role="status">Pending</div>
     }
   };
 
@@ -305,10 +305,16 @@ export default function NegativeRemarksPage() {
             <div className="space-y-2">
                 <label htmlFor="proof" className="text-sm font-medium">Proof Document</label>
                 <FileUpload onFileSelect={setAppealProof} />
-                <div className="flex items-start gap-2 text-sm text-destructive p-3 bg-destructive/10 rounded-md">
+                <div className="flex items-start gap-2 text-sm text-destructive p-3 bg-destructive/10 rounded-md" role="alert">
                     <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <p>
                         <strong>Note:</strong> A proof document is mandatory for all appeals. Appeals submitted without proof will not be considered. If you do not appeal within one week, the remark will be finalized and cannot be appealed later.
+                    </p>
+                </div>
+                 <div className="flex items-start gap-2 text-sm text-green-700 p-3 bg-green-50 rounded-md mt-2" role="note">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                        <strong>Tip:</strong> If you have multiple files, please combine them into a single .zip file (under 10MB) before uploading.
                     </p>
                 </div>
             </div>
