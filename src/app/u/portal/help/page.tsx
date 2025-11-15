@@ -4,7 +4,6 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Award, FileText, MessageSquareWarning, ShieldCheck, User, Lock, Fingerprint, LayoutDashboard } from 'lucide-react';
-import Link from 'next/link';
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/lib/utils';
 
@@ -82,8 +81,8 @@ export default function HelpPage() {
                     )}
                     onClick={() => scrollToSection(section.id)}
                   >
-                    <section.icon className="h-5 w-5" />
-                    <span className="font-medium">{section.title}</span>
+                    <section.icon className="h-5 w-5 flex-shrink-0" />
+                    <span className="font-medium text-left">{section.title}</span>
                   </Button>
                 </li>
               ))}
@@ -193,7 +192,7 @@ export default function HelpPage() {
                       <li><strong>You must upload a new proof document</strong> to support your appeal. This is mandatory. Without proof, your appeal will not be considered.</li>
                       <li>Once submitted, your appeal is sent to an administrator. You can track its status (Pending, Accepted, or Rejected) on the <strong>"My Appeals"</strong> page.</li>
                   </ol>
-                  <div className="bg-destructive/10 text-destructive p-4 rounded-md mt-4">
+                  <div className="bg-destructive/10 text-destructive p-4 rounded-md mt-4" role="alert">
                      <strong>Important:</strong> If you do not appeal within one week of receiving a remark, it will be finalized and can no longer be appealed.
                   </div>
               </CardContent>
@@ -212,21 +211,21 @@ export default function HelpPage() {
               </CardHeader>
               <CardContent className="prose prose-lg max-w-none space-y-4 text-foreground prose-headings:font-semibold prose-headings:text-foreground prose-a:text-primary">
                   <div className="flex items-start gap-4">
-                    <User className="h-6 w-6 mt-1 text-muted-foreground"/>
+                    <User className="h-6 w-6 mt-1 text-muted-foreground flex-shrink-0"/>
                     <div>
                       <h4 className="font-semibold">Profile</h4>
                       <p>Update your personal information, such as your name, phone number, and profile picture. Keeping this information current is important for communication.</p>
                     </div>
                   </div>
                    <div className="flex items-start gap-4">
-                    <Lock className="h-6 w-6 mt-1 text-muted-foreground"/>
+                    <Lock className="h-6 w-6 mt-1 text-muted-foreground flex-shrink-0"/>
                     <div>
                       <h4 className="font-semibold">Password</h4>
                       <p>Change your account password regularly to keep your account secure. It's recommended to use a strong, unique password that you don't use for other services.</p>
                     </div>
                   </div>
                    <div className="flex items-start gap-4">
-                    <Fingerprint className="h-6 w-6 mt-1 text-muted-foreground"/>
+                    <Fingerprint className="h-6 w-6 mt-1 text-muted-foreground flex-shrink-0"/>
                     <div>
                       <h4 className="font-semibold">Security (MFA)</h4>
                       <p>Enhance your account security by enabling Multi-Factor Authentication (MFA). You can choose to receive a login code via email or use a dedicated authenticator app on your phone. This adds an extra layer of protection to your account.</p>
