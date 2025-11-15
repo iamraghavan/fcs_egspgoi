@@ -1,6 +1,8 @@
+
+"use client";
+
 import { Award, FileText, Fingerprint, LayoutDashboard, Lock, MessageSquareWarning, ShieldCheck, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
 const helpTopics = [
@@ -49,6 +51,14 @@ const helpTopics = [
 ]
 
 function HelpSection() {
+
+  const handleTopicClick = (slug: string) => {
+    // Generate a random string for the URL parameter
+    const randomParam = Math.random().toString(36).substring(2, 10);
+    const url = `/u/portal/help/${slug}?session=${randomParam}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <div className="w-full py-20 lg:py-24">
       <div className="container mx-auto">
@@ -62,7 +72,7 @@ function HelpSection() {
                 How to Use CreditWise
               </h2>
               <p className="text-lg max-w-xl lg:max-w-lg leading-relaxed tracking-tight text-muted-foreground  text-left">
-                Your complete guide to navigating the Faculty Performance System. Click on a topic to open a detailed guide in a new tab.
+                Your complete guide to navigating the Faculty Performance System. Click on a topic to open a detailed guide.
               </p>
             </div>
           </div>
@@ -70,12 +80,10 @@ function HelpSection() {
             {helpTopics.map((topic) => {
                 const Icon = topic.icon;
                 return (
-                    <Link
-                        href={`/u/portal/help/${topic.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <button
+                        onClick={() => handleTopicClick(topic.slug)}
                         key={topic.title}
-                        className={`bg-muted rounded-md h-full p-6 aspect-square lg:aspect-auto flex justify-between flex-col transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 ${topic.isWide ? 'lg:col-span-2' : ''}`}
+                        className={`bg-muted rounded-md h-full p-6 aspect-square lg:aspect-auto flex justify-between flex-col transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 text-left ${topic.isWide ? 'lg:col-span-2' : ''}`}
                     >
                         <Icon className="w-8 h-8 stroke-1" />
                         <div className="flex flex-col">
@@ -84,7 +92,7 @@ function HelpSection() {
                                 {topic.description}
                             </p>
                         </div>
-                    </Link>
+                    </button>
                 )
             })}
           </div>
