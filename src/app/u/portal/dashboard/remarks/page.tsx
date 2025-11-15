@@ -34,7 +34,7 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge } from "lucide-react";
+import { Eye, Badge, AlertTriangle } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -151,10 +151,10 @@ export default function NegativeRemarksPage() {
   };
 
   const handleAppealSubmit = async () => {
-    if (!selectedRemark || !appealReason.trim()) {
+    if (!selectedRemark || !appealReason.trim() || !appealProof) {
         showAlert(
             "Incomplete Form",
-            "Please provide a reason for your appeal.",
+            "Please provide a reason and a proof document for your appeal.",
         );
         return;
     }
@@ -287,7 +287,7 @@ export default function NegativeRemarksPage() {
           <DialogHeader>
             <DialogTitle>Create an Appeal for "{selectedRemark?.title}"</DialogTitle>
             <DialogDescription>
-              Provide a reason for your appeal. You may optionally attach a proof document. This action cannot be undone.
+              Provide a reason for your appeal and attach a mandatory proof document. This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -299,21 +299,25 @@ export default function NegativeRemarksPage() {
                     value={appealReason}
                     onChange={(e) => setAppealReason(e.target.value)} 
                     rows={4}
+                    aria-required="true"
                 />
             </div>
             <div className="space-y-2">
-                <label htmlFor="proof" className="text-sm font-medium">Proof Document (Optional)</label>
+                <label htmlFor="proof" className="text-sm font-medium">Proof Document</label>
                 <FileUpload onFileSelect={setAppealProof} />
-                 <p className="text-xs text-muted-foreground pt-1">
-                    If more than one file, please make it a zip (below 10MB) and upload.
-                </p>
+                <div className="flex items-start gap-2 text-sm text-destructive p-3 bg-destructive/10 rounded-md">
+                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                        <strong>Note:</strong> A proof document is mandatory for all appeals. Appeals submitted without proof will not be considered. If you do not appeal within one week, the remark will be finalized and cannot be appealed later.
+                    </p>
+                </div>
             </div>
           </div>
           <DialogFooter>
             <DialogClose asChild>
                 <Button type="button" variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button onClick={handleAppealSubmit} disabled={isSubmittingAppeal || !appealReason.trim()}>
+            <Button onClick={handleAppealSubmit} disabled={isSubmittingAppeal || !appealReason.trim() || !appealProof}>
                 {isSubmittingAppeal ? 'Submitting...' : 'Submit Appeal'}
             </Button>
           </DialogFooter>
