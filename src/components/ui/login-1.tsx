@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAlert } from '@/context/alert-context';
@@ -34,6 +34,7 @@ export function LoginScreen() {
 
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [isCapsOn, setIsCapsOn] = useState(false);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -45,6 +46,20 @@ export function LoginScreen() {
   const [mfaCode, setMfaCode] = useState("");
 
   const formRef = useRef(null);
+
+  useEffect(() => {
+    const handleCapsLock = (event: KeyboardEvent) => {
+        if (event.getModifierState) {
+            setIsCapsOn(event.getModifierState("CapsLock"));
+        }
+    };
+    window.addEventListener('keydown', handleCapsLock);
+    window.addEventListener('keyup', handleCapsLock);
+    return () => {
+        window.removeEventListener('keydown', handleCapsLock);
+        window.removeEventListener('keyup', handleCapsLock);
+    };
+  }, []);
 
   useEffect(() => {
     setIsClient(true);
@@ -258,6 +273,12 @@ export function LoginScreen() {
             {showPassword ? <EyeOff className="w-5 h-5" aria-hidden="true" /> : <Eye className="w-5 h-5" aria-hidden="true" />}
           </Button>
         </div>
+        {isCapsOn && (
+            <div className="flex items-center text-yellow-600 text-xs mt-2" role="alert">
+                <AlertTriangle className="h-4 w-4 mr-2" />
+                Caps Lock is on
+            </div>
+        )}
       </div>
 
         {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
@@ -363,3 +384,5 @@ export function LoginScreen() {
     </>
   );
 }
+
+    
