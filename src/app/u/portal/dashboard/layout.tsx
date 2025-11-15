@@ -1,7 +1,9 @@
+
 import { SidebarProvider } from "@/components/ui/sidebar";
 import React, { Suspense, type ReactNode } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import DashboardClientWrapper from "@/components/dashboard-client-wrapper";
+import { TourProvider } from "@/context/tour-context";
 
 const LoadingSkeleton = () => (
     <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto] md:grid-cols-[auto_1fr]">
@@ -42,9 +44,11 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   return (
     <SidebarProvider>
         <Suspense fallback={<LoadingSkeleton />}>
+          <TourProvider>
             <DashboardClientWrapper>
                 {children}
             </DashboardClientWrapper>
+          </TourProvider>
         </Suspense>
     </SidebarProvider>
   );
