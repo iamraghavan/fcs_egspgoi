@@ -213,7 +213,7 @@ export function LoginScreen() {
           Your email
         </Label>
           <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
           <Input
             type="email"
             id="email"
@@ -223,6 +223,8 @@ export function LoginScreen() {
             className="pl-10"
             placeholder="Enter your email"
             required
+            aria-required="true"
+            autoComplete="email"
           />
         </div>
       </div>
@@ -232,7 +234,7 @@ export function LoginScreen() {
           Password
         </Label>
         <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
           <Input
             type={showPassword ? "text" : "password"}
             id="password"
@@ -242,6 +244,8 @@ export function LoginScreen() {
             className="pl-10 pr-10"
             placeholder="Enter your password"
             required
+            aria-required="true"
+            autoComplete="current-password"
           />
           <Button
             type="button"
@@ -249,8 +253,9 @@ export function LoginScreen() {
             size="icon"
             onClick={togglePasswordVisibility}
             className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground h-full"
+            aria-label={showPassword ? "Hide password" : "Show password"}
           >
-            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+            {showPassword ? <EyeOff className="w-5 h-5" aria-hidden="true" /> : <Eye className="w-5 h-5" aria-hidden="true" />}
           </Button>
         </div>
       </div>
@@ -294,7 +299,7 @@ export function LoginScreen() {
                   {mfaState.mfaType === 'email' ? '6-Digit Code from Email' : '6-Digit Code from Authenticator App'}
               </Label>
               <div className="relative mt-2">
-                  <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                   <Input
                       type="text"
                       id="mfa-code"
@@ -304,6 +309,8 @@ export function LoginScreen() {
                       placeholder="_ _ _ _ _ _"
                       maxLength={6}
                       required
+                      aria-required="true"
+                      autoComplete="one-time-code"
                   />
               </div>
           </div>
@@ -322,7 +329,7 @@ export function LoginScreen() {
        <div className="hidden md:flex flex-1 relative">
           <Image
             src={EngineeringCollegeImage}
-            alt="EGS Pillay Engineering College"
+            alt="EGS Pillay Engineering College campus building"
             layout="fill"
             objectFit="cover"
             quality={90}
@@ -336,7 +343,7 @@ export function LoginScreen() {
           <div className="text-center mb-8">
              <Image
                   src={EgspgoiLogo}
-                  alt="College Logo"
+                  alt="EGS Pillay Group of Institutions Logo"
                   width={100}
                   height={100}
                   className="mx-auto mb-4"

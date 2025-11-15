@@ -110,7 +110,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
 
   return (
     <form className="space-y-6" onSubmit={handleSubmit}>
-      {errors.form && <p className="text-sm font-medium text-destructive">{errors.form}</p>}
+      {errors.form && <p className="text-sm font-medium text-destructive" role="alert">{errors.form}</p>}
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <div>
           <Label htmlFor="category">Category</Label>
@@ -126,7 +126,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
               ))}
             </SelectContent>
           </Select>
-          {errors.category && <p className="text-sm font-medium text-destructive mt-1">{errors.category}</p>}
+          {errors.category && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="category-error">{errors.category}</p>}
         </div>
         <div>
           <Label htmlFor="points">Points</Label>
@@ -135,6 +135,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
             className="mt-1 bg-muted"
             value={selectedCreditTitle?.points || ""}
             readOnly
+            aria-readonly="true"
           />
         </div>
       </div>
@@ -147,8 +148,10 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           disabled={isLoading}
+          aria-required="true"
+          aria-describedby={errors.title ? 'title-error' : undefined}
         />
-        {errors.title && <p className="text-sm font-medium text-destructive mt-1">{errors.title}</p>}
+        {errors.title && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="title-error">{errors.title}</p>}
       </div>
       <div>
           <Label htmlFor="academicYear">Academic Year</Label>
@@ -162,7 +165,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
                   ))}
               </SelectContent>
           </Select>
-          {errors.academicYear && <p className="text-sm font-medium text-destructive mt-1">{errors.academicYear}</p>}
+          {errors.academicYear && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="year-error">{errors.academicYear}</p>}
       </div>
        <div>
         <Label htmlFor="notes">Notes (Optional)</Label>
@@ -177,9 +180,9 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
         />
       </div>
       <div>
-        <Label>Attachments</Label>
+        <Label htmlFor="file-upload">Attachments</Label>
         <FileUpload onFileSelect={setProof} disabled={isLoading} />
-        {errors.proof && <p className="text-sm font-medium text-destructive mt-1">{errors.proof}</p>}
+        {errors.proof && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="proof-error">{errors.proof}</p>}
       </div>
       <div className="flex justify-end pt-4">
         <Button type="submit" disabled={isLoading || !!errors.form}>

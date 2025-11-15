@@ -160,7 +160,7 @@ export default function AdmissionEnquiryPage() {
 
   if (isSubmitted) {
     return (
-        <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 p-4">
+        <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-green-50 to-cyan-50 p-4">
             <Card className="w-full max-w-md text-center">
                 <CardHeader>
                     <CheckCircle className="mx-auto h-16 w-16 text-green-500 mb-4" />
@@ -171,13 +171,15 @@ export default function AdmissionEnquiryPage() {
                     <p className="text-muted-foreground">Our admissions team will review your information and contact you soon. You can now close this window.</p>
                 </CardContent>
             </Card>
-        </div>
+        </main>
     )
   }
 
   return (
     <>
     <Head>
+        <title>Admission Enquiry: BNYS 2025-2026</title>
+        <meta name="description" content="Enquire about admission for the Bachelor of Naturopathy and Yogic Sciences (BNYS) course for the academic year 2025-2026." />
         <script
             dangerouslySetInnerHTML={{
               __html: `
@@ -196,14 +198,14 @@ export default function AdmissionEnquiryPage() {
         />
         <noscript>
             <img height="1" width="1" style={{display: 'none'}}
-            src="https://www.facebook.com/tr?id=660713297027148&ev=PageView&noscript=1"/>
+            src="https://www.facebook.com/tr?id=660713297027148&ev=PageView&noscript=1" alt="" />
         </noscript>
     </Head>
     <ThemeProvider theme={muiTheme}>
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
+    <main className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 p-4">
       <Card className="w-full max-w-2xl">
         <CardHeader className="text-center">
-            <Image src={EgspgoiLogo} alt="College Logo" width={80} height={80} className="mx-auto mb-4" />
+            <Image src={EgspgoiLogo} alt="EGS Pillay Group of Institutions Logo" width={80} height={80} className="mx-auto mb-4" />
           <CardTitle className="text-3xl font-bold">Admission Enquiry: 2025-2026</CardTitle>
           <CardDescription>Bachelor of Naturopathy and Yogic Sciences (BNYS)</CardDescription>
         </CardHeader>
@@ -213,14 +215,14 @@ export default function AdmissionEnquiryPage() {
                  <div>
                     <Label htmlFor="college">College Name</Label>
                     <div className="relative mt-2">
-                        <University className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <University className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         <Input id="college" value="EGS Pillay Naturopathy and Yoga Science" readOnly className="pl-10 bg-muted/50 cursor-not-allowed" />
                     </div>
                 </div>
                 <div>
                     <Label htmlFor="course">Course</Label>
                      <div className="relative mt-2">
-                        <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                        <BookOpen className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                         <Input id="course" value="BNYS" readOnly className="pl-10 bg-muted/50 cursor-not-allowed" />
                     </div>
                 </div>
@@ -228,7 +230,7 @@ export default function AdmissionEnquiryPage() {
             <div>
               <Label htmlFor="name">Full Name</Label>
               <div className="relative mt-2">
-                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <User className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <Input id="name" placeholder="Enter your full name" value={name} onChange={(e) => setName(e.target.value)} required className="pl-10" />
               </div>
             </div>
@@ -236,6 +238,7 @@ export default function AdmissionEnquiryPage() {
                 <Label htmlFor="phone">Phone Number</Label>
                 <div className="relative mt-2">
                     <MuiTelInput
+                        id="phone"
                         value={phone}
                         onChange={(newValue) => setPhone(newValue)}
                         defaultCountry="IN"
@@ -243,20 +246,21 @@ export default function AdmissionEnquiryPage() {
                         fullWidth
                         variant="outlined"
                         required
+                        aria-required="true"
                     />
                 </div>
             </div>
              <div>
               <Label htmlFor="email">Email Address (Optional)</Label>
                <div className="relative mt-2">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <Input id="email" type="email" placeholder="Enter your email address" value={email} onChange={(e) => setEmail(e.target.value)} className="pl-10" />
               </div>
             </div>
             <div>
               <Label htmlFor="address">Address / Location</Label>
               <div className="relative mt-2">
-                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
                 <Input
                   id="address"
                   ref={addressRef}
@@ -265,7 +269,7 @@ export default function AdmissionEnquiryPage() {
                   className="pl-10"
                   onChange={(e) => setFullAddress(e.target.value)}
                 />
-                {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
+                {error && <p className="text-xs text-red-500 mt-1" role="alert">{error}</p>}
               </div>
             </div>
             <div className="pt-4">
@@ -276,7 +280,7 @@ export default function AdmissionEnquiryPage() {
           </form>
         </CardContent>
       </Card>
-    </div>
+    </main>
     </ThemeProvider>
     </>
   );
