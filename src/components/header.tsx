@@ -120,9 +120,11 @@ export function Header({ user }: { user: User }) {
                 </Button>
             </Link>
           )}
-          <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
-              <span className="material-symbols-outlined">help</span>
-          </Button>
+          <Link href="/u/portal/help">
+            <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
+                <span className="material-symbols-outlined">help</span>
+            </Button>
+          </Link>
           <Link href={user.role === 'admin' ? `/u/portal/dashboard/admin/settings?uid=${uid}` : `/u/portal/dashboard/settings?uid=${uid}`}>
             <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
                 <span className="material-symbols-outlined">settings</span>

@@ -1,3 +1,4 @@
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import {
@@ -83,9 +84,11 @@ export function UserNav({ user, logout }: UserNavProps) {
             </Link>
             </>
            )}
-           <DropdownMenuItem>
-                Help & Feedback
+           <Link href="/u/portal/help">
+            <DropdownMenuItem>
+                    Help & Feedback
             </DropdownMenuItem>
+           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
