@@ -1,40 +1,48 @@
 import { Award, FileText, Fingerprint, LayoutDashboard, Lock, MessageSquareWarning, ShieldCheck, User } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
 const helpTopics = [
     {
         icon: LayoutDashboard,
         title: "Dashboard Concepts",
+        slug: "dashboard-concepts",
         description: "Understand your credit balance, yearly net points, and performance trends.",
         isWide: true,
     },
     {
         icon: Award,
         title: "Good Works",
+        slug: "good-works",
         description: "View and track the status of all your submitted achievements for positive credits.",
         isWide: false,
     },
     {
         icon: FileText,
         title: "Submitting New Work",
+        slug: "submitting-new-work",
         description: "Learn how to submit achievements for review, attach proof, and get credit.",
         isWide: false,
     },
     {
         icon: MessageSquareWarning,
         title: "Negative Remarks",
+        slug: "negative-remarks",
         description: "Understand how negative remarks affect your score and what your options are.",
         isWide: true,
     },
     {
         icon: ShieldCheck,
         title: "Filing an Appeal",
+        slug: "filing-an-appeal",
         description: "A step-by-step guide on how to appeal a negative remark you believe is incorrect.",
         isWide: true,
     },
     {
         icon: User,
         title: "Account Settings",
+        slug: "account-settings",
         description: "Manage your profile, change your password, and enhance security with Multi-Factor Authentication (MFA).",
         isWide: false,
     },
@@ -54,7 +62,7 @@ function HelpSection() {
                 How to Use CreditWise
               </h2>
               <p className="text-lg max-w-xl lg:max-w-lg leading-relaxed tracking-tight text-muted-foreground  text-left">
-                Your complete guide to navigating the Faculty Performance System. Explore the features below to get started.
+                Your complete guide to navigating the Faculty Performance System. Click on a topic to open a detailed guide in a new tab.
               </p>
             </div>
           </div>
@@ -62,9 +70,12 @@ function HelpSection() {
             {helpTopics.map((topic) => {
                 const Icon = topic.icon;
                 return (
-                    <div 
+                    <Link
+                        href={`/u/portal/help/${topic.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         key={topic.title}
-                        className={`bg-muted rounded-md h-full p-6 aspect-square lg:aspect-auto flex justify-between flex-col ${topic.isWide ? 'lg:col-span-2' : ''}`}
+                        className={`bg-muted rounded-md h-full p-6 aspect-square lg:aspect-auto flex justify-between flex-col transition-all duration-300 hover:bg-primary/10 hover:shadow-lg hover:-translate-y-1 ${topic.isWide ? 'lg:col-span-2' : ''}`}
                     >
                         <Icon className="w-8 h-8 stroke-1" />
                         <div className="flex flex-col">
@@ -73,7 +84,7 @@ function HelpSection() {
                                 {topic.description}
                             </p>
                         </div>
-                    </div>
+                    </Link>
                 )
             })}
           </div>
