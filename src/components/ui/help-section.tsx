@@ -53,10 +53,10 @@ const helpTopics = [
 function HelpSection() {
 
   const handleTopicClick = (slug: string) => {
-    // Generate a random string for the URL parameter
     const randomParam = Math.random().toString(36).substring(2, 10);
     const url = `/u/portal/help/${slug}?session=${randomParam}`;
-    window.open(url, '_blank', 'noopener,noreferrer');
+    const windowFeatures = "width=800,height=700,noopener,noreferrer,scrollbars=yes,resizable=yes";
+    window.open(url, `help-window-${slug}`, windowFeatures);
   };
 
   return (
