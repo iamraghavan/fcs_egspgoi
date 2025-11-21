@@ -262,6 +262,39 @@ export default function NegativeRemarksPage() {
                     <TableCell>{getStatusBadge(remark.status)}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedRemark(remark)}>
+                                    <Eye className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Remark Details</DialogTitle>
+                                </DialogHeader>
+                                {selectedRemark && (
+                                    <div className="space-y-4 py-4 text-sm">
+                                        <p><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</p>
+                                        <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
+                                        <p><strong className="font-medium text-muted-foreground block">Status:</strong> {getStatusBadge(selectedRemark.status)}</p>
+                                        <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                                        <p><strong className="font-medium text-muted-foreground block">Notes from Admin:</strong></p>
+                                        <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
+                                        <div>
+                                            <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
+                                            {selectedRemark.proofUrl ? (
+                                                <Button asChild variant="link" className="p-0 h-auto">
+                                                    <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                </Button>
+                                            ) : "Not Provided"}
+                                        </div>
+                                    </div>
+                                )}
+                                <DialogFooter>
+                                    <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                         <Button 
                             variant="secondary" 
                             size="sm" 
