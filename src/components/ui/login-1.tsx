@@ -149,7 +149,7 @@ export function LoginScreen() {
 
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", 'Cache-Control': 'no-cache' },
         body: JSON.stringify(body),
       });
       
@@ -219,7 +219,7 @@ export function LoginScreen() {
     setShowPassword(!showPassword);
   };
   
-  const showTurnstile = email && password && !mfaState.mfaRequired;
+  const showTurnstile = !!email && !!password && !mfaState.mfaRequired;
 
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
