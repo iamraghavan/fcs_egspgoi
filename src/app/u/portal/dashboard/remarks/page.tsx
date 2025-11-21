@@ -274,11 +274,11 @@ export default function NegativeRemarksPage() {
                                 </DialogHeader>
                                 {selectedRemark && (
                                     <div className="space-y-4 py-4 text-sm">
-                                        <p><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</p>
-                                        <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
-                                        <p><strong className="font-medium text-muted-foreground block">Status:</strong> {getStatusBadge(selectedRemark.status)}</p>
-                                        <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                                        <p><strong className="font-medium text-muted-foreground block">Notes from Admin:</strong></p>
+                                        <div><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</div>
+                                        <div><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></div>
+                                        <div><strong className="font-medium text-muted-foreground block">Status:</strong> {getStatusBadge(selectedRemark.status)}</div>
+                                        <div><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</div>
+                                        <div><strong className="font-medium text-muted-foreground block">Notes from Admin:</strong></div>
                                         <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
                                         <div>
                                             <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
