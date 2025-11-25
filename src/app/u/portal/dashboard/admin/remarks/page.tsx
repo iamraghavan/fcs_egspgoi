@@ -126,6 +126,8 @@ export default function ManageRemarksPage() {
 
   // Form state
   const [facultyId, setFacultyId] = useState("");
+  const [facultySearch, setFacultySearch] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [creditTitleId, setCreditTitleId] = useState("");
   const [points, setPoints] = useState<number | string>("");
   const [title, setTitle] = useState("");
@@ -158,6 +160,42 @@ export default function ManageRemarksPage() {
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const uid = searchParams.get('uid');
   const totalPages = Math.ceil(total / limit);
+  const suggestionRef = useRef<HTMLDivElement>(null);
+
+
+  const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFacultySearch(e.target.value);
+    setFacultyId(""); // Clear selection when user types
+    if (!showSuggestions) {
+      setShowSuggestions(true);
+    }
+  };
+  
+  const handleFacultySelect = (faculty: User) => {
+    setFacultyId(faculty._id);
+    setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
+    setShowSuggestions(false);
+  };
+  
+  const suggestedFaculty = useMemo(() => {
+    if (!facultySearch) return [];
+    return facultyList.filter(f => 
+      f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
+      (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
+    ).slice(0, 10);
+  }, [facultySearch, facultyList]);
+  
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
+        setShowSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
@@ -277,7 +315,7 @@ export default function ManageRemarksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!facultyId || !points || !title) {
-      showAlert("Incomplete Form", "Please fill out all required fields.");
+      showAlert("Incomplete Form", "Please select a faculty member and fill out all required fields.");
       return;
     }
     setIsLoading(true);
@@ -316,6 +354,7 @@ export default function ManageRemarksPage() {
 
       // Reset form and close dialog *before* attempting to send email
       setFacultyId("");
+      setFacultySearch("");
       setCreditTitleId("");
       setTitle("");
       setPoints("");
@@ -373,14 +412,6 @@ export default function ManageRemarksPage() {
     }
     return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
-
-  const facultyOptions = useMemo(() => 
-    facultyList
-        .slice()
-        .sort((a, b) => a.name.localeCompare(b.name))
-        .map(f => ({ value: f._id, label: `${f.name} (${f.department || 'N/A'})` })),
-    [facultyList]
-  );
   
  const creditTitleOptions = useMemo(() => {
     const sortedTitles = creditTitles
@@ -416,20 +447,30 @@ export default function ManageRemarksPage() {
                     <DialogDescription>Fill out the details below to issue a negative credit to a faculty member.</DialogDescription>
                 </DialogHeader>
                 <form className="space-y-4 pt-4" onSubmit={handleSubmit}>
-                    <div>
+                    <div ref={suggestionRef} className="relative">
                         <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
-                        <Select value={facultyId} onValueChange={setFacultyId}>
-                            <SelectTrigger id="faculty">
-                                <SelectValue placeholder="Select faculty member..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {facultyOptions.map(option => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        <Input 
+                          id="faculty"
+                          placeholder="Type to search for faculty..."
+                          value={facultySearch}
+                          onChange={handleFacultySearch}
+                          onFocus={() => setShowSuggestions(true)}
+                          autoComplete="off"
+                        />
+                         {showSuggestions && suggestedFaculty.length > 0 && (
+                          <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                            {suggestedFaculty.map(faculty => (
+                              <div
+                                key={faculty._id}
+                                className="cursor-pointer p-2 hover:bg-accent"
+                                onClick={() => handleFacultySelect(faculty)}
+                              >
+                                <p className="font-medium">{faculty.name}</p>
+                                <p className="text-sm text-muted-foreground">{faculty.department}</p>
+                              </div>
+                            ))}
+                          </div>
+                        )}
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
@@ -703,3 +744,5 @@ export default function ManageRemarksPage() {
     </div>
   )
 }
+
+    
