@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -19,31 +20,24 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-export type ComboboxOption = {
-  value: string;
-  label: string;
-};
-
 type ComboboxProps = {
-  options: ComboboxOption[];
+  options: { value: string; label: string }[];
   value: string;
   onValueChange: (value: string) => void;
   placeholder?: string;
   searchPlaceholder?: string;
-  emptyPlaceholder?: string;
+  emptyMessage?: string;
   disabled?: boolean;
-  className?: string;
 };
 
-export function Combobox({ 
-    options, 
-    value, 
-    onValueChange,
-    placeholder = "Select an option...",
-    searchPlaceholder = "Search...",
-    emptyPlaceholder = "No results found.",
-    disabled = false,
-    className
+export function Combobox({
+  options,
+  value,
+  onValueChange,
+  placeholder = "Select an option...",
+  searchPlaceholder = "Search...",
+  emptyMessage = "No option found.",
+  disabled = false
 }: ComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
@@ -54,7 +48,7 @@ export function Combobox({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between", className)}
+          className="w-full justify-between"
           disabled={disabled}
         >
           {value
@@ -67,7 +61,7 @@ export function Combobox({
         <Command>
           <CommandInput placeholder={searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>{emptyPlaceholder}</CommandEmpty>
+            <CommandEmpty>{emptyMessage}</CommandEmpty>
             <CommandGroup>
               {options.map((option) => (
                 <CommandItem

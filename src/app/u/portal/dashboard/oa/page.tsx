@@ -17,7 +17,6 @@ import { FileUpload } from "@/components/file-upload";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { PlusCircle, History } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
-import { Combobox } from "@/components/ui/combobox";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 
@@ -262,25 +261,33 @@ export default function OADashboardPage() {
         <CardContent className="space-y-4 pt-4">
             <div>
               <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
-              <Combobox
-                  options={facultyOptions}
-                  value={facultyId}
-                  onValueChange={setFacultyId}
-                  placeholder="Select faculty member..."
-                  searchPlaceholder="Search faculty..."
-                  emptyPlaceholder="No faculty found."
-              />
+               <Select value={facultyId} onValueChange={setFacultyId}>
+                  <SelectTrigger id="faculty">
+                      <SelectValue placeholder="Select faculty member..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                      {facultyOptions.map(option => (
+                          <SelectItem key={option.value} value={option.value}>
+                              {option.label}
+                          </SelectItem>
+                      ))}
+                  </SelectContent>
+              </Select>
             </div>
             <div>
                 <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
-                <Combobox
-                    options={creditTitleOptions}
-                    value={creditTitleId}
-                    onValueChange={setCreditTitleId}
-                    placeholder="Select a template..."
-                    searchPlaceholder="Search templates..."
-                    emptyPlaceholder="No templates found."
-                />
+                <Select value={creditTitleId} onValueChange={setCreditTitleId}>
+                    <SelectTrigger id="creditTitle">
+                        <SelectValue placeholder="Select a template..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {creditTitleOptions.map(option => (
+                            <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
             </div>
             <div>
                 <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
