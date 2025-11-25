@@ -48,6 +48,10 @@ type User = {
   _id: string;
   name: string;
   department?: string;
+  facultyID?: string;
+  role?: string;
+  email?: string;
+  profileImage?: string;
 };
 
 type CreditTitle = {
@@ -125,7 +129,7 @@ export default function ManageRemarksPage() {
   const router = useRouter();
 
   // Form state
-  const [facultyId, setFacultyId] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState<User | null>(null);
   const [facultySearch, setFacultySearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [creditTitleId, setCreditTitleId] = useState("");
@@ -154,7 +158,7 @@ export default function ManageRemarksPage() {
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
   // Details view state
-  const [selectedRemark, setSelectedRemark] = useState<NegativeRemark | null>(null);
+  const [selectedRemark, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
@@ -165,14 +169,14 @@ export default function ManageRemarksPage() {
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
-    setFacultyId(""); // Clear selection when user types
+    setSelectedFaculty(null); // Clear selection when user types
     if (!showSuggestions) {
       setShowSuggestions(true);
     }
   };
   
   const handleFacultySelect = (faculty: User) => {
-    setFacultyId(faculty._id);
+    setSelectedFaculty(faculty);
     setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
     setShowSuggestions(false);
   };
@@ -317,7 +321,7 @@ export default function ManageRemarksPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!facultyId || !points || !title) {
+    if (!selectedFaculty || !points || !title) {
       showAlert("Incomplete Form", "Please select a faculty member and fill out all required fields.");
       return;
     }
@@ -330,7 +334,7 @@ export default function ManageRemarksPage() {
     }
 
     const formData = new FormData();
-    formData.append("facultyId", facultyId);
+    formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
     formData.append("academicYear", getCurrentAcademicYear());
     formData.append("title", title);
@@ -356,7 +360,7 @@ export default function ManageRemarksPage() {
       });
 
       // Reset form and close dialog *before* attempting to send email
-      setFacultyId("");
+      setSelectedFaculty(null);
       setFacultySearch("");
       setCreditTitleId("");
       setTitle("");
@@ -375,7 +379,7 @@ export default function ManageRemarksPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          facultyId: facultyId,
+          facultyId: selectedFaculty._id,
           remark: {
             title: title,
             message: notes,
@@ -444,78 +448,105 @@ export default function ManageRemarksPage() {
                     Issue New Remark
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-2xl">
+            <DialogContent className="sm:max-w-4xl">
                  <DialogHeader>
                     <DialogTitle>Issue New Remark</DialogTitle>
                     <DialogDescription>Fill out the details below to issue a negative credit to a faculty member.</DialogDescription>
                 </DialogHeader>
-                <form className="space-y-4 pt-4" onSubmit={handleSubmit}>
-                    <div ref={suggestionRef} className="relative">
-                        <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
-                        <Input 
-                          id="faculty"
-                          placeholder="Type to search for faculty..."
-                          value={facultySearch}
-                          onChange={handleFacultySearch}
-                          onFocus={() => setShowSuggestions(true)}
-                          autoComplete="off"
-                        />
-                         {showSuggestions && suggestedFaculty.length > 0 && (
-                          <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                            {suggestedFaculty.map(faculty => (
-                              <div
-                                key={faculty._id}
-                                className="cursor-pointer p-2 hover:bg-accent"
-                                onClick={() => handleFacultySelect(faculty)}
-                              >
-                                <p className="font-medium">{faculty.name}</p>
-                                <p className="text-sm text-muted-foreground">{faculty.department}</p>
+                <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
+                    <div className="md:col-span-2 space-y-4">
+                        <div ref={suggestionRef} className="relative">
+                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                            <Input 
+                              id="faculty"
+                              placeholder="Type to search for faculty..."
+                              value={facultySearch}
+                              onChange={handleFacultySearch}
+                              onFocus={() => setShowSuggestions(true)}
+                              autoComplete="off"
+                            />
+                             {showSuggestions && suggestedFaculty.length > 0 && (
+                              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                                {suggestedFaculty.map(faculty => (
+                                  <div
+                                    key={faculty._id}
+                                    className="cursor-pointer p-2 hover:bg-accent"
+                                    onClick={() => handleFacultySelect(faculty)}
+                                  >
+                                    <p className="font-medium">{faculty.name}</p>
+                                    <p className="text-sm text-muted-foreground">{faculty.department}</p>
+                                  </div>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            )}
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
+                             <Select value={creditTitleId} onValueChange={setCreditTitleId}>
+                                <SelectTrigger id="creditTitle">
+                                    <SelectValue placeholder="Select a template..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {creditTitles.map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })).map(option => (
+                                        <SelectItem key={option.value} value={option.value}>
+                                            {option.label}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
+                            <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
+                                <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
+                                <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                            </div>
+                            <div>
+                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
+                            <Select value={getCurrentAcademicYear()} disabled>
+                                <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                                <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+                            </Select>
+                            </div>
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
+                        <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
+                        <FileUpload onFileSelect={setProof} />
+                        </div>
+                    </div>
+                    <div className="md:col-span-1">
+                        {selectedFaculty ? (
+                             <Card>
+                                <CardHeader className="flex flex-row items-center gap-4">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={selectedFaculty.profileImage} />
+                                        <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <CardTitle className="text-base">{selectedFaculty.name}</CardTitle>
+                                        <CardDescription>{selectedFaculty.facultyID}</CardDescription>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="text-sm space-y-2">
+                                    <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'N/A'}</p>
+                                    <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'N/A'}</span></p>
+                                    <p><strong className="font-medium text-muted-foreground">Email:</strong> {selectedFaculty.email || 'N/A'}</p>
+                                </CardContent>
+                            </Card>
+                        ) : (
+                            <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50">
+                                <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
+                            </div>
                         )}
                     </div>
-                    <div>
-                        <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
-                         <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                            <SelectTrigger id="creditTitle">
-                                <SelectValue placeholder="Select a template..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {creditTitles.map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })).map(option => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div>
-                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
-                        <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
-                            <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
-                        </div>
-                        <div>
-                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
-                        <Select value={getCurrentAcademicYear()} disabled>
-                            <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                            <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                    <div>
-                    <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
-                    <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-                    </div>
-                    <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
-                    <FileUpload onFileSelect={setProof} />
-                    </div>
-                    <DialogFooter className="pt-4">
+                     <DialogFooter className="pt-4 md:col-span-3">
                         <DialogClose asChild>
                             <Button type="button" variant="secondary">Cancel</Button>
                         </DialogClose>
@@ -619,16 +650,16 @@ export default function ManageRemarksPage() {
                     <TableCell className="text-center">
                         <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={(isOpen) => {
                             if (isOpen) {
-                                setSelectedRemark(remark);
+                                setSelectedRemarkDetails(remark);
                                 setIsDetailsOpen(true);
                             } else {
                                 setIsDetailsOpen(false);
-                                setSelectedRemark(null);
+                                setSelectedRemarkDetails(null);
                             }
                         }}>
                             <DialogTrigger asChild>
                                 <Button variant="ghost" size="icon" onClick={() => {
-                                    setSelectedRemark(remark);
+                                    setSelectedRemarkDetails(remark);
                                     setIsDetailsOpen(true);
                                 }}>
                                     <Eye className="h-4 w-4" />

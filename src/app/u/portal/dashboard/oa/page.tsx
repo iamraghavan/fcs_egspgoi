@@ -19,6 +19,7 @@ import { PlusCircle, History } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -27,6 +28,10 @@ type User = {
   _id: string;
   name: string;
   department?: string;
+  facultyID?: string;
+  role?: string;
+  email?: string;
+  profileImage?: string;
 };
 
 type CreditTitle = {
@@ -65,7 +70,7 @@ export default function OADashboardPage() {
   const searchParams = useSearchParams();
 
   // Form state
-  const [facultyId, setFacultyId] = useState("");
+  const [selectedFaculty, setSelectedFaculty] = useState<User | null>(null);
   const [facultySearch, setFacultySearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [creditTitleId, setCreditTitleId] = useState("");
@@ -86,14 +91,14 @@ export default function OADashboardPage() {
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
-    setFacultyId(""); // Clear selection when user types
+    setSelectedFaculty(null); // Clear selection when user types
     if (!showSuggestions) {
       setShowSuggestions(true);
     }
   };
   
   const handleFacultySelect = (faculty: User) => {
-    setFacultyId(faculty._id);
+    setSelectedFaculty(faculty);
     setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
     setShowSuggestions(false);
   };
@@ -105,7 +110,7 @@ export default function OADashboardPage() {
         f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
         (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
       )
-      .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
+      .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 10);
   }, [facultySearch, facultyList]);
   
@@ -175,7 +180,7 @@ export default function OADashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!facultyId || !points || !title) {
+    if (!selectedFaculty || !points || !title) {
       showAlert("Incomplete Form", "Please select a faculty member and fill out all required fields.");
       return;
     }
@@ -188,7 +193,7 @@ export default function OADashboardPage() {
     }
 
     const formData = new FormData();
-    formData.append("facultyId", facultyId);
+    formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
     formData.append("academicYear", getCurrentAcademicYear());
     formData.append("title", title);
@@ -214,7 +219,7 @@ export default function OADashboardPage() {
       });
 
       // Reset form
-      setFacultyId("");
+      setSelectedFaculty(null);
       setFacultySearch("");
       setCreditTitleId("");
       setTitle("");
@@ -230,7 +235,7 @@ export default function OADashboardPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          facultyId: facultyId,
+          facultyId: selectedFaculty._id,
           remark: {
             title: title,
             message: notes,
@@ -268,7 +273,7 @@ export default function OADashboardPage() {
   
 
   return (
-    <div className="mx-auto max-w-2xl space-y-8">
+    <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
@@ -286,88 +291,115 @@ export default function OADashboardPage() {
         </Button>
       </header>
         
-      <Card>
-        <CardHeader>
-            <CardTitle>New Negative Remark Form</CardTitle>
-            <CardDescription>Fill out the details below to issue a negative credit to a faculty member.</CardDescription>
-        </CardHeader>
-        <form onSubmit={handleSubmit}>
-        <CardContent className="space-y-4 pt-4">
-            <div ref={suggestionRef} className="relative">
-              <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
-              <Input
-                id="faculty"
-                placeholder="Type to search for faculty..."
-                value={facultySearch}
-                onChange={handleFacultySearch}
-                onFocus={() => setShowSuggestions(true)}
-                autoComplete="off"
-              />
-              {showSuggestions && suggestedFaculty.length > 0 && (
-                <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                  {suggestedFaculty.map(faculty => (
-                    <div
-                      key={faculty._id}
-                      className="cursor-pointer p-2 hover:bg-accent"
-                      onClick={() => handleFacultySelect(faculty)}
-                    >
-                      <p className="font-medium">{faculty.name}</p>
-                      <p className="text-sm text-muted-foreground">{faculty.department}</p>
+      <form onSubmit={handleSubmit}>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <Card className="md:col-span-2">
+                <CardHeader>
+                    <CardTitle>New Negative Remark Form</CardTitle>
+                    <CardDescription>Fill out the details below to issue a negative credit to a faculty member.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    <div ref={suggestionRef} className="relative">
+                      <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                      <Input
+                        id="faculty"
+                        placeholder="Type to search for faculty..."
+                        value={facultySearch}
+                        onChange={handleFacultySearch}
+                        onFocus={() => setShowSuggestions(true)}
+                        autoComplete="off"
+                      />
+                      {showSuggestions && suggestedFaculty.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                          {suggestedFaculty.map(faculty => (
+                            <div
+                              key={faculty._id}
+                              className="cursor-pointer p-2 hover:bg-accent"
+                              onClick={() => handleFacultySelect(faculty)}
+                            >
+                              <p className="font-medium">{faculty.name}</p>
+                              <p className="text-sm text-muted-foreground">{faculty.department}</p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div>
+                        <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
+                        <Select value={creditTitleId} onValueChange={setCreditTitleId}>
+                            <SelectTrigger id="creditTitle">
+                                <SelectValue placeholder="Select a template..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {creditTitleOptions.map(option => (
+                                    <SelectItem key={option.value} value={option.value}>
+                                        {option.label}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
+                        <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
+                            <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                        </div>
+                        <div>
+                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
+                        <Select value={getCurrentAcademicYear()} disabled>
+                            <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                            <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+                        </Select>
+                        </div>
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
+                    <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                    </div>
+                    <div>
+                    <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
+                    <FileUpload onFileSelect={setProof} />
+                    </div>
+                </CardContent>
+                 <CardFooter className="flex justify-end">
+                    <Button type="submit" disabled={isLoading}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {isLoading ? "Submitting..." : "Issue Remark"}
+                    </Button>
+                </CardFooter>
+            </Card>
+
+            <div className="md:col-span-1">
+                {selectedFaculty ? (
+                     <Card className="sticky top-24">
+                        <CardHeader className="flex flex-row items-center gap-4">
+                            <Avatar className="h-16 w-16">
+                                <AvatarImage src={selectedFaculty.profileImage} />
+                                <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div>
+                                <CardTitle>{selectedFaculty.name}</CardTitle>
+                                <CardDescription>{selectedFaculty.facultyID}</CardDescription>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="text-sm space-y-3">
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'N/A'}</span></p>
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Dept:</strong> {selectedFaculty.department || 'N/A'}</p>
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Email:</strong> {selectedFaculty.email || 'N/A'}</p>
+                        </CardContent>
+                    </Card>
+                ) : (
+                    <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50 sticky top-24">
+                        <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
+                    </div>
+                )}
             </div>
-            <div>
-                <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
-                <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                    <SelectTrigger id="creditTitle">
-                        <SelectValue placeholder="Select a template..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {creditTitleOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-            <div>
-                <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
-                <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
-                    <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
-                </div>
-                <div>
-                <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
-                <Select value={getCurrentAcademicYear()} disabled>
-                    <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                    <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
-                </Select>
-                </div>
-            </div>
-            <div>
-            <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
-            <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
-            <div>
-            <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
-            <FileUpload onFileSelect={setProof} />
-            </div>
-            
-        </CardContent>
-        <CardFooter className="flex justify-end">
-            <Button type="submit" disabled={isLoading}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                {isLoading ? "Submitting..." : "Issue Remark"}
-            </Button>
-        </CardFooter>
-        </form>
-      </Card>
+        </div>
+      </form>
     </div>
   )
 }
