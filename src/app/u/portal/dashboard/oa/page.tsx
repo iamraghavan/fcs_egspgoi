@@ -100,10 +100,13 @@ export default function OADashboardPage() {
   
   const suggestedFaculty = useMemo(() => {
     if (!facultySearch) return [];
-    return facultyList.filter(f => 
-      f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
-      (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
-    ).slice(0, 10);
+    return facultyList
+      .filter(f => 
+        f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
+        (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
+      )
+      .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
+      .slice(0, 10);
   }, [facultySearch, facultyList]);
   
   useEffect(() => {
@@ -368,5 +371,3 @@ export default function OADashboardPage() {
     </div>
   )
 }
-
-    
