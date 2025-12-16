@@ -15,7 +15,6 @@ import { Separator } from "@/components/ui/separator";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
-const TEMPLATE_URL = "/templates/bulk-user-template.xlsx";
 
 type UploadResult = {
   row: number;
@@ -129,6 +128,27 @@ export default function BulkAddUsersPage() {
     }
   };
 
+  const handleDownloadTemplate = () => {
+    const templateData = [
+      {
+        name: "Dr. Example",
+        email: "dr.example@egspec.org",
+        password: "TemporaryPassword123",
+        role: "faculty",
+        college: "EGS Pillay Engineering College",
+        department: "B.E - Computer Science & Engineering"
+      }
+    ];
+    const worksheet = XLSX.utils.json_to_sheet(templateData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Users");
+    // Set column widths
+    worksheet['!cols'] = [
+      { wch: 25 }, { wch: 30 }, { wch: 20 }, { wch: 10 }, { wch: 35 }, { wch: 40 }
+    ];
+    XLSX.writeFile(workbook, "bulk-user-template.xlsx");
+  };
+
   const previewHeaders = previewData.length > 0 ? Object.keys(previewData[0]) : [];
 
   return (
@@ -151,7 +171,7 @@ export default function BulkAddUsersPage() {
                         <div>
                             <h3 className="text-lg font-semibold">Prepare Your File</h3>
                             <p className="text-muted-foreground">
-                                <a href={TEMPLATE_URL} download="bulk-user-template.xlsx" className="text-primary hover:underline font-medium">Download our template</a> to ensure your data is formatted correctly.
+                                <button onClick={handleDownloadTemplate} className="text-primary hover:underline font-medium">Download our template</button> to ensure your data is formatted correctly.
                             </p>
                         </div>
                     </div>
