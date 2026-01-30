@@ -147,6 +147,7 @@ export default function AdminDashboard() {
   const trendData = useMemo(() => {
     if (!creditTrends) return [];
     const data = creditTrends[trendsTimescale];
+    if (!data) return [];
     const key = trendsTimescale === 'daily' ? 'date' : trendsTimescale === 'weekly' ? 'week' : 'month';
     return data.map(item => ({...item, name: item[key as keyof typeof item]}));
   }, [creditTrends, trendsTimescale]);
@@ -295,3 +296,5 @@ export default function AdminDashboard() {
     </div>
   )
 }
+
+    

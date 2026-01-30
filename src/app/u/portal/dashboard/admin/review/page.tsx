@@ -147,13 +147,14 @@ export default function ReviewSubmissionsPage() {
 
             const data = await response.json();
             if (data.success) {
-                setSubmissions(data.items);
+                const items = Array.isArray(data.items) ? data.items : [];
+                setSubmissions(items);
                 setTotal(data.meta.total);
                 setAggregates(data.aggregates);
                 
-                if (data.items.length > 0 && !selectedSubmission) {
-                    setSelectedSubmission(data.items[0]);
-                } else if (data.items.length === 0) {
+                if (items.length > 0 && !selectedSubmission) {
+                    setSelectedSubmission(items[0]);
+                } else if (items.length === 0) {
                     setSelectedSubmission(null);
                 }
             } else {
@@ -172,7 +173,7 @@ export default function ReviewSubmissionsPage() {
         } finally {
             setIsLoading(false);
         }
-    }, [filters, dateRange, showAlert]);
+    }, [filters, dateRange, showAlert, selectedSubmission]);
     
     useEffect(() => {
         const debounceTimer = setTimeout(() => fetchSubmissions(), 500);
@@ -472,3 +473,5 @@ export default function ReviewSubmissionsPage() {
     </div>
   )
 }
+
+    
