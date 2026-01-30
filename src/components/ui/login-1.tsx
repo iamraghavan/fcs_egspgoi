@@ -141,9 +141,7 @@ export function LoginScreen() {
 
     try {
       const body: any = { email, password };
-      if (mfaState.mfaType === 'app') {
-        body.token = mfaCode;
-      } else if (turnstileToken) {
+      if (turnstileToken) {
         body.token = turnstileToken;
       }
 
@@ -163,8 +161,8 @@ export function LoginScreen() {
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
-          userId: responseData.data.id,
-          userRole: responseData.data.role, // Store role from initial response
+          userId: responseData.userId,
+          userRole: responseData.userRole,
           message: responseData.message,
         });
       } else {
@@ -182,12 +180,7 @@ export function LoginScreen() {
       e.preventDefault();
       setIsLoading(true);
 
-      if (mfaState.mfaType === 'app') {
-          await handleLogin(e);
-          return;
-      }
-      
-      if (mfaState.mfaType === 'email') {
+      if (mfaState.mfaType === 'email' || mfaState.mfaType === 'app') {
           try {
               const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
                   method: 'POST',
@@ -200,9 +193,8 @@ export function LoginScreen() {
                   throw new Error(responseData.message || 'MFA verification failed.');
               }
               
-              // Correctly process the response from /verify-mfa
               processSuccessfulLogin({
-                  token: responseData.token, // Token is at the root
+                  token: responseData.token,
                   id: mfaState.userId!,
                   role: mfaState.userRole!,
               });
@@ -212,6 +204,9 @@ export function LoginScreen() {
           } finally {
               setIsLoading(false);
           }
+      } else {
+        showAlert('Verification Error', 'An unknown MFA type was encountered.');
+        setIsLoading(false);
       }
   };
 
