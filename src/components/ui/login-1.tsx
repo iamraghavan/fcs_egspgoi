@@ -143,8 +143,8 @@ export function LoginScreen() {
       const body: any = { email, password };
       if (mfaState.mfaType === 'app') {
         body.token = mfaCode;
-      } else {
-        body.turnstileToken = turnstileToken;
+      } else if (turnstileToken) {
+        body.token = turnstileToken;
       }
 
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
@@ -384,5 +384,3 @@ export function LoginScreen() {
     </>
   );
 }
-
-    
