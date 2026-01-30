@@ -17,7 +17,7 @@ import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-const SESSION_DURATION_SECONDS = 10 * 60; // 10 minutes
+const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type MfaState = {
     mfaRequired: boolean;
@@ -192,7 +192,7 @@ export function LoginScreen() {
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: mfaState.userId, token: mfaCode }),
+              body: JSON.stringify({ userId: mfaState.userId, code: mfaCode }),
           });
 
           const responseData = await response.json();
