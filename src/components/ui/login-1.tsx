@@ -22,8 +22,6 @@ const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 type MfaState = {
     mfaRequired: boolean;
     mfaType: 'email' | 'app' | null;
-    userId: string | null;
-    userRole: 'faculty' | 'admin' | 'oa' | null;
     message: string;
 };
 
@@ -42,7 +40,7 @@ export function LoginScreen() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [isClient, setIsClient] = useState(false);
-  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, userId: null, userRole: null, message: "" });
+  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "" });
   const [mfaCode, setMfaCode] = useState("");
 
   const formRef = useRef(null);
@@ -163,9 +161,7 @@ export function LoginScreen() {
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
-          userId: responseData.userId,
-          userRole: responseData.userRole,
-          message: responseData.message,
+          message: responseData.message || `A verification code has been sent to your ${responseData.mfaType}.`,
         });
       } else {
         processSuccessfulLogin(responseData.data);
@@ -182,17 +178,11 @@ export function LoginScreen() {
       e.preventDefault();
       setIsLoading(true);
 
-      if (!mfaState.userId) {
-          showAlert('Verification Error', 'User information is missing. Please try logging in again.');
-          setIsLoading(false);
-          return;
-      }
-
       try {
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ userId: mfaState.userId, code: mfaCode }),
+              body: JSON.stringify({ email: email, token: mfaCode }),
           });
 
           const responseData = await response.json();
@@ -200,16 +190,13 @@ export function LoginScreen() {
               throw new Error(responseData.message || 'MFA verification failed.');
           }
           
-          if (!responseData.token || !mfaState.userRole || !responseData.sessionId) {
+          const { id, role, token, sessionId } = responseData.data;
+
+          if (!id || !role || !token || !sessionId) {
               throw new Error("Incomplete MFA response from server.");
           }
 
-          processSuccessfulLogin({
-              token: responseData.token,
-              id: mfaState.userId,
-              role: mfaState.userRole,
-              sessionId: responseData.sessionId,
-          });
+          processSuccessfulLogin({ id, role, token, sessionId });
 
       } catch (error: any) {
           showAlert('Verification Failed', error.message);
@@ -341,7 +328,7 @@ export function LoginScreen() {
           <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full">
               {isLoading ? 'Verifying...' : 'Verify'}
           </Button>
-          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, userId: null, userRole: null, message: "" })}>
+          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, message: "" })}>
               Back to Login
           </Button>
       </form>
