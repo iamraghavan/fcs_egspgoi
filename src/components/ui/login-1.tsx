@@ -141,7 +141,7 @@ export function LoginScreen() {
 
     try {
       const body: any = { email, password };
-      if (turnstileToken) {
+      if (!mfaState.mfaRequired && turnstileToken) {
         body.token = turnstileToken;
       }
 
@@ -185,7 +185,7 @@ export function LoginScreen() {
               const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
                   method: 'POST',
                   headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId: mfaState.userId, code: mfaCode }),
+                  body: JSON.stringify({ userId: mfaState.userId, token: mfaCode }),
               });
 
               const responseData = await response.json();
@@ -193,10 +193,14 @@ export function LoginScreen() {
                   throw new Error(responseData.message || 'MFA verification failed.');
               }
               
+              if (!responseData.token || !mfaState.userId || !mfaState.userRole) {
+                  throw new Error("Incomplete MFA response from server.");
+              }
+
               processSuccessfulLogin({
                   token: responseData.token,
-                  id: mfaState.userId!,
-                  role: mfaState.userRole!,
+                  id: mfaState.userId,
+                  role: mfaState.userRole,
               });
 
           } catch (error: any) {
