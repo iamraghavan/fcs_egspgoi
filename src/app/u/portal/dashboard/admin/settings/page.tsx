@@ -14,6 +14,7 @@ import { Camera, ShieldCheck, Star } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
 import { MfaSettings } from "@/components/mfa-settings"
+import { SessionManager } from "@/components/session-manager"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -336,6 +337,7 @@ export default function AdminSettingsPage() {
                             mfaAppEnabled={user?.mfaAppEnabled || false}
                             onUpdate={fetchUser}
                         />
+                        <SessionManager />
                     </TabsContent>
                 </Tabs>
             </div>
@@ -343,5 +345,3 @@ export default function AdminSettingsPage() {
     </div>
   )
 }
-
-    

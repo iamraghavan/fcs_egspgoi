@@ -84,9 +84,9 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string}) => {
-    const { token, role, id } = loginData;
-    if (!token || !role || !id) {
+  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string, sessionId: string}) => {
+    const { token, role, id, sessionId } = loginData;
+    if (!token || !role || !id || !sessionId) {
       showAlert("Login Error", "Incomplete login data received from server.");
       return;
     }
@@ -99,6 +99,7 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     localStorage.setItem("userRole", role);
+    localStorage.setItem("sessionId", sessionId);
     
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
@@ -127,7 +128,8 @@ export function LoginScreen() {
       const oaUser = {
         token: 'mock_oa_token',
         role: 'oa',
-        id: 'oa_user_01'
+        id: 'oa_user_01',
+        sessionId: 'mock_session_id',
       };
       processSuccessfulLogin(oaUser);
       return;
@@ -180,37 +182,39 @@ export function LoginScreen() {
       e.preventDefault();
       setIsLoading(true);
 
-      if (mfaState.mfaType === 'email' || mfaState.mfaType === 'app') {
-          try {
-              const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ userId: mfaState.userId, token: mfaCode }),
-              });
+      if (!mfaState.userId) {
+          showAlert('Verification Error', 'User information is missing. Please try logging in again.');
+          setIsLoading(false);
+          return;
+      }
 
-              const responseData = await response.json();
-              if (!response.ok || !responseData.success) {
-                  throw new Error(responseData.message || 'MFA verification failed.');
-              }
-              
-              if (!responseData.token || !mfaState.userId || !mfaState.userRole) {
-                  throw new Error("Incomplete MFA response from server.");
-              }
+      try {
+          const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ userId: mfaState.userId, token: mfaCode }),
+          });
 
-              processSuccessfulLogin({
-                  token: responseData.token,
-                  id: mfaState.userId,
-                  role: mfaState.userRole,
-              });
-
-          } catch (error: any) {
-              showAlert('Verification Failed', error.message);
-          } finally {
-              setIsLoading(false);
+          const responseData = await response.json();
+          if (!response.ok || !responseData.success) {
+              throw new Error(responseData.message || 'MFA verification failed.');
           }
-      } else {
-        showAlert('Verification Error', 'An unknown MFA type was encountered.');
-        setIsLoading(false);
+          
+          if (!responseData.token || !mfaState.userRole || !responseData.sessionId) {
+              throw new Error("Incomplete MFA response from server.");
+          }
+
+          processSuccessfulLogin({
+              token: responseData.token,
+              id: mfaState.userId,
+              role: mfaState.userRole,
+              sessionId: responseData.sessionId,
+          });
+
+      } catch (error: any) {
+          showAlert('Verification Failed', error.message);
+      } finally {
+          setIsLoading(false);
       }
   };
 
