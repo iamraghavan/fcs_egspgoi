@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -556,14 +555,14 @@ export default function GoodWorksPage() {
               )}
               {detailedWork && !isFetchingDetails && (
                   <div className="space-y-3 py-4 text-sm">
-                      <p><strong className="font-medium text-muted-foreground block">Title:</strong> {detailedWork.title}</p>
-                      <p><strong className="font-medium text-muted-foreground block">Points Awarded:</strong> {detailedWork.points}</p>
-                      <p><strong className="font-medium text-muted-foreground block">Status:</strong> <Badge variant={detailedWork.status === 'approved' ? 'default' : 'destructive'} className={detailedWork.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>{detailedWork.status}</Badge></p>
-                      <p><strong className="font-medium text-muted-foreground block">Academic Year:</strong> {detailedWork.academicYear}</p>
-                      <p><strong className="font-medium text-muted-foreground block">Notes:</strong> {detailedWork.notes || 'N/A'}</p>
-                      <p><strong className="font-medium text-muted-foreground block">Submission Date:</strong> {new Date(detailedWork.createdAt).toLocaleString()}</p>
+                      <div><strong className="font-medium text-muted-foreground block">Title:</strong> {detailedWork.title}</div>
+                      <div><strong className="font-medium text-muted-foreground block">Points Awarded:</strong> {detailedWork.points}</div>
+                      <div><strong className="font-medium text-muted-foreground block">Status:</strong> <Badge variant={detailedWork.status === 'approved' ? 'default' : 'destructive'} className={detailedWork.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>{detailedWork.status}</Badge></div>
+                      <div><strong className="font-medium text-muted-foreground block">Academic Year:</strong> {detailedWork.academicYear}</div>
+                      <div><strong className="font-medium text-muted-foreground block">Notes:</strong> {detailedWork.notes || 'N/A'}</div>
+                      <div><strong className="font-medium text-muted-foreground block">Submission Date:</strong> {new Date(detailedWork.createdAt).toLocaleString()}</div>
                       {detailedWork.proofUrl && (
-                        <p><strong className="font-medium text-muted-foreground block">Proof:</strong> <Button asChild variant="link" className="p-0 h-auto"><a href={detailedWork.proofUrl} target="_blank" rel="noopener noreferrer">View Document</a></Button></p>
+                        <div><strong className="font-medium text-muted-foreground block">Proof:</strong> <Button asChild variant="link" className="p-0 h-auto"><a href={detailedWork.proofUrl} target="_blank" rel="noopener noreferrer">View Document</a></Button></div>
                       )}
                   </div>
               )}
@@ -575,5 +574,4 @@ export default function GoodWorksPage() {
     </div>
   )
 }
-
     
