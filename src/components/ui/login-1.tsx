@@ -182,7 +182,11 @@ export function LoginScreen() {
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ email: email, token: mfaCode }),
+              body: JSON.stringify({
+                  email: email,
+                  code: mfaCode,
+                  type: mfaState.mfaType,
+              }),
           });
 
           const responseData = await response.json();
@@ -190,10 +194,21 @@ export function LoginScreen() {
               throw new Error(responseData.message || 'MFA verification failed.');
           }
           
-          const { id, role, token, sessionId } = responseData.data;
+          const { token, sessionId } = responseData;
 
-          if (!id || !role || !token || !sessionId) {
+          if (!token || !sessionId) {
               throw new Error("Incomplete MFA response from server.");
+          }
+          
+          // Decode JWT to get id and role
+          const payloadBase64 = token.split('.')[1];
+          const decodedPayload = JSON.parse(atob(payloadBase64));
+          
+          const id = decodedPayload.id;
+          const role = decodedPayload.role;
+
+          if (!id || !role) {
+              throw new Error("Could not extract user details from token.");
           }
 
           processSuccessfulLogin({ id, role, token, sessionId });
