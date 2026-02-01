@@ -21,6 +21,17 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
@@ -28,6 +39,8 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useAlert } from "@/context/alert-context";
+import { FileUpload } from "@/components/file-upload";
+import { Edit, Trash2 } from "lucide-react";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -39,11 +52,12 @@ type NegativeCredit = {
   points: number;
   notes: string;
   proofUrl?: string;
-  faculty: { // Corrected type
+  faculty: {
     _id: string;
     name: string;
   };
   appeal?: {
+    _id: string;
     by: string;
     reason: string;
     createdAt: string;
@@ -65,6 +79,12 @@ export default function AppealsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
   const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  
+  // State for editing appeals
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [appealReason, setAppealReason] = useState("");
+  const [appealProof, setAppealProof] = useState<File | null>(null);
+  const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
 
   const facultyId = searchParams.get('uid');
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
@@ -133,6 +153,66 @@ export default function AppealsPage() {
         fetchAppeals();
     }
   }, [facultyId, filter]);
+  
+  const handleAppealSubmit = async () => {
+    if (!selectedAppeal || !appealReason.trim()) {
+        showAlert("Incomplete Form", "Please provide a reason for your appeal.");
+        return;
+    }
+    setIsSubmittingAppeal(true);
+    
+    const formData = new FormData();
+    formData.append("reason", appealReason);
+    if (appealProof) {
+      formData.append("proof", appealProof);
+    }
+    
+    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal.appeal._id}`;
+    const method = 'PUT';
+
+    try {
+        const response = await fetch(url, {
+            method: method,
+            headers: { "Authorization": `Bearer ${token}` },
+            body: formData,
+        });
+
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || `Failed to update appeal.`);
+        }
+        
+        toast({
+            title: `Appeal Updated`,
+            description: `Your appeal has been successfully updated.`,
+        });
+
+        setIsEditDialogOpen(false);
+        fetchAppeals(); // Refresh list
+
+    } catch (error: any) {
+        showAlert("Appeal Failed", error.message);
+    } finally {
+        setIsSubmittingAppeal(false);
+    }
+  };
+
+  const handleWithdrawAppeal = async (appealId: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${appealId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to withdraw appeal.");
+        }
+        toast({ title: "Appeal Withdrawn", description: "Your appeal has been withdrawn."});
+        fetchAppeals();
+    } catch(error: any) {
+        showAlert("Withdrawal Failed", error.message);
+    }
+  };
 
   const getStatusVariant = (status: Appeal['appeal']['status']) => {
       switch (status) {
@@ -336,6 +416,35 @@ export default function AppealsPage() {
                             </li>
                         </ul>
                     </div>
+                    {selectedAppeal.appeal.status === 'pending' && (
+                        <div className="mt-6 border-t pt-6">
+                            <h4 className="font-semibold mb-4">Actions</h4>
+                            <div className="flex flex-col gap-2">
+                                <Button onClick={() => { setAppealReason(selectedAppeal.appeal.reason); setAppealProof(null); setIsEditDialogOpen(true); }} >
+                                    <Edit className="mr-2 h-4 w-4" /> Edit Appeal
+                                </Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="destructive">
+                                             <Trash2 className="mr-2 h-4 w-4" /> Withdraw Appeal
+                                        </Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>This action will permanently withdraw your appeal. You may not be able to appeal this remark again.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal.appeal._id)} className="bg-destructive hover:bg-destructive/90">
+                                                Confirm & Withdraw
+                                            </AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </div>
+                    )}
                 </>
             </div>
         ) : (
@@ -344,6 +453,43 @@ export default function AppealsPage() {
             </div>
         )}
       </aside>
+
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Edit Appeal for "{selectedAppeal?.title}"</DialogTitle>
+            <DialogDescription>
+              Update your reason for appealing. Attaching new proof is optional.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal <span className="text-red-500">*</span></label>
+                <Textarea 
+                    id="reason" 
+                    placeholder="Explain why you are appealing this remark..."
+                    value={appealReason}
+                    onChange={(e) => setAppealReason(e.target.value)} 
+                    rows={4}
+                    aria-required="true"
+                />
+            </div>
+            <div className="space-y-2">
+                <label htmlFor="proof" className="text-sm font-medium">Proof Document (Optional)</label>
+                <FileUpload onFileSelect={setAppealProof} />
+                <p className="text-xs text-muted-foreground">If you upload a new file, it will replace the old one.</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleAppealSubmit} disabled={isSubmittingAppeal || !appealReason.trim()}>
+                {isSubmittingAppeal ? 'Updating...' : 'Update Appeal'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
+
+    
