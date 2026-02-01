@@ -90,11 +90,13 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (loginResponse: {token: string, sessionId?: string}) => {
-    const { token, sessionId } = loginResponse;
-    
+  const processSuccessfulLogin = (loginResponse: any) => {
+    // This function now correctly handles both direct login and MFA verification responses.
+    const token = loginResponse.data?.token || loginResponse.token;
+    const sessionId = loginResponse.data?.sessionId || loginResponse.sessionId;
+
     if (!token) {
-      showAlert("Login Error", "Incomplete login data received from server.");
+      showAlert("Login Error", "Incomplete login data received from server. The authentication token is missing.");
       return;
     }
 
@@ -176,7 +178,8 @@ export function LoginScreen() {
     }
 
     try {
-      const body = { email, password, token: turnstileToken };
+      // FIX: Renamed 'token' field to avoid backend collision
+      const body = { email, password, "cf-turnstile-response": turnstileToken };
 
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
@@ -186,11 +189,11 @@ export function LoginScreen() {
       
       const responseData = await response.json();
 
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || "Login failed");
+      if (!response.ok) {
+        throw new Error(responseData.message || "An unknown error occurred during login.");
       }
       
-      if (responseData.mfaRequired) {
+      if (responseData.success && responseData.mfaRequired) {
         setTempAuthData({
           userId: responseData.userId,
           email: email,
@@ -198,9 +201,11 @@ export function LoginScreen() {
           message: responseData.message || `A verification code has been sent to your ${responseData.mfaType === 'app' ? 'authenticator app' : 'email'}.`,
         });
         setStep('mfa');
-      } else {
+      } else if (responseData.success && !responseData.mfaRequired) {
         // Non-MFA login success
-        processSuccessfulLogin(responseData.data);
+        processSuccessfulLogin(responseData);
+      } else {
+        throw new Error(responseData.message || "Login failed");
       }
 
     } catch (error: any) {
