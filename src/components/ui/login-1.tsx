@@ -43,7 +43,6 @@ export function LoginScreen() {
   
   const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "" });
   const [mfaCode, setMfaCode] = useState("");
-  const [userIdForMfa, setUserIdForMfa] = useState<string>("");
 
   const formRef = useRef(null);
 
@@ -159,7 +158,6 @@ export function LoginScreen() {
       }
       
       if (responseData.mfaRequired) {
-        setUserIdForMfa(responseData.userId); // Store the userId for the next step
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
@@ -182,7 +180,7 @@ export function LoginScreen() {
 
       try {
           const body = {
-            userId: userIdForMfa,
+            email: email,
             code: mfaCode,
             type: mfaState.mfaType,
           };
