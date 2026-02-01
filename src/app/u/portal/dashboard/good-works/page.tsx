@@ -347,7 +347,7 @@ export default function GoodWorksPage() {
                 <TableHead>Points</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Proof</TableHead>
-                <TableHead>Actions</TableHead>
+                <TableHead className="text-center">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -393,33 +393,19 @@ export default function GoodWorksPage() {
                         <span className="text-muted-foreground text-xs">N/A</span>
                       )}
                     </TableCell>
-                    <TableCell>
-                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" className="h-8 w-8 p-0">
-                                  <span className="sr-only">Open menu</span>
-                                  <MoreHorizontal className="h-4 w-4" />
-                              </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                              <DropdownMenuItem
-                                  onClick={() => work.proofUrl && handleViewDetails(work.proofUrl)}
-                                  disabled={!work.proofUrl}
-                              >
-                                  View Details
-                              </DropdownMenuItem>
-                              {work.status === 'pending' && (
-                                <>
-                                  <DropdownMenuItem onSelect={() => { setEditingWork(work); setIsEditModalOpen(true); }}>
-                                    <Edit className="mr-2 h-4 w-4"/>
-                                    Edit
-                                  </DropdownMenuItem>
-                                  <AlertDialog>
+                    <TableCell className="text-center">
+                        {work.status === 'pending' ? (
+                            <div className="flex items-center justify-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWork(work); setIsEditModalOpen(true); }}>
+                                    <span className="sr-only">Edit</span>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                                <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                          <Trash2 className="mr-2 h-4 w-4"/>
-                                          Delete
-                                        </DropdownMenuItem>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
+                                            <span className="sr-only">Delete</span>
+                                            <Trash2 className="h-4 w-4" />
+                                        </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
@@ -433,11 +419,18 @@ export default function GoodWorksPage() {
                                             <AlertDialogAction onClick={() => handleDelete(work._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
-                                  </AlertDialog>
-                                </>
-                              )}
-                          </DropdownMenuContent>
-                      </DropdownMenu>
+                                </AlertDialog>
+                            </div>
+                        ) : (
+                            <Button
+                                variant="link"
+                                size="sm"
+                                onClick={() => work.proofUrl && handleViewDetails(work.proofUrl)}
+                                disabled={!work.proofUrl}
+                            >
+                                View Details
+                            </Button>
+                        )}
                     </TableCell>
                   </TableRow>
                 ))
