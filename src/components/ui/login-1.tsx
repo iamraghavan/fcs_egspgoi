@@ -85,9 +85,9 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string, sessionId: string}) => {
+  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string, sessionId?: string}) => {
     const { token, role, id, sessionId } = loginData;
-    if (!token || !role || !id || !sessionId) {
+    if (!token || !role || !id) {
       showAlert("Login Error", "Incomplete login data received from server.");
       return;
     }
@@ -100,7 +100,9 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     localStorage.setItem("userRole", role);
-    localStorage.setItem("sessionId", sessionId);
+    if (sessionId) {
+      localStorage.setItem("sessionId", sessionId);
+    }
     
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
@@ -163,7 +165,7 @@ export function LoginScreen() {
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
-          message: responseData.message || `A verification code has been sent to your ${responseData.mfaType}.`,
+          message: responseData.message || `A verification code has been sent to your ${responseData.mfaType === 'app' ? 'authenticator app' : 'email'}.`,
           userId: responseData.userId,
           email: email
         });
@@ -210,7 +212,6 @@ export function LoginScreen() {
               throw new Error("Incomplete MFA response from server.");
           }
           
-          // Decode JWT to get user ID and role
           const payloadBase64 = token.split('.')[1];
           if (!payloadBase64) {
             throw new Error("Invalid JWT token received.");
@@ -224,7 +225,6 @@ export function LoginScreen() {
               throw new Error("Could not extract user details from token.");
           }
 
-          // Pass everything to the success handler
           processSuccessfulLogin({ id, role, token, sessionId });
 
       } catch (error: any) {
