@@ -91,7 +91,6 @@ export function LoginScreen() {
   }, [searchParams]);
   
   const processSuccessfulLogin = (loginResponse: any) => {
-    // This function now correctly handles both direct login and MFA verification responses.
     const token = loginResponse.data?.token || loginResponse.token;
     const sessionId = loginResponse.data?.sessionId || loginResponse.sessionId;
 
@@ -178,8 +177,7 @@ export function LoginScreen() {
     }
 
     try {
-      // FIX: Renamed 'token' field to avoid backend collision
-      const body = { email, password, "cf-turnstile-response": turnstileToken };
+      const body = { email, password };
 
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
