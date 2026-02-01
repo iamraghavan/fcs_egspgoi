@@ -167,7 +167,7 @@ export default function AppealsPage() {
       formData.append("proof", appealProof);
     }
     
-    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal.appeal._id}`;
+    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal._id}`;
     const method = 'PUT';
 
     try {
@@ -197,9 +197,9 @@ export default function AppealsPage() {
     }
   };
 
-  const handleWithdrawAppeal = async (appealId: string) => {
+  const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${appealId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -436,7 +436,7 @@ export default function AppealsPage() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal.appeal._id)} className="bg-destructive hover:bg-destructive/90">
+                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal._id)} className="bg-destructive hover:bg-destructive/90">
                                                 Confirm & Withdraw
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
@@ -491,5 +491,3 @@ export default function AppealsPage() {
     </div>
   )
 }
-
-    
