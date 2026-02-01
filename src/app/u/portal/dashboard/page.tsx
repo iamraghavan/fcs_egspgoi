@@ -25,9 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
 import { gsap } from "gsap";
-import { useTour } from "@/context/tour-context";
-import { facultyTourSteps } from "@/lib/tour-steps";
-import { TourStep } from "@/components/ui/tour-step";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -120,17 +117,8 @@ export default function FacultyDashboard() {
   const [creditHistory, setCreditHistory] = useState<{ month: string; netCredits: number; positive: number; negative: number; }[]>([]);
   const [loading, setLoading] = useState(true);
   const containerRef = useRef(null);
-  const { startTour, isTourActive } = useTour();
 
   const yearOptions = generateYearOptions();
-
-  useEffect(() => {
-    const hasViewedTour = localStorage.getItem('hasViewedDashboardTour');
-    if (!hasViewedTour) {
-      startTour(facultyTourSteps);
-    }
-  }, [startTour]);
-
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -241,11 +229,10 @@ export default function FacultyDashboard() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Card className="dashboard-card" id="tour-step-1">
+        <Card className="dashboard-card">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Net Credit Balance</CardTitle>
             <Star className="h-4 w-4 text-muted-foreground" />
-             {isTourActive && <TourStep stepId="tour-step-1" />}
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-primary">{userProfileStats?.currentCredit ?? 0}</div>
@@ -262,7 +249,7 @@ export default function FacultyDashboard() {
             <p className="text-xs text-muted-foreground">Net change for current year</p>
           </CardContent>
         </Card>
-        <Card className="dashboard-card" id="tour-step-2">
+        <Card className="dashboard-card">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Positive Points (Year)</CardTitle>
                 <TrendingUp className="h-4 w-4 text-green-500" />
@@ -310,8 +297,7 @@ export default function FacultyDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6" id="tour-step-3">
-         {isTourActive && <TourStep stepId="tour-step-3" />}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="dashboard-card">
             <CardHeader>
                 <CardTitle>Net Credit Change</CardTitle>
@@ -370,8 +356,7 @@ export default function FacultyDashboard() {
         </Card>
       </div>
 
-      <div className="grid gap-6" id="tour-step-4">
-         {isTourActive && <TourStep stepId="tour-step-4" />}
+      <div className="grid gap-6">
         <Card className="md:col-span-2 lg:col-span-3 dashboard-card">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>

@@ -39,6 +39,7 @@ import {
   DialogTrigger,
   DialogFooter,
   DialogClose,
+  DialogDescription,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -53,6 +54,7 @@ import {
 } from "@/components/ui/alert-dialog"
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
+import { Textarea } from "@/components/ui/textarea";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
@@ -68,6 +70,7 @@ type GoodWork = {
   academicYear: string;
   type: 'positive' | 'negative';
   proofUrl?: string;
+  notes?: string;
 };
 
 const getCurrentAcademicYear = () => {
@@ -110,6 +113,12 @@ export default function GoodWorksPage() {
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingWork, setEditingWork] = useState<GoodWork | null>(null);
+
+  const [editTitle, setEditTitle] = useState("");
+  const [editAcademicYear, setEditAcademicYear] = useState("");
+  const [editProof, setEditProof] = useState<File | null>(null);
+  const [editNotes, setEditNotes] = useState("");
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const fetchGoodWorks = async (currentPage: number, currentYear: string, currentStatus: string) => {
     setIsLoading(true);
@@ -186,6 +195,61 @@ export default function GoodWorksPage() {
         fetchGoodWorks(page, academicYear, statusFilter);
     }
   }, [page, academicYear, statusFilter, searchParams]);
+
+  useEffect(() => {
+    if (editingWork) {
+      setEditTitle(editingWork.title);
+      setEditAcademicYear(editingWork.academicYear);
+      setEditNotes(editingWork.notes || "");
+      setEditProof(null); // Reset file input
+    }
+  }, [editingWork]);
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingWork) return;
+    setIsSubmittingEdit(true);
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      showAlert("Authentication Error", "Please log in again.");
+      setIsSubmittingEdit(false);
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("title", editTitle);
+    formData.append("academicYear", editAcademicYear);
+    if (editNotes) {
+      formData.append("notes", editNotes);
+    }
+    if (editProof) {
+      formData.append("proof", editProof);
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/positive/${editingWork._id}`, {
+        method: 'PUT',
+        headers: {
+          "Authorization": `Bearer ${token}`,
+        },
+        body: formData,
+      });
+
+      const responseData = await response.json();
+      if (!response.ok || !responseData.success) {
+        throw new Error(responseData.message || "Failed to update submission.");
+      }
+
+      toast({ title: "Submission Updated", description: "Your changes have been saved." });
+      setIsEditModalOpen(false);
+      fetchGoodWorks(page, academicYear, statusFilter);
+    } catch (error: any) {
+      showAlert("Update Failed", error.message);
+    } finally {
+      setIsSubmittingEdit(false);
+    }
+  };
 
   const handleViewDetails = (proofUrl: string) => {
     window.open(proofUrl, '_blank', 'noopener,noreferrer');
@@ -280,9 +344,9 @@ export default function GoodWorksPage() {
               <TableRow>
                 <TableHead>Date</TableHead>
                 <TableHead>Title</TableHead>
-                <TableHead>Category</TableHead>
                 <TableHead>Points</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Proof</TableHead>
                 <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -296,11 +360,6 @@ export default function GoodWorksPage() {
                   <TableRow key={work._id}>
                     <TableCell className="text-muted-foreground">{new Date(work.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="font-medium text-foreground">{work.title}</TableCell>
-                    <TableCell>
-                      {work.categories.map(cat => (
-                        <Badge key={`${work._id}-${cat._id}`} variant="secondary">{cat.title}</Badge>
-                      ))}
-                    </TableCell>
                     <TableCell className="font-medium text-foreground">{work.points}</TableCell>
                     <TableCell>
                       <Badge
@@ -324,6 +383,15 @@ export default function GoodWorksPage() {
                         }`}></span>
                         {work.status}
                       </Badge>
+                    </TableCell>
+                     <TableCell>
+                      {work.proofUrl ? (
+                        <Button variant="link" size="sm" asChild className="p-0 h-auto">
+                          <a href={work.proofUrl} target="_blank" rel="noopener noreferrer">View</a>
+                        </Button>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">N/A</span>
+                      )}
                     </TableCell>
                     <TableCell>
                        <DropdownMenu>
@@ -410,13 +478,47 @@ export default function GoodWorksPage() {
         <DialogContent>
             <DialogHeader>
                 <DialogTitle>Edit Submission</DialogTitle>
+                <DialogDescription>
+                    Update the details of your submission. Only available for pending items.
+                </DialogDescription>
             </DialogHeader>
-            {/* You would create a form here, similar to AchievementForm, pre-filled with `editingWork` data */}
-             <p className="py-4">Editing functionality is under development.</p>
-             <DialogFooter>
-                <Button onClick={() => setIsEditModalOpen(false)} variant="secondary">Cancel</Button>
-                <Button disabled>Save Changes</Button>
-             </DialogFooter>
+            <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                <div>
+                  <Label htmlFor="edit-title">Achievement Title</Label>
+                  <Input id="edit-title" value={editTitle} onChange={(e) => setEditTitle(e.target.value)} required />
+                </div>
+                 <div>
+                    <Label htmlFor="edit-academicYear">Academic Year</Label>
+                    <Select onValueChange={setEditAcademicYear} value={editAcademicYear}>
+                        <SelectTrigger id="edit-academicYear"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                            {yearOptions.map(year => (
+                                <SelectItem key={year} value={year}>{year}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                 <div>
+                    <Label htmlFor="edit-notes">Notes (Optional)</Label>
+                    <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                </div>
+                <div>
+                    <Label htmlFor="edit-proof">Proof Document (Optional)</Label>
+                    {editingWork?.proofUrl && !editProof && (
+                        <div className="text-sm text-muted-foreground mb-2">
+                            Current file: <a href={editingWork.proofUrl} target="_blank" rel="noopener noreferrer" className="text-primary underline">View current proof</a>.
+                            <p>Upload a new file to replace it.</p>
+                        </div>
+                    )}
+                    <FileUpload onFileSelect={setEditProof} />
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                    <Button type="submit" disabled={isSubmittingEdit}>
+                        {isSubmittingEdit ? 'Saving...' : 'Save Changes'}
+                    </Button>
+                </DialogFooter>
+            </form>
         </DialogContent>
       </Dialog>
     </div>

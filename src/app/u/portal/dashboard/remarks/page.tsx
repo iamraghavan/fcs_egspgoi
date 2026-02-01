@@ -34,7 +34,8 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge, AlertTriangle, Info, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Eye, Badge as BadgeIcon, AlertTriangle, Info, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -213,14 +214,22 @@ export default function NegativeRemarksPage() {
     return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
-  const getStatusBadge = (status: NegativeCredit['status']) => {
+  const getStatusBadge = (remark: NegativeCredit) => {
+    if (remark.status === 'appealed' && remark.appeal) {
+      switch (remark.appeal.status) {
+        case 'pending': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Appeal Pending</Badge>;
+        case 'accepted': return <Badge variant="default" className="bg-green-100 text-green-800">Appeal Accepted</Badge>;
+        case 'rejected': return <Badge variant="destructive">Appeal Rejected</Badge>;
+      }
+    }
+    
     let variant: "default" | "secondary" | "destructive" = "secondary";
-    switch (status) {
+    switch (remark.status) {
         case 'approved': variant = 'default'; break;
         case 'rejected': variant = 'destructive'; break;
         case 'appealed': variant = 'secondary'; break;
     }
-    return <Badge variant={variant} className={status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{status}</Badge>;
+    return <Badge variant={variant} className={remark.status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{remark.status}</Badge>;
   };
 
   const renderAppealDialog = (isEdit = false) => (
@@ -297,7 +306,7 @@ export default function NegativeRemarksPage() {
                   <TableRow key={remark._id}>
                     <TableCell className="font-medium text-foreground">{remark.title}</TableCell>
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusBadge(remark.status)}</TableCell>
+                    <TableCell>{getStatusBadge(remark)}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
                         <DropdownMenu>

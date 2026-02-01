@@ -179,7 +179,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
         />
       </div>
       <div>
-        <Label htmlFor="file-upload">Attachments (Optional)</Label>
+        <Label htmlFor="file-upload">Proof Document (Optional)</Label>
         <FileUpload onFileSelect={setProof} disabled={isLoading} />
         {errors.proof && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="proof-error">{errors.proof}</p>}
       </div>
