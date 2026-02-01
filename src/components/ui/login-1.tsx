@@ -85,9 +85,10 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (loginData: {token: string, role: string, id: string, sessionId?: string}) => {
+  const processSuccessfulLogin = (loginData: {token: string, role?: string, id?: string, sessionId?: string}) => {
     const { token, role, id, sessionId } = loginData;
-    if (!token || !role || !id) {
+    
+    if (!token) {
       showAlert("Login Error", "Incomplete login data received from server.");
       return;
     }
@@ -99,7 +100,31 @@ export function LoginScreen() {
     }
 
     localStorage.setItem("token", token);
-    localStorage.setItem("userRole", role);
+    
+    let userId = id;
+    let userRole = role;
+
+    if (!userId || !userRole) {
+      const payloadBase64 = token.split('.')[1];
+      if (payloadBase64) {
+        try {
+          const decodedPayload = JSON.parse(atob(payloadBase64));
+          userId = userId || decodedPayload.id;
+          userRole = userRole || decodedPayload.role;
+        } catch (e) {
+          showAlert("Login Error", "Could not parse user information from token.");
+          return;
+        }
+      }
+    }
+    
+    if (!userId || !userRole) {
+       showAlert("Login Error", "Could not determine user role or ID.");
+       return;
+    }
+
+    localStorage.setItem("userRole", userRole as string);
+
     if (sessionId) {
       localStorage.setItem("sessionId", sessionId);
     }
@@ -108,15 +133,15 @@ export function LoginScreen() {
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
 
     let redirectUrl;
-    switch (role) {
+    switch (userRole) {
       case 'admin':
-        redirectUrl = `/u/portal/dashboard/admin?uid=${id}`;
+        redirectUrl = `/u/portal/dashboard/admin?uid=${userId}`;
         break;
       case 'oa':
-        redirectUrl = `/u/portal/dashboard/oa?uid=${id}`;
+        redirectUrl = `/u/portal/dashboard/oa?uid=${userId}`;
         break;
       default:
-        redirectUrl = `/u/portal/dashboard?uid=${id}`;
+        redirectUrl = `/u/portal/dashboard?uid=${userId}`;
     }
     
     router.push(redirectUrl);
@@ -185,13 +210,13 @@ export function LoginScreen() {
       setIsLoading(true);
 
       try {
-          if (!mfaState.email || !mfaState.mfaType) {
+          if (!mfaState.userId || !mfaState.mfaType) {
               throw new Error("MFA information is missing. Please try logging in again.");
           }
 
           const body = {
-            email: mfaState.email,
-            code: mfaCode,
+            userId: mfaState.userId,
+            code: mfaCode.trim(),
             type: mfaState.mfaType,
           };
 
@@ -206,26 +231,7 @@ export function LoginScreen() {
               throw new Error(responseData.message || 'MFA verification failed.');
           }
           
-          const { token, sessionId } = responseData;
-
-          if (!token || !sessionId) {
-              throw new Error("Incomplete MFA response from server.");
-          }
-          
-          const payloadBase64 = token.split('.')[1];
-          if (!payloadBase64) {
-            throw new Error("Invalid JWT token received.");
-          }
-          const decodedPayload = JSON.parse(atob(payloadBase64));
-          
-          const id = decodedPayload.id;
-          const role = decodedPayload.role;
-
-          if (!id || !role) {
-              throw new Error("Could not extract user details from token.");
-          }
-
-          processSuccessfulLogin({ id, role, token, sessionId });
+          processSuccessfulLogin(responseData);
 
       } catch (error: any) {
           showAlert('Verification Failed', error.message);
