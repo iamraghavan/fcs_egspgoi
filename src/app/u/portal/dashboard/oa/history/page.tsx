@@ -48,7 +48,7 @@ import { colleges } from "@/lib/colleges";
 import { cn } from "@/lib/utils";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type IssuedRemark = {
     _id: string;

@@ -17,7 +17,7 @@ import { useAlert } from "@/context/alert-context";
 import { gsap } from "gsap";
 import { Users, FolderKanban, ShieldAlert, BarChartHorizontal } from 'lucide-react';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type AnalyticsData = {
     totalUsers: number;

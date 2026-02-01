@@ -51,7 +51,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type GoodWork = {
   _id: string;

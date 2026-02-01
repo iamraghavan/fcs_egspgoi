@@ -19,7 +19,7 @@ import { MfaSettings } from "@/components/mfa-settings"
 import { SessionManager } from "@/components/session-manager"
 import { PushNotificationManager } from "@/components/push-notification-manager"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type UserProfile = {
   name: string;
@@ -393,7 +393,7 @@ export default function SettingsPage() {
                         <Card className="mt-6">
                             <CardHeader>
                                 <CardTitle>Push Notifications</CardTitle>
-                                <CardDescription>Receive instant updates directly on your device, even when the browser is closed.</CardDescription>
+                                <CardDescription>Enable push notifications to receive instant updates. Your browser will ask for permission after you click the button below.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <PushNotificationManager />

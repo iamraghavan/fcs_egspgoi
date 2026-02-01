@@ -46,7 +46,7 @@ import { ArrowUpDown, Edit, Trash2 } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type CreditTitle = {
   _id: string;

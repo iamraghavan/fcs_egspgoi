@@ -13,7 +13,7 @@ import {
 import { formatDistanceToNow } from 'date-fns';
 import { useAlert } from "@/context/alert-context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
 
 type Credit = {

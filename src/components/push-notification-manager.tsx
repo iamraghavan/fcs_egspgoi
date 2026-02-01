@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useEffect, useState } from 'react';
@@ -114,9 +115,14 @@ export function PushNotificationManager() {
     }
 
     return (
-        <Button onClick={subscribeUser} disabled={isProcessing}>
-            <BellRing className="mr-2 h-4 w-4" />
-            {isProcessing ? 'Processing...' : 'Enable Push Notifications'}
-        </Button>
+        <div className="space-y-3">
+            <Button onClick={subscribeUser} disabled={isProcessing}>
+                <BellRing className="mr-2 h-4 w-4" />
+                {isProcessing ? 'Processing...' : 'Enable Push Notifications'}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+                Your browser will ask for permission. Please select "Allow" to receive updates.
+            </p>
+        </div>
     );
 }

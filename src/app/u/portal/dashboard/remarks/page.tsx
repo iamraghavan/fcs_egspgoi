@@ -56,7 +56,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAlert } from "@/context/alert-context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type AppealData = {
     _id: string;

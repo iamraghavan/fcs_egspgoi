@@ -38,7 +38,7 @@ import { gsap } from "gsap";
 import { Label } from "@/components/ui/label";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type FacultyAccount = {
   _id: string;
