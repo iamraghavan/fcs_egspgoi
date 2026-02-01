@@ -40,8 +40,10 @@ export function LoginScreen() {
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const [rememberMe, setRememberMe] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  
   const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "" });
   const [mfaCode, setMfaCode] = useState("");
+  const [userIdForMfa, setUserIdForMfa] = useState<string>("");
 
   const formRef = useRef(null);
 
@@ -122,7 +124,6 @@ export function LoginScreen() {
     setIsLoading(true);
 
     if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
-      // OA login logic
       const oaUser = {
         token: 'mock_oa_token',
         role: 'oa',
@@ -158,6 +159,7 @@ export function LoginScreen() {
       }
       
       if (responseData.mfaRequired) {
+        setUserIdForMfa(responseData.userId); // Store the userId for the next step
         setMfaState({
           mfaRequired: true,
           mfaType: responseData.mfaType,
@@ -179,14 +181,16 @@ export function LoginScreen() {
       setIsLoading(true);
 
       try {
+          const body = {
+            userId: userIdForMfa,
+            code: mfaCode,
+            type: mfaState.mfaType,
+          };
+
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  email: email,
-                  code: mfaCode,
-                  type: mfaState.mfaType,
-              }),
+              body: JSON.stringify(body),
           });
 
           const responseData = await response.json();
@@ -200,7 +204,6 @@ export function LoginScreen() {
               throw new Error("Incomplete MFA response from server.");
           }
           
-          // Decode JWT to get id and role
           const payloadBase64 = token.split('.')[1];
           const decodedPayload = JSON.parse(atob(payloadBase64));
           
