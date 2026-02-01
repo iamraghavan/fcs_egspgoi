@@ -23,6 +23,8 @@ type MfaState = {
     mfaRequired: boolean;
     mfaType: 'email' | 'app' | null;
     message: string;
+    userId: string | null;
+    email: string | null;
 };
 
 export function LoginScreen() {
@@ -41,7 +43,7 @@ export function LoginScreen() {
   const [rememberMe, setRememberMe] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
-  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "" });
+  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "", userId: null, email: null });
   const [mfaCode, setMfaCode] = useState("");
 
   const formRef = useRef(null);
@@ -162,6 +164,8 @@ export function LoginScreen() {
           mfaRequired: true,
           mfaType: responseData.mfaType,
           message: responseData.message || `A verification code has been sent to your ${responseData.mfaType}.`,
+          userId: responseData.userId,
+          email: email
         });
       } else {
         processSuccessfulLogin(responseData.data);
@@ -179,8 +183,12 @@ export function LoginScreen() {
       setIsLoading(true);
 
       try {
+          if (!mfaState.email || !mfaState.mfaType) {
+              throw new Error("MFA information is missing. Please try logging in again.");
+          }
+
           const body = {
-            email: email,
+            email: mfaState.email,
             code: mfaCode,
             type: mfaState.mfaType,
           };
@@ -202,7 +210,11 @@ export function LoginScreen() {
               throw new Error("Incomplete MFA response from server.");
           }
           
+          // Decode JWT to get user ID and role
           const payloadBase64 = token.split('.')[1];
+          if (!payloadBase64) {
+            throw new Error("Invalid JWT token received.");
+          }
           const decodedPayload = JSON.parse(atob(payloadBase64));
           
           const id = decodedPayload.id;
@@ -212,6 +224,7 @@ export function LoginScreen() {
               throw new Error("Could not extract user details from token.");
           }
 
+          // Pass everything to the success handler
           processSuccessfulLogin({ id, role, token, sessionId });
 
       } catch (error: any) {
@@ -344,7 +357,7 @@ export function LoginScreen() {
           <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full">
               {isLoading ? 'Verifying...' : 'Verify'}
           </Button>
-          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, message: "" })}>
+          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, message: "", userId: null, email: null })}>
               Back to Login
           </Button>
       </form>
