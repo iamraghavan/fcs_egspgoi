@@ -19,12 +19,11 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
-type MfaState = {
-    mfaRequired: boolean;
-    mfaType: 'email' | 'app' | null;
-    message: string;
+type TempAuthData = {
     userId: string | null;
     email: string | null;
+    mfaType: 'email' | 'app' | null;
+    message: string;
 };
 
 export function LoginScreen() {
@@ -32,18 +31,24 @@ export function LoginScreen() {
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
 
+  // Login form state
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  
+  // UI state
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isCapsOn, setIsCapsOn] = useState(false);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
-  const [rememberMe, setRememberMe] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
-  const [mfaState, setMfaState] = useState<MfaState>({ mfaRequired: false, mfaType: null, message: "", userId: null, email: null });
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+
+  // MFA flow state
+  const [step, setStep] = useState<'credentials' | 'mfa'>('credentials');
+  const [tempAuthData, setTempAuthData] = useState<TempAuthData | null>(null);
   const [mfaCode, setMfaCode] = useState("");
 
   const formRef = useRef(null);
@@ -85,8 +90,8 @@ export function LoginScreen() {
     }
   }, [searchParams]);
   
-  const processSuccessfulLogin = (loginData: {token: string, role?: string, id?: string, sessionId?: string}) => {
-    const { token, role, id, sessionId } = loginData;
+  const processSuccessfulLogin = (loginResponse: {token: string, sessionId?: string}) => {
+    const { token, sessionId } = loginResponse;
     
     if (!token) {
       showAlert("Login Error", "Incomplete login data received from server.");
@@ -101,29 +106,25 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     
-    let userId = id;
-    let userRole = role;
+    let userId: string | undefined;
+    let userRole: string | undefined;
 
-    if (!userId || !userRole) {
-      const payloadBase64 = token.split('.')[1];
-      if (payloadBase64) {
-        try {
-          const decodedPayload = JSON.parse(atob(payloadBase64));
-          userId = userId || decodedPayload.id;
-          userRole = userRole || decodedPayload.role;
-        } catch (e) {
-          showAlert("Login Error", "Could not parse user information from token.");
-          return;
-        }
-      }
+    try {
+        const payloadBase64 = token.split('.')[1];
+        const decodedPayload = JSON.parse(atob(payloadBase64));
+        userId = decodedPayload.id;
+        userRole = decodedPayload.role;
+    } catch (e) {
+        showAlert("Login Error", "Could not parse user information from token.");
+        return;
     }
     
     if (!userId || !userRole) {
-       showAlert("Login Error", "Could not determine user role or ID.");
+       showAlert("Login Error", "Could not determine user role or ID from token.");
        return;
     }
 
-    localStorage.setItem("userRole", userRole as string);
+    localStorage.setItem("userRole", userRole);
 
     if (sessionId) {
       localStorage.setItem("sessionId", sessionId);
@@ -153,26 +154,29 @@ export function LoginScreen() {
 
     if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
       const oaUser = {
-        token: 'mock_oa_token',
+        token: 'mock_oa_token', // This will be handled client-side
         role: 'oa',
         id: 'oa_user_01',
-        sessionId: 'mock_session_id',
+        sessionId: 'mock_session_id_oa',
       };
-      processSuccessfulLogin(oaUser);
+      // For mock OA user, we need to manually set local storage and redirect
+      localStorage.setItem("token", oaUser.token);
+      localStorage.setItem("userRole", oaUser.role);
+      localStorage.setItem("sessionId", oaUser.sessionId);
+      const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
+      localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
+      router.push(`/u/portal/dashboard/oa?uid=${oaUser.id}`);
       return;
     }
 
-    if (!mfaState.mfaRequired && !turnstileToken) {
+    if (!turnstileToken) {
         showAlert("Verification Failed", "Please complete the security check.");
         setIsLoading(false);
         return;
     }
 
     try {
-      const body: any = { email, password };
-      if (!mfaState.mfaRequired && turnstileToken) {
-        body.token = turnstileToken;
-      }
+      const body = { email, password, token: turnstileToken };
 
       const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
         method: "POST",
@@ -187,14 +191,15 @@ export function LoginScreen() {
       }
       
       if (responseData.mfaRequired) {
-        setMfaState({
-          mfaRequired: true,
+        setTempAuthData({
+          userId: responseData.userId,
+          email: email,
           mfaType: responseData.mfaType,
           message: responseData.message || `A verification code has been sent to your ${responseData.mfaType === 'app' ? 'authenticator app' : 'email'}.`,
-          userId: responseData.userId,
-          email: email
         });
+        setStep('mfa');
       } else {
+        // Non-MFA login success
         processSuccessfulLogin(responseData.data);
       }
 
@@ -210,14 +215,14 @@ export function LoginScreen() {
       setIsLoading(true);
 
       try {
-          if (!mfaState.userId || !mfaState.mfaType) {
+          if (!tempAuthData || !tempAuthData.email || !tempAuthData.mfaType) {
               throw new Error("MFA information is missing. Please try logging in again.");
           }
 
           const body = {
-            userId: mfaState.userId,
+            email: tempAuthData.email,
             code: mfaCode.trim(),
-            type: mfaState.mfaType,
+            type: tempAuthData.mfaType,
           };
 
           const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
@@ -244,7 +249,7 @@ export function LoginScreen() {
     setShowPassword(!showPassword);
   };
   
-  const showTurnstile = !!email && !!password && !mfaState.mfaRequired;
+  const showTurnstile = !!email && !!password && step === 'credentials';
 
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
@@ -306,15 +311,15 @@ export function LoginScreen() {
         )}
       </div>
 
-        {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
-          <div className="flex justify-center">
-              <Turnstile
-                  sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
-                  onVerify={(token) => setTurnstileToken(token)}
-                  onExpire={() => setTurnstileToken(null)}
-                  theme="light"
-              />
-          </div>
+      {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
+        <div className="flex justify-center">
+            <Turnstile
+                sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                onVerify={(token) => setTurnstileToken(token)}
+                onExpire={() => setTurnstileToken(null)}
+                theme="light"
+            />
+        </div>
       )}
 
       <div className="flex items-center justify-between">
@@ -339,10 +344,10 @@ export function LoginScreen() {
 
   const renderMfaForm = () => (
       <form onSubmit={handleMfaVerification} className="space-y-6">
-          <p className="text-center text-sm text-muted-foreground">{mfaState.message}</p>
+          <p className="text-center text-sm text-muted-foreground">{tempAuthData?.message}</p>
           <div>
               <Label htmlFor="mfa-code">
-                  {mfaState.mfaType === 'email' ? '6-Digit Code from Email' : '6-Digit Code from Authenticator App'}
+                  {tempAuthData?.mfaType === 'email' ? '6-Digit Code from Email' : '6-Digit Code from Authenticator App'}
               </Label>
               <div className="relative mt-2">
                   <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
@@ -363,7 +368,7 @@ export function LoginScreen() {
           <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full">
               {isLoading ? 'Verifying...' : 'Verify'}
           </Button>
-          <Button variant="link" className="w-full" onClick={() => setMfaState({ mfaRequired: false, mfaType: null, message: "", userId: null, email: null })}>
+          <Button variant="link" className="w-full" onClick={() => setStep('credentials')}>
               Back to Login
           </Button>
       </form>
@@ -395,14 +400,14 @@ export function LoginScreen() {
                   className="mx-auto mb-4"
               />
             <h2 className="text-3xl font-bold text-foreground mb-2">
-              {mfaState.mfaRequired ? 'Two-Factor Authentication' : 'Welcome Back'}
+              {step === 'mfa' ? 'Two-Factor Authentication' : 'Welcome Back'}
             </h2>
             <p className="text-muted-foreground">
-              {mfaState.mfaRequired ? 'Enter the code to complete your login.' : 'Welcome back to CreditWise — Continue your journey'}
+              {step === 'mfa' ? 'Enter the code to complete your login.' : 'Welcome back to CreditWise — Continue your journey'}
             </p>
           </div>
 
-          {mfaState.mfaRequired ? renderMfaForm() : renderLoginForm()}
+          {step === 'mfa' ? renderMfaForm() : renderLoginForm()}
         </div>
       </div>
     </div>
