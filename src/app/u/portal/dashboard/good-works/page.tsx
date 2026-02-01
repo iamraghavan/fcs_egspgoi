@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import { useState, useEffect } from "react";
@@ -21,12 +22,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
 import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
@@ -397,14 +392,14 @@ export default function GoodWorksPage() {
                         {work.status === 'pending' ? (
                             <div className="flex items-center justify-center gap-1">
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingWork(work); setIsEditModalOpen(true); }}>
-                                    <span className="sr-only">Edit</span>
                                     <Edit className="h-4 w-4" />
+                                    <span className="sr-only">Edit</span>
                                 </Button>
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
                                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive">
-                                            <span className="sr-only">Delete</span>
                                             <Trash2 className="h-4 w-4" />
+                                            <span className="sr-only">Delete</span>
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
