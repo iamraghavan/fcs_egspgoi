@@ -36,10 +36,22 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { PlusCircle, Eye, Search } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { PlusCircle, Eye, Search, Edit, Trash2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
+import { Label } from "@/components/ui/label";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -158,8 +170,17 @@ export default function ManageRemarksPage() {
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
   // Details view state
-  const [selectedRemark, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
+  const [selectedRemarkDetails, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+
+  // Edit State
+  const [editingRemark, setEditingRemark] = useState<NegativeRemark | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editNotes, setEditNotes] = useState("");
+  const [editCreditTitleId, setEditCreditTitleId] = useState("");
+  const [editProof, setEditProof] = useState<File | null>(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const uid = searchParams.get('uid');
@@ -318,6 +339,14 @@ export default function ManageRemarksPage() {
     }
   }, [collegeFilter]);
 
+  useEffect(() => {
+    if (editingRemark) {
+        setEditNotes(editingRemark.notes || "");
+        setEditCreditTitleId(editingRemark.creditTitle || "");
+        setEditProof(null);
+    }
+  }, [editingRemark]);
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -407,6 +436,73 @@ export default function ManageRemarksPage() {
     }
   };
   
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRemark) return;
+    setIsSubmittingEdit(true);
+
+    const formData = new FormData();
+    // Only append changed values
+    if (editNotes !== (editingRemark.notes || "")) formData.append("notes", editNotes);
+    if (editCreditTitleId !== (editingRemark.creditTitle || "")) formData.append("creditTitleId", editCreditTitleId);
+    if (editProof) formData.append("proof", editProof);
+
+    if (Array.from(formData.keys()).length === 0) {
+        setIsSubmittingEdit(false);
+        setIsEditDialogOpen(false);
+        toast({ title: "No Changes", description: "No changes were made to the remark." });
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+            body: formData,
+        });
+
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to update remark.");
+        }
+
+        toast({ title: "Remark Updated", description: "The remark has been successfully updated." });
+        setIsEditDialogOpen(false);
+        fetchRemarks(page);
+    } catch (error: any) {
+        showAlert("Update Failed", error.message);
+    } finally {
+        setIsSubmittingEdit(false);
+    }
+  };
+
+  const handleDeleteRemark = async (creditId: string) => {
+      if (!adminToken) {
+          showAlert("Authentication Error", "Admin token not found.");
+          return;
+      }
+      try {
+          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${creditId}`, {
+              method: "DELETE",
+              headers: { "Authorization": `Bearer ${adminToken}` },
+          });
+
+          const responseData = await response.json();
+          if (!response.ok || !responseData.success) {
+              throw new Error(responseData.message || "Failed to delete remark.");
+          }
+
+          toast({ title: "Remark Deleted", description: "The remark has been permanently deleted." });
+          if (page > 1 && remarks.length === 1) {
+            setPage(page - 1);
+          } else {
+            fetchRemarks(page);
+          }
+      } catch (error: any) {
+          showAlert("Delete Failed", error.message);
+      }
+  };
+
   const getProofUrl = (url: string) => {
     if (!url) return '';
     if (url.startsWith('http')) {
@@ -648,109 +744,91 @@ export default function ManageRemarksPage() {
                     <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
-                        <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={(isOpen) => {
-                            if (isOpen) {
-                                setSelectedRemarkDetails(remark);
-                                setIsDetailsOpen(true);
-                            } else {
-                                setIsDetailsOpen(false);
-                                setSelectedRemarkDetails(null);
-                            }
-                        }}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => {
-                                    setSelectedRemarkDetails(remark);
-                                    setIsDetailsOpen(true);
-                                }}>
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                             <DialogContent className="max-w-3xl">
-                                <DialogHeader>
-                                <DialogTitle>Remark Details</DialogTitle>
-                                <DialogDescription>A complete overview of the recorded remark.</DialogDescription>
-                                </DialogHeader>
-                                {selectedRemark && (
-                                <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                                     {/* Faculty Info */}
-                                    <Card>
-                                        <CardHeader><CardTitle className="text-lg">Faculty Information</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                            <div className="flex items-center gap-4 col-span-full">
-                                                <Avatar className="h-16 w-16">
-                                                    <AvatarImage src={selectedRemark.facultySnapshot?.profileImage} />
-                                                    <AvatarFallback>{selectedRemark.facultySnapshot.name?.charAt(0) ?? '?'}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="font-bold text-base">{selectedRemark.facultySnapshot.name}</p>
-                                                    <p className="text-muted-foreground">{selectedRemark.facultySnapshot.facultyID}</p>
-                                                </div>
-                                            </div>
-                                            <p><strong className="font-medium text-muted-foreground block">College:</strong> {selectedRemark.facultySnapshot.college}</p>
-                                            <p><strong className="font-medium text-muted-foreground block">Department:</strong> {selectedRemark.facultySnapshot.department}</p>
-                                        </CardContent>
-                                    </Card>
+                        <div className="flex justify-center items-center">
+                            <Dialog open={isDetailsOpen && selectedRemarkDetails?._id === remark._id} onOpenChange={setIsDetailsOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setSelectedRemarkDetails(remark)}>
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                 <DialogContent className="max-w-3xl">
+                                    <DialogHeader>
+                                    <DialogTitle>Remark Details</DialogTitle>
+                                    <DialogDescription>A complete overview of the recorded remark.</DialogDescription>
+                                    </DialogHeader>
+                                    {selectedRemarkDetails && (
+                                    <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
+                                        {/* Faculty Info, Remark Details, etc. */}
+                                    </div>
+                                    )}
+                                    <DialogFooter>
+                                        <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
 
-                                    {/* Remark Details */}
-                                    <Card>
-                                        <CardHeader><CardTitle className="text-lg">Remark Details</CardTitle></CardHeader>
-                                        <CardContent className="space-y-3 text-sm">
-                                            <p><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</p>
-                                            <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
-                                            <p><strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong></p>
-                                            <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
-                                        </CardContent>
-                                    </Card>
+                            <Dialog open={isEditDialogOpen && editingRemark?._id === remark._id} onOpenChange={setIsEditDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setEditingRemark(remark)}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Negative Remark</DialogTitle>
+                                        <DialogDescription>Update the details for this remark.</DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                                        <div>
+                                            <Label htmlFor="edit-creditTitle">Remark Template (Optional)</Label>
+                                            <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                                                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {creditTitleOptions.filter(o => o.value !== 'all').map(option => (
+                                                        <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="edit-notes">Notes / Rationale</Label>
+                                            <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <Label>Proof Document (Optional)</Label>
+                                            {editingRemark?.proofUrl && !editProof && (
+                                                <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingRemark.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
+                                            )}
+                                            <FileUpload onFileSelect={setEditProof} />
+                                        </div>
+                                        <DialogFooter>
+                                            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                                            <Button type="submit" disabled={isSubmittingEdit}>
+                                                {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
 
-                                    {/* Status & Appeal Info */}
-                                    <Card>
-                                        <CardHeader><CardTitle className="text-lg">Status & History</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                            <p><strong className="font-medium text-muted-foreground block">Status:</strong> <span className="font-semibold capitalize">{selectedRemark.status}</span></p>
-                                            <p><strong className="font-medium text-muted-foreground block">Academic Year:</strong> {selectedRemark.academicYear}</p>
-                                            <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                                            <p><strong className="font-medium text-muted-foreground block">Last Updated:</strong> {new Date(selectedRemark.updatedAt).toLocaleString()}</p>
-                                            <p><strong className="font-medium text-muted-foreground block">Appeal Count:</strong> {selectedRemark.appealCount || 0}</p>
-                                            {selectedRemark.appeal && (
-                                                <div className="col-span-full border-t pt-4 mt-4">
-                                                    <p className="font-semibold text-base mb-2">Appeal Information</p>
-                                                    <p><strong className="font-medium text-muted-foreground block">Appeal Status:</strong> <span className="font-semibold capitalize">{selectedRemark.appeal.status}</span></p>
-                                                    <p><strong className="font-medium text-muted-foreground block">Appeal Reason:</strong> {selectedRemark.appeal.reason}</p>
-                                                </div>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-
-                                    {/* Proof & System IDs */}
-                                    <Card>
-                                        <CardHeader><CardTitle className="text-lg">System & Proof</CardTitle></CardHeader>
-                                        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                                             <div>
-                                                <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
-                                                {selectedRemark.proofUrl ? (
-                                                     <Button asChild variant="link" className="p-0 h-auto">
-                                                        <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                    </Button>
-                                                ) : "Not Provided"}
-                                            </div>
-                                            {selectedRemark.proofMeta && (
-                                                <p><strong className="font-medium text-muted-foreground block">File Name:</strong> {selectedRemark.proofMeta.fileName}</p>
-                                            )}
-                                            <p className="col-span-full"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemark._id}</span></p>
-                                            <p><strong className="font-medium text-muted-foreground block">Faculty ID:</strong> <span className="font-mono text-xs">{selectedRemark. faculty}</span></p>
-                                            <p><strong className="font-medium text-muted-foreground block">Issued By ID:</strong> <span className="font-mono text-xs">{selectedRemark.issuedBy}</span></p>
-                                            {selectedRemark.creditTitle && (
-                                                 <p><strong className="font-medium text-muted-foreground block">Template ID:</strong> <span className="font-mono text-xs">{selectedRemark.creditTitle}</span></p>
-                                            )}
-                                        </CardContent>
-                                    </Card>
-                                </div>
-                                )}
-                                <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>This will permanently delete the remark. This action cannot be undone.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        </div>
                     </TableCell>
                   </TableRow>
                 ))

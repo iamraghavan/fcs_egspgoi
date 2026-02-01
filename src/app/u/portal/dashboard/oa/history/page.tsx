@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Eye, Calendar as CalendarIcon, Trash2 } from "lucide-react";
+import { Search, Eye, Calendar as CalendarIcon, Trash2, Edit } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -46,7 +46,9 @@ import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { colleges } from "@/lib/colleges";
 import { cn } from "@/lib/utils";
-
+import { Label } from "@/components/ui/label";
+import { FileUpload } from "@/components/file-upload";
+import { Textarea } from "@/components/ui/textarea";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -76,6 +78,14 @@ type IssuedRemark = {
     updatedAt: string;
     creditTitle?: string;
 };
+
+type CreditTitle = {
+  _id: string;
+  title: string;
+  points: number;
+  type: 'positive' | 'negative';
+};
+
 
 type Departments = {
     [key: string]: string[];
@@ -129,6 +139,15 @@ export default function IssuedHistoryPage() {
   // Details view state
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  
+  // Edit State
+  const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
+  const [editingRemark, setEditingRemark] = useState<IssuedRemark | null>(null);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editNotes, setEditNotes] = useState("");
+  const [editCreditTitleId, setEditCreditTitleId] = useState("");
+  const [editProof, setEditProof] = useState<File | null>(null);
+  const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const uid = searchParams.get('uid');
@@ -177,6 +196,24 @@ export default function IssuedHistoryPage() {
   };
 
   useEffect(() => {
+    const fetchCreditTitles = async () => {
+        if (!adminToken) return;
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+                headers: { Authorization: `Bearer ${adminToken}` },
+            });
+            const data = await response.json();
+            if(data.success) {
+                setCreditTitles(data.items.filter((ct: any) => ct.type === 'negative'));
+            }
+        } catch (error) {
+            console.error("Failed to fetch credit titles", error);
+        }
+    };
+    fetchCreditTitles();
+  }, [adminToken]);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
         if (adminToken) {
             fetchRemarks(page);
@@ -198,6 +235,53 @@ export default function IssuedHistoryPage() {
     setDepartmentFilter("all"); 
   }, [collegeFilter]);
 
+   useEffect(() => {
+    if (editingRemark) {
+        setEditNotes(editingRemark.notes || "");
+        setEditCreditTitleId(editingRemark.creditTitle || "");
+        setEditProof(null);
+    }
+  }, [editingRemark]);
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingRemark) return;
+    setIsSubmittingEdit(true);
+
+    const formData = new FormData();
+    if (editNotes !== (editingRemark.notes || "")) formData.append("notes", editNotes);
+    if (editCreditTitleId && editCreditTitleId !== (editingRemark.creditTitle || "")) formData.append("creditTitleId", editCreditTitleId);
+    if (editProof) formData.append("proof", editProof);
+
+    if (Array.from(formData.keys()).length === 0) {
+        setIsSubmittingEdit(false);
+        setIsEditDialogOpen(false);
+        toast({ title: "No Changes", description: "No changes were made to the remark." });
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
+            method: 'PUT',
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+            body: formData,
+        });
+
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to update remark.");
+        }
+
+        toast({ title: "Remark Updated", description: "The remark has been successfully updated." });
+        setIsEditDialogOpen(false);
+        fetchRemarks(page);
+    } catch (error: any) {
+        showAlert("Update Failed", error.message);
+    } finally {
+        setIsSubmittingEdit(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!adminToken) {
         showAlert("Authentication Error", "Admin token not found.");
@@ -205,7 +289,7 @@ export default function IssuedHistoryPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/admin/oa/credits/issued/${id}?soft=true`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${id}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${adminToken}` },
         });
@@ -215,7 +299,7 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "Failed to delete remark.");
         }
 
-        toast({ title: "Remark Deleted", description: "The remark has been successfully (soft) deleted." });
+        toast({ title: "Remark Deleted", description: "The remark has been permanently deleted." });
         fetchRemarks(page);
     } catch (error: any) {
         showAlert("Delete Failed", error.message);
@@ -367,20 +451,9 @@ export default function IssuedHistoryPage() {
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={(isOpen) => {
-                            if (isOpen) {
-                                setSelectedRemark(remark);
-                                setIsDetailsOpen(true);
-                            } else {
-                                setIsDetailsOpen(false);
-                                setSelectedRemark(null);
-                            }
-                        }}>
+                        <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={setIsDetailsOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => {
-                                    setSelectedRemark(remark);
-                                    setIsDetailsOpen(true);
-                                }}>
+                                <Button variant="ghost" size="icon" onClick={() => setSelectedRemark(remark)}>
                                     <Eye className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
@@ -414,6 +487,49 @@ export default function IssuedHistoryPage() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
+                        <Dialog open={isEditDialogOpen && editingRemark?._id === remark._id} onOpenChange={setIsEditDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => setEditingRemark(remark)}>
+                                    <Edit className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                             <DialogContent>
+                                <DialogHeader>
+                                    <DialogTitle>Edit Negative Remark</DialogTitle>
+                                    <DialogDescription>Update the details for this remark.</DialogDescription>
+                                </DialogHeader>
+                                <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                                    <div>
+                                        <Label htmlFor="edit-creditTitle">Remark Template (Optional)</Label>
+                                        <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                                            <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                                            <SelectContent>
+                                                {creditTitles.map(ct => (
+                                                    <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <div>
+                                        <Label htmlFor="edit-notes">Notes / Rationale</Label>
+                                        <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                                    </div>
+                                    <div>
+                                        <Label>Proof Document (Optional)</Label>
+                                        {editingRemark?.proofUrl && !editProof && (
+                                            <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingRemark.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
+                                        )}
+                                        <FileUpload onFileSelect={setEditProof} />
+                                    </div>
+                                    <DialogFooter>
+                                        <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                                        <Button type="submit" disabled={isSubmittingEdit}>
+                                            {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                                        </Button>
+                                    </DialogFooter>
+                                </form>
+                            </DialogContent>
+                        </Dialog>
                          <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={remark.status === 'deleted'}>
@@ -424,7 +540,7 @@ export default function IssuedHistoryPage() {
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    This action will mark the remark as deleted. It can be recovered by an administrator, but will be hidden from most views.
+                                    This will permanently delete this remark. This action cannot be undone.
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -461,5 +577,3 @@ export default function IssuedHistoryPage() {
     </div>
   )
 }
-
-    
