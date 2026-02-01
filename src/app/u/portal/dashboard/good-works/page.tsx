@@ -27,9 +27,33 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Label } from "@/components/ui/label";
+import { FileUpload } from "@/components/file-upload";
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -72,6 +96,7 @@ const generateYearOptions = () => {
 
 export default function GoodWorksPage() {
   const { showAlert } = useAlert();
+  const { toast } = useToast();
   const searchParams = useSearchParams();
   const [goodWorks, setGoodWorks] = useState<GoodWork[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -82,6 +107,9 @@ export default function GoodWorksPage() {
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   const uid = searchParams.get('uid');
+
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingWork, setEditingWork] = useState<GoodWork | null>(null);
 
   const fetchGoodWorks = async (currentPage: number, currentYear: string, currentStatus: string) => {
     setIsLoading(true);
@@ -160,11 +188,32 @@ export default function GoodWorksPage() {
   }, [page, academicYear, statusFilter, searchParams]);
 
   const handleViewDetails = (proofUrl: string) => {
-    const userConfirmation = window.confirm("You are being redirected to an external website. This application is not responsible for the content of external sites.");
-    if (userConfirmation) {
-      window.open(proofUrl, '_blank', 'noopener,noreferrer');
+    window.open(proofUrl, '_blank', 'noopener,noreferrer');
+  };
+  
+  const handleDelete = async (creditId: string) => {
+    const originalWorks = [...goodWorks];
+    // Optimistic UI update
+    setGoodWorks(prevWorks => prevWorks.filter(work => work._id !== creditId));
+
+    const token = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/positive/${creditId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (!response.ok) throw new Error("Server responded with an error.");
+        
+        toast({ title: "Submission Deleted", description: "Your submission has been successfully deleted." });
+        // Re-fetch to ensure data consistency, though optimistic update handles UI
+        fetchGoodWorks(page, academicYear, statusFilter);
+    } catch (error) {
+        // Revert UI on failure
+        setGoodWorks(originalWorks);
+        showAlert("Deletion Failed", "Could not delete the submission. Please try again.");
     }
   };
+
 
   const filteredWorks = goodWorks.filter(work => {
     const matchesSearch = searchTerm.trim() === "" ||
@@ -277,7 +326,7 @@ export default function GoodWorksPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <DropdownMenu>
+                       <DropdownMenu>
                           <DropdownMenuTrigger asChild>
                               <Button variant="ghost" className="h-8 w-8 p-0">
                                   <span className="sr-only">Open menu</span>
@@ -291,6 +340,34 @@ export default function GoodWorksPage() {
                               >
                                   View Details
                               </DropdownMenuItem>
+                              {work.status === 'pending' && (
+                                <>
+                                  <DropdownMenuItem onSelect={() => { setEditingWork(work); setIsEditModalOpen(true); }}>
+                                    <Edit className="mr-2 h-4 w-4"/>
+                                    Edit
+                                  </DropdownMenuItem>
+                                  <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                          <Trash2 className="mr-2 h-4 w-4"/>
+                                          Delete
+                                        </DropdownMenuItem>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete your submission.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(work._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                  </AlertDialog>
+                                </>
+                              )}
                           </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -328,6 +405,20 @@ export default function GoodWorksPage() {
             </nav>
         </div>
       </div>
+      {/* Edit Dialog */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Edit Submission</DialogTitle>
+            </DialogHeader>
+            {/* You would create a form here, similar to AchievementForm, pre-filled with `editingWork` data */}
+             <p className="py-4">Editing functionality is under development.</p>
+             <DialogFooter>
+                <Button onClick={() => setIsEditModalOpen(false)} variant="secondary">Cancel</Button>
+                <Button disabled>Save Changes</Button>
+             </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

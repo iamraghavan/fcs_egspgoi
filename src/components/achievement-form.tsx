@@ -46,7 +46,7 @@ export type AchievementFormData = {
   title: string;
   creditTitleId: string;
   academicYear: string;
-  proof: File;
+  proof: File | null;
   points: number;
   notes?: string;
 };
@@ -75,8 +75,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
     if (!title.trim()) newErrors.title = "Achievement title is required.";
     if (!selectedCreditTitleId) newErrors.category = "Category is required.";
     if (!academicYear) newErrors.academicYear = "Academic year is required.";
-    if (!proof) newErrors.proof = "A proof document is required.";
-
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -89,7 +88,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
       title,
       creditTitleId: selectedCreditTitleId,
       academicYear,
-      proof: proof!,
+      proof: proof,
       points: selectedCreditTitle.points,
       notes: notes,
     });
@@ -180,7 +179,7 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
         />
       </div>
       <div>
-        <Label htmlFor="file-upload">Attachments</Label>
+        <Label htmlFor="file-upload">Attachments (Optional)</Label>
         <FileUpload onFileSelect={setProof} disabled={isLoading} />
         {errors.proof && <p className="text-sm font-medium text-destructive mt-1" role="alert" id="proof-error">{errors.proof}</p>}
       </div>

@@ -34,10 +34,35 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge, AlertTriangle, Info } from "lucide-react";
+import { Eye, Badge, AlertTriangle, Info, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 import { useAlert } from "@/context/alert-context";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
+
+type AppealData = {
+    _id: string;
+    reason: string;
+    createdAt: string;
+    status: 'pending' | 'accepted' | 'rejected';
+}
 
 type NegativeCredit = {
   _id: string;
@@ -49,29 +74,7 @@ type NegativeCredit = {
   createdAt: string;
   academicYear: string;
   appealCount?: number;
-};
-
-const getCurrentAcademicYear = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    if (currentMonth >= 5) { // June or later
-      return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-    }
-    return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
-};
-
-const generateYearOptions = () => {
-    const currentYearString = getCurrentAcademicYear();
-    const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-        const startYear = startCurrentYear - i;
-        const endYear = (startYear + 1).toString().slice(-2);
-        years.push(`${startYear}-${endYear}`);
-    }
-    return years;
+  appeal?: AppealData;
 };
 
 export default function NegativeRemarksPage() {
@@ -80,19 +83,17 @@ export default function NegativeRemarksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Data for table and filters
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
-  
-  // Details view state
   const [selectedRemark, setSelectedRemark] = useState<NegativeCredit | null>(null);
 
-  // Appeal state
+  // Modal/Dialog states
   const [isAppealDialogOpen, setIsAppealDialogOpen] = useState(false);
+  const [isEditAppealDialogOpen, setIsEditAppealDialogOpen] = useState(false);
+  
   const [appealReason, setAppealReason] = useState("");
   const [appealProof, setAppealProof] = useState<File | null>(null);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
-
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const facultyId = searchParams.get('uid');
@@ -127,7 +128,6 @@ export default function NegativeRemarksPage() {
               throw new Error(data.message || "Failed to fetch remarks");
           }
       } catch (error: any) {
-        // Avoid double-toasting if already handled
         if (!error.message.includes('Failed to fetch remarks')) {
             showAlert("Error fetching remarks", error.message);
         }
@@ -143,19 +143,9 @@ export default function NegativeRemarksPage() {
     }
   }, [token, facultyId]);
   
-  const handleOpenAppealDialog = (remark: NegativeCredit) => {
-    setSelectedRemark(remark);
-    setIsAppealDialogOpen(true);
-    setAppealReason("");
-    setAppealProof(null);
-  };
-
-  const handleAppealSubmit = async () => {
-    if (!selectedRemark || !appealReason.trim() || !appealProof) {
-        showAlert(
-            "Incomplete Form",
-            "Please provide a reason and a proof document for your appeal.",
-        );
+  const handleAppealSubmit = async (isEdit: boolean) => {
+    if (!selectedRemark || !appealReason.trim()) {
+        showAlert("Incomplete Form", "Please provide a reason for your appeal.");
         return;
     }
     setIsSubmittingAppeal(true);
@@ -165,73 +155,121 @@ export default function NegativeRemarksPage() {
     if (appealProof) {
       formData.append("proof", appealProof);
     }
+    
+    const url = isEdit
+        ? `${API_BASE_URL}/api/v1/credits/appeals/${selectedRemark.appeal?._id}`
+        : `${API_BASE_URL}/api/v1/credits/credits/${selectedRemark._id}/appeal`;
+    const method = isEdit ? 'PUT' : 'POST';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/${selectedRemark._id}/appeal`, {
-            method: "POST",
-            headers: {
-                "Authorization": `Bearer ${token}`,
-            },
+        const response = await fetch(url, {
+            method: method,
+            headers: { "Authorization": `Bearer ${token}` },
             body: formData,
         });
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "Failed to submit appeal.");
+            throw new Error(responseData.message || `Failed to ${isEdit ? 'update' : 'submit'} appeal.`);
         }
         
         toast({
-            title: "Appeal Submitted",
-            description: "Your appeal has been successfully submitted for review.",
+            title: `Appeal ${isEdit ? 'Updated' : 'Submitted'}`,
+            description: `Your appeal has been successfully ${isEdit ? 'updated' : 'submitted'}.`,
         });
 
         setIsAppealDialogOpen(false);
-        setAppealReason("");
-        setAppealProof(null);
-        fetchRemarks(); // Refresh the list to show the 'appealed' status
-        router.push(`/u/portal/dashboard/appeals?uid=${searchParams.get('uid')}`);
+        setIsEditAppealDialogOpen(false);
+        fetchRemarks(); // Refresh list
+        router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`);
 
     } catch (error: any) {
-        showAlert(
-            "Appeal Failed",
-            error.message,
-        );
+        showAlert("Appeal Failed", error.message);
     } finally {
         setIsSubmittingAppeal(false);
     }
   };
 
+  const handleWithdrawAppeal = async (appealId: string) => {
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${appealId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const responseData = await response.json();
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to withdraw appeal.");
+        }
+        toast({ title: "Appeal Withdrawn", description: "Your appeal has been withdrawn."});
+        fetchRemarks();
+    } catch(error: any) {
+        showAlert("Withdrawal Failed", error.message);
+    }
+  }
+
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    if (url.startsWith('http')) {
-        return url;
-    }
-    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const getStatusBadge = (status: NegativeCredit['status']) => {
+    let variant: "default" | "secondary" | "destructive" = "secondary";
     switch (status) {
-        case 'approved': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-green-100 text-green-800" role="status">Approved</div>
-        case 'rejected': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-red-100 text-red-800" role="status">Rejected</div>
-        case 'appealed': return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-blue-100 text-blue-800" role="status">Appealed</div>
-        case 'pending':
-        default:
-            return <div className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold bg-yellow-100 text-yellow-800" role="status">Pending</div>
+        case 'approved': variant = 'default'; break;
+        case 'rejected': variant = 'destructive'; break;
+        case 'appealed': variant = 'secondary'; break;
     }
+    return <Badge variant={variant} className={status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{status}</Badge>;
   };
+
+  const renderAppealDialog = (isEdit = false) => (
+     <Dialog open={isEdit ? isEditAppealDialogOpen : isAppealDialogOpen} onOpenChange={isEdit ? setIsEditAppealDialogOpen : setIsAppealDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{isEdit ? 'Edit' : 'Create'} an Appeal for "{selectedRemark?.title}"</DialogTitle>
+            <DialogDescription>
+              Provide a clear reason for your appeal. Attaching a new proof document is optional but recommended.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+                <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal <span className="text-red-500">*</span></label>
+                <Textarea 
+                    id="reason" 
+                    placeholder="Explain why you are appealing this remark..."
+                    value={appealReason}
+                    onChange={(e) => setAppealReason(e.target.value)} 
+                    rows={4}
+                    aria-required="true"
+                />
+            </div>
+            <div className="space-y-2">
+                <label htmlFor="proof" className="text-sm font-medium">Proof Document (Optional)</label>
+                <FileUpload onFileSelect={setAppealProof} />
+                 <div className="flex items-start gap-2 text-sm text-blue-700 p-3 bg-blue-50 rounded-md mt-2" role="note">
+                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                    <p>
+                        <strong>Tip:</strong> If you have multiple files, please combine them into a single .zip file (under 10MB) before uploading.
+                    </p>
+                </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => isEdit ? setIsEditAppealDialogOpen(false) : setIsAppealDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => handleAppealSubmit(isEdit)} disabled={isSubmittingAppeal || !appealReason.trim()}>
+                {isSubmittingAppeal ? 'Submitting...' : 'Submit Appeal'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+  );
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            My Negative Remarks
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Review and manage negative credits.
-          </p>
-        </div>
+      <header>
+        <h1 className="text-3xl font-bold text-foreground">My Negative Remarks</h1>
+        <p className="mt-1 text-muted-foreground">Review and manage negative credits.</p>
       </header>
         
       <Card>
@@ -262,47 +300,49 @@ export default function NegativeRemarksPage() {
                     <TableCell>{getStatusBadge(remark.status)}</TableCell>
                     <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                     <TableCell className="text-center">
-                        <Dialog>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setSelectedRemark(remark)}>
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Remark Details</DialogTitle>
-                                </DialogHeader>
-                                {selectedRemark && (
-                                    <div className="space-y-4 py-4 text-sm">
-                                        <div><strong className="font-medium text-muted-foreground block">Title:</strong> {selectedRemark.title}</div>
-                                        <div><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></div>
-                                        <div><strong className="font-medium text-muted-foreground block">Status:</strong> {getStatusBadge(selectedRemark.status)}</div>
-                                        <div><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</div>
-                                        <div><strong className="font-medium text-muted-foreground block">Notes from Admin:</strong></div>
-                                        <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
-                                        <div>
-                                            <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
-                                            {selectedRemark.proofUrl ? (
-                                                <Button asChild variant="link" className="p-0 h-auto">
-                                                    <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                </Button>
-                                            ) : "Not Provided"}
-                                        </div>
-                                    </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onSelect={() => setSelectedRemark(remark)}>View Details</DropdownMenuItem>
+                                 <DropdownMenuSeparator />
+                                {!remark.appeal && (remark.appealCount || 0) < 2 && (
+                                    <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsAppealDialogOpen(true); setAppealReason(""); setAppealProof(null); }}>
+                                        Appeal
+                                    </DropdownMenuItem>
                                 )}
-                                <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <Button 
-                            variant="secondary" 
-                            size="sm" 
-                            onClick={() => handleOpenAppealDialog(remark)}
-                            disabled={remark.status === 'appealed' || (remark.appealCount && remark.appealCount >= 2)}
-                        >
-                            {remark.status === 'appealed' ? 'Appealed' : 'Appeal'}
-                        </Button>
+                                {remark.appeal?.status === 'pending' && (
+                                    <>
+                                    <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsEditAppealDialogOpen(true); setAppealReason(remark.appeal?.reason || ""); setAppealProof(null); }}>
+                                        <Edit className="mr-2 h-4 w-4" /> Edit Appeal
+                                    </DropdownMenuItem>
+                                     <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                              <Trash2 className="mr-2 h-4 w-4"/> Withdraw Appeal
+                                            </DropdownMenuItem>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Withdraw Appeal?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This will cancel your pending appeal. You may not be able to appeal this remark again. Are you sure?
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleWithdrawAppeal(remark.appeal!._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </>
+                                )}
+                                 {remark.appeal && (
+                                    <DropdownMenuItem onSelect={() => router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`)}>
+                                        View Appeal Status
+                                    </DropdownMenuItem>
+                                 )}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 ))
@@ -315,53 +355,9 @@ export default function NegativeRemarksPage() {
         </CardContent>
       </Card>
       
-      <Dialog open={isAppealDialogOpen} onOpenChange={setIsAppealDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>Create an Appeal for "{selectedRemark?.title}"</DialogTitle>
-            <DialogDescription>
-              Provide a reason for your appeal and attach a mandatory proof document. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-                <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal <span className="text-red-500">*</span></label>
-                <Textarea 
-                    id="reason" 
-                    placeholder="Explain why you are appealing this remark..."
-                    value={appealReason}
-                    onChange={(e) => setAppealReason(e.target.value)} 
-                    rows={4}
-                    aria-required="true"
-                />
-            </div>
-            <div className="space-y-2">
-                <label htmlFor="proof" className="text-sm font-medium">Proof Document <span className="text-red-500">*</span></label>
-                <FileUpload onFileSelect={setAppealProof} />
-                <div className="flex items-start gap-2 text-sm text-destructive p-3 bg-destructive/10 rounded-md" role="alert">
-                    <AlertTriangle className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>
-                        <strong>Note:</strong> A proof document is mandatory for all appeals. Appeals submitted without proof will not be considered. If you do not appeal within one week, the remark will be finalized and cannot be appealed later.
-                    </p>
-                </div>
-                 <div className="flex items-start gap-2 text-sm text-green-700 p-3 bg-green-50 rounded-md mt-2" role="note">
-                    <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
-                    <p>
-                        <strong>Tip:</strong> If you have multiple files, please combine them into a single .zip file (under 10MB) before uploading.
-                    </p>
-                </div>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-                <Button type="button" variant="secondary">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleAppealSubmit} disabled={isSubmittingAppeal || !appealReason.trim() || !appealProof}>
-                {isSubmittingAppeal ? 'Submitting...' : 'Submit Appeal'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {renderAppealDialog(false)}
+      {renderAppealDialog(true)}
+
     </div>
   )
 }
