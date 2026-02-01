@@ -17,6 +17,7 @@ import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
 import { MfaSettings } from "@/components/mfa-settings"
 import { SessionManager } from "@/components/session-manager"
+import { PushNotificationManager } from "@/components/push-notification-manager"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in:81';
 
@@ -389,6 +390,15 @@ export default function SettingsPage() {
                             onUpdate={fetchUser}
                         />
                         <SessionManager />
+                        <Card className="mt-6">
+                            <CardHeader>
+                                <CardTitle>Push Notifications</CardTitle>
+                                <CardDescription>Receive instant updates directly on your device, even when the browser is closed.</CardDescription>
+                            </CardHeader>
+                            <CardContent>
+                                <PushNotificationManager />
+                            </CardContent>
+                        </Card>
                     </TabsContent>
                 </Tabs>
             </div>
