@@ -22,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
+import { Eye, Loader2, PlusCircle, Trash2, Edit } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
@@ -114,6 +114,12 @@ export default function GoodWorksPage() {
   const [editProof, setEditProof] = useState<File | null>(null);
   const [editNotes, setEditNotes] = useState("");
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
+
+  // State for viewing details
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [detailedWork, setDetailedWork] = useState<GoodWork | null>(null);
+  const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+
 
   const fetchGoodWorks = async (currentPage: number, currentYear: string, currentStatus: string) => {
     setIsLoading(true);
@@ -246,8 +252,34 @@ export default function GoodWorksPage() {
     }
   };
 
-  const handleViewDetails = (proofUrl: string) => {
-    window.open(proofUrl, '_blank', 'noopener,noreferrer');
+  const handleViewDetails = async (creditId: string) => {
+    setIsFetchingDetails(true);
+    setIsViewModalOpen(true);
+    const token = localStorage.getItem("token");
+    if (!token) {
+        showAlert("Authentication Error", "You are not logged in.");
+        setIsFetchingDetails(false);
+        setIsViewModalOpen(false);
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/${creditId}`, {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const responseData = await response.json();
+
+        if (!response.ok || !responseData.success) {
+            throw new Error(responseData.message || "Failed to fetch submission details.");
+        }
+        
+        setDetailedWork(responseData.data);
+    } catch (error: any) {
+        showAlert("Error", error.message);
+        setIsViewModalOpen(false);
+    } finally {
+        setIsFetchingDetails(false);
+    }
   };
   
   const handleDelete = async (creditId: string) => {
@@ -418,12 +450,13 @@ export default function GoodWorksPage() {
                             </div>
                         ) : (
                             <Button
-                                variant="link"
-                                size="sm"
-                                onClick={() => work.proofUrl && handleViewDetails(work.proofUrl)}
-                                disabled={!work.proofUrl}
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleViewDetails(work._id)}
+                                disabled={isFetchingDetails && detailedWork?._id === work._id}
                             >
-                                View Details
+                                <Eye className="h-4 w-4" />
+                                <span className="sr-only">View Details</span>
                             </Button>
                         )}
                     </TableCell>
@@ -509,6 +542,38 @@ export default function GoodWorksPage() {
             </form>
         </DialogContent>
       </Dialog>
+      
+      {/* View Details Dialog */}
+      <Dialog open={isViewModalOpen} onOpenChange={setIsViewModalOpen}>
+          <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                  <DialogTitle>Submission Details</DialogTitle>
+              </DialogHeader>
+              {isFetchingDetails && (
+                  <div className="flex items-center justify-center p-8">
+                      <Loader2 className="h-8 w-8 animate-spin" />
+                  </div>
+              )}
+              {detailedWork && !isFetchingDetails && (
+                  <div className="space-y-3 py-4 text-sm">
+                      <p><strong className="font-medium text-muted-foreground block">Title:</strong> {detailedWork.title}</p>
+                      <p><strong className="font-medium text-muted-foreground block">Points Awarded:</strong> {detailedWork.points}</p>
+                      <p><strong className="font-medium text-muted-foreground block">Status:</strong> <Badge variant={detailedWork.status === 'approved' ? 'default' : 'destructive'} className={detailedWork.status === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}>{detailedWork.status}</Badge></p>
+                      <p><strong className="font-medium text-muted-foreground block">Academic Year:</strong> {detailedWork.academicYear}</p>
+                      <p><strong className="font-medium text-muted-foreground block">Notes:</strong> {detailedWork.notes || 'N/A'}</p>
+                      <p><strong className="font-medium text-muted-foreground block">Submission Date:</strong> {new Date(detailedWork.createdAt).toLocaleString()}</p>
+                      {detailedWork.proofUrl && (
+                        <p><strong className="font-medium text-muted-foreground block">Proof:</strong> <Button asChild variant="link" className="p-0 h-auto"><a href={detailedWork.proofUrl} target="_blank" rel="noopener noreferrer">View Document</a></Button></p>
+                      )}
+                  </div>
+              )}
+              <DialogFooter>
+                  <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+              </DialogFooter>
+          </DialogContent>
+      </Dialog>
     </div>
   )
 }
+
+    
