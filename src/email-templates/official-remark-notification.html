@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Remark Notification</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            background-color: #f4f6f9;
+            font-family: Arial, sans-serif;
+        }
+        table {
+            border-collapse: collapse;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+        }
+        .header {
+            background-color: #001b70;
+            color: #ffffff;
+            padding: 20px;
+            text-align: center;
+        }
+        .header img {
+            max-width: 80px;
+            background-color: white;
+            border-radius: 6px;
+            padding: 5px;
+        }
+        .header h1 {
+            margin: 10px 0 0;
+            font-size: 24px;
+        }
+        .content {
+            padding: 30px;
+            color: #333333;
+            line-height: 1.6;
+        }
+        .content p {
+            margin: 0 0 15px;
+        }
+        .summary-card {
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 25px 0;
+        }
+        .summary-card h2 {
+            margin: 0;
+            padding: 15px;
+            background-color: #f9fafb;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 18px;
+            color: #111827;
+        }
+        .summary-table {
+            width: 100%;
+            padding: 15px;
+        }
+        .summary-table td {
+            padding: 10px 0;
+            vertical-align: top;
+        }
+        .summary-table .label {
+            color: #6b7280;
+            font-weight: bold;
+            width: 40%;
+        }
+        .summary-table .value {
+            color: #111827;
+        }
+        .points {
+            font-weight: bold;
+            color: #d946ef;
+        }
+        .notes-section {
+            background-color: #f9fafb;
+            padding: 15px;
+            border-radius: 6px;
+            border: 1px dashed #d1d5db;
+        }
+        .notes-section h3 {
+            margin: 0 0 10px;
+            font-size: 16px;
+            color: #111827;
+        }
+        .button-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #001b70;
+            color: #ffffff;
+            padding: 12px 25px;
+            border-radius: 5px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+        .footer {
+            background-color: #f9fafb;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            border-top: 1px solid #e5e7eb;
+        }
+        .footer p {
+            margin: 0 0 5px;
+        }
+        .footer a {
+            color: #001b70;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <table width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #f4f6f9;">
+        <tr>
+            <td align="center">
+                <table class="container" width="600" border="0" cellspacing="0" cellpadding="0">
+                    <!-- Header -->
+                    <tr>
+                        <td class="header">
+                            <img src="https://egspgroup.in/assets/egspgoi___logo.webp" alt="E.G.S. Pillay Group of Institutions Logo">
+                            <h1>Official Remark</h1>
+                        </td>
+                    </tr>
+                    <!-- Content -->
+                    <tr>
+                        <td class="content">
+                            <p>Dear {{facultyName}},</p>
+                            <p>An official remark has been recorded on your faculty profile. A detailed PDF report is attached for your reference and records.</p>
+                            
+                            <!-- Remark Summary Card -->
+                            <div class="summary-card">
+                                <h2>Remark Summary</h2>
+                                <table class="summary-table" width="100%">
+                                    <tr>
+                                        <td class="label">Faculty Name</td>
+                                        <td class="value">{{facultyName}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Faculty ID</td>
+                                        <td class="value">{{facultyID}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Academic Year</td>
+                                        <td class="value">{{academicYear}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label">Date Issued</td>
+                                        <td class="value">{{date}}</td>
+                                    </tr>
+                                     <tr>
+                                        <td class="label">Issued By</td>
+                                        <td class="value">{{issuerName}}</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="label" style="border-bottom:none;">Total Credit Deduction</td>
+                                        <td class="value points" style="border-bottom:none;">{{remarkPoints}} Points</td>
+                                    </tr>
+                                </table>
+                            </div>
+
+                            <!-- Administrator Notes -->
+                            <div class="notes-section">
+                                <h3>Administrator Notes:</h3>
+                                <p style="margin:0;">{{remarkMessage}}</p>
+                            </div>
+
+                            <!-- CTA Button -->
+                            <div class="button-container">
+                                <a href="{{portalUrl}}" class="button">View Details & Submit Appeal</a>
+                            </div>
+
+                            <p>If you believe this remark was issued in error, you may submit an appeal through the faculty portal within the allowed timeframe.</p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td class="footer">
+                            <p>&copy; {{currentYear}} E.G.S. Pillay Group of Institutions. All rights reserved.</p>
+                            <p>Nagapattinam - 611002, Tamil Nadu, India</p>
+                            <p>
+                                <a href="#">Help Center</a> &bull; <a href="#">Privacy Policy</a>
+                            </p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>
