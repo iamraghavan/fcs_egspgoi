@@ -167,7 +167,7 @@ export default function AppealsPage() {
       formData.append("proof", appealProof);
     }
     
-    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal._id}`;
+    const url = `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedAppeal._id}`;
     const method = 'PUT';
 
     try {
@@ -199,7 +199,7 @@ export default function AppealsPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -491,5 +491,3 @@ export default function AppealsPage() {
     </div>
   )
 }
-
-    
