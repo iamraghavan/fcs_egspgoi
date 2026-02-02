@@ -409,10 +409,10 @@ export default function ManageRemarksPage() {
         },
         body: JSON.stringify({
           facultyId: selectedFaculty._id,
-          remark: {
-            title: title,
-            message: notes,
-          },
+          title: title,
+          points: Number(points),
+          notes: notes,
+          academicYear: getCurrentAcademicYear(),
         }),
       }).then(async (emailResponse) => {
           if (!emailResponse.ok) {
