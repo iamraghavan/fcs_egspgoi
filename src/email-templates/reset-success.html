@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Password Reset Successful</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            -webkit-font-smoothing: antialiased;
+            background-color: #f4f6f9;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen", "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue", sans-serif;
+        }
+        .wrapper {
+            background-color: #f4f6f9;
+            padding: 20px;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background-color: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .header-blue-bar {
+            background-color: #001b70;
+            height: 5px;
+        }
+        .content {
+            padding: 40px;
+            color: #374151;
+            line-height: 1.6;
+        }
+        .logo {
+            max-width: 70px;
+            margin-bottom: 24px;
+        }
+        h1 {
+            font-size: 28px;
+            font-weight: 600;
+            color: #111827;
+            margin: 0 0 24px;
+        }
+        p {
+            margin: 0 0 16px;
+            font-size: 16px;
+        }
+        .button-container {
+            text-align: center;
+            margin: 32px 0;
+        }
+        .button {
+            display: inline-block;
+            background-color: #001b70;
+            color: #ffffff;
+            padding: 14px 28px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 16px;
+        }
+        .separator {
+            border: none;
+            border-top: 1px solid #e5e7eb;
+            margin: 32px 0;
+        }
+        .footer-text {
+            font-size: 14px;
+            color: #6b7280;
+            text-align: center;
+        }
+        .footer-text a {
+            color: #001b70;
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .final-footer {
+            padding: 24px;
+            text-align: center;
+            font-size: 12px;
+            color: #9ca3af;
+        }
+        .final-footer p {
+            margin: 0 0 5px;
+        }
+        .final-footer a {
+            color: #6b7280;
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="header-blue-bar"></div>
+            <div class="content">
+                <img src="https://egspgroup.in/assets/egspgoi___logo.webp" alt="E.G.S. Pillay Group of Institutions Logo" class="logo">
+                <h1>Password Reset Successful</h1>
+                <p>Dear {{facultyName}},</p>
+                <p>This is a confirmation that the password for your CreditWise account has been successfully changed. You can now use your new password to log in.</p>
+                
+                <div class="button-container">
+                    <a href="{{portalUrl}}" class="button">Login to Your Account</a>
+                </div>
+
+                <p>If you did not make this change, please contact our support team immediately.</p>
+
+                <hr class="separator">
+
+                <div class="footer-text">
+                    Having trouble? <a href="mailto:web@egspec.org">Contact our support team</a>.
+                    <p style="margin-top: 16px; font-size: 14px; color: #6b7280;">Regards,<br>The CreditWise Team</p>
+                </div>
+            </div>
+        </div>
+        <div class="final-footer">
+            <p>&copy; {{currentYear}} E.G.S. Pillay Group of Institutions. All rights reserved.</p>
+            <p>Nagapattinam - 611002, Tamil Nadu, India</p>
+            <p>
+                <a href="#">Help Center</a> &bull; <a href="#">Privacy Policy</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
