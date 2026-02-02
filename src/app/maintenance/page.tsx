@@ -7,8 +7,49 @@ import { Clock, Calendar } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
+import { useState, useEffect } from 'react';
 
 export default function MaintenancePage() {
+  const [timeLeft, setTimeLeft] = useState({
+    days: 0,
+    hours: 0,
+    minutes: 0,
+    seconds: 0,
+  });
+  const [isMaintenanceOver, setIsMaintenanceOver] = useState(false);
+
+  useEffect(() => {
+    const maintenanceEndDate = new Date('2026-02-03T18:00:00').getTime();
+
+    const interval = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = maintenanceEndDate - now;
+
+      if (distance < 0) {
+        clearInterval(interval);
+        setTimeLeft({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+        setIsMaintenanceOver(true);
+        return;
+      }
+
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000),
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, []);
+
+  const TimerBox = ({ value, label }: { value: number, label: string }) => (
+    <div className="text-center bg-primary/5 p-3 rounded-lg flex-1">
+        <div className="text-3xl md:text-4xl font-bold text-primary">{String(value).padStart(2, '0')}</div>
+        <div className="text-xs text-muted-foreground uppercase tracking-wider">{label}</div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-muted/40 text-center p-4 sm:p-6">
       <Card className="w-full max-w-2xl">
@@ -21,7 +62,18 @@ export default function MaintenancePage() {
             The Faculty Credit System is temporarily unavailable.
           </CardDescription>
         </CardHeader>
-        <CardContent className="text-left space-y-4 text-sm sm:text-base">
+        <CardContent className="text-left space-y-6 text-sm sm:text-base">
+            {!isMaintenanceOver && (
+                <div className="text-center space-y-3">
+                    <h3 className="font-semibold">Time until service resumes:</h3>
+                    <div className="flex justify-center gap-2 sm:gap-4">
+                        <TimerBox value={timeLeft.days} label="Days" />
+                        <TimerBox value={timeLeft.hours} label="Hours" />
+                        <TimerBox value={timeLeft.minutes} label="Minutes" />
+                        <TimerBox value={timeLeft.seconds} label="Seconds" />
+                    </div>
+                </div>
+            )}
             <p>
                 This is to inform you that due to scheduled Application / Server Maintenance, the Faculty Credit System will be temporarily shut down as per the details below.
             </p>
@@ -42,7 +94,7 @@ export default function MaintenancePage() {
                     </div>
                     <div>
                         <p className="font-medium">End</p>
-                        <p className="text-muted-foreground">Monday, 02-02-2026 at 10:30 AM</p>
+                        <p className="text-muted-foreground">Tuesday, 03-02-2026 at 6:00 PM</p>
                     </div>
                 </div>
             </div>
