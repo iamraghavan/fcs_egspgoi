@@ -91,9 +91,9 @@ export function LoginScreen() {
   }, [searchParams]);
   
   const processSuccessfulLogin = (loginResponse: any) => {
-    const token = loginResponse.data?.token || loginResponse.token;
-    const sessionId = loginResponse.data?.sessionId || loginResponse.sessionId;
-    const user = loginResponse.data?.user || loginResponse.user;
+    const userData = loginResponse.data || {};
+    const token = userData.token || loginResponse.token;
+    const sessionId = userData.sessionId || loginResponse.sessionId;
 
     if (!token) {
       showAlert("Login Error", "Incomplete login data received from server. The authentication token is missing.");
@@ -108,8 +108,8 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     
-    let userId = user?._id;
-    let userRole = user?.role;
+    let userId = userData.id;
+    let userRole = userData.role;
 
     // Fallback to decoding token if user object isn't in response or is incomplete
     if (!userId || !userRole) {

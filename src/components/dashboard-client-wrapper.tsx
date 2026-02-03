@@ -165,7 +165,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           throw new Error(responseData.message || "Failed to fetch user data");
         }
 
-        const userData = responseData.user;
+        const userData = responseData.user || responseData.data;
         
         const getAvatarUrl = (user: any) => {
             if (user.profileImage) {
@@ -178,7 +178,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         };
 
         const userPayload: User = {
-          id: userData._id,
+          id: userData._id || userData.id,
           name: userData.name,
           email: userData.email,
           role: userData.role,
