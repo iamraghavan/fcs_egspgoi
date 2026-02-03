@@ -99,10 +99,10 @@ export default function AdminDashboard() {
         const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
         const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => ({ name, value: Number(value), color: `hsl(var(--chart-${index + 1}))`})) : [];
         
-        const formattedRecentActivities = recentActivitiesData.success ? recentActivitiesData.items.map((item: any) => ({
+        const formattedRecentActivities = (recentActivitiesData.success && Array.isArray(recentActivitiesData.items)) ? recentActivitiesData.items.map((item: any) => ({
              id: item._id,
              description: `New submission: "${item.title}"`,
-             user: item.faculty.name,
+             user: item.faculty?.name || 'N/A',
              date: new Date(item.createdAt).toISOString().split('T')[0]
         })) : [];
 
@@ -277,7 +277,7 @@ export default function AdminDashboard() {
               <CardContent>
                 {loading ? <Skeleton className="h-[280px] w-full" /> : 
                   <div className="space-y-4">
-                    {analytics?.recentActivities.map((activity) => (
+                    {analytics?.recentActivities?.map((activity) => (
                       <div key={activity.id} className="flex items-start gap-4">
                         <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
                           <FolderKanban className="h-4 w-4" />
@@ -296,5 +296,3 @@ export default function AdminDashboard() {
     </div>
   )
 }
-
-    
