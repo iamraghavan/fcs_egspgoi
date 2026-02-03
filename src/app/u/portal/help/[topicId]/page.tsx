@@ -1,7 +1,4 @@
 
-"use client";
-
-import { useParams } from 'next/navigation';
 import { LayoutDashboard, Award, FileText, MessageSquareWarning, ShieldCheck, User, AlertTriangle, Info, CheckCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -242,9 +239,8 @@ const helpContent = {
   },
 };
 
-export default function HelpTopicPage() {
-    const params = useParams();
-    const topicId = params.topicId as string;
+export default function HelpTopicPage({ params }: { params: { topicId: string } }) {
+    const { topicId } = params;
     const content = helpContent[topicId as keyof typeof helpContent];
 
     if (!content) {
@@ -293,4 +289,3 @@ export default function HelpTopicPage() {
         </div>
     );
 }
-

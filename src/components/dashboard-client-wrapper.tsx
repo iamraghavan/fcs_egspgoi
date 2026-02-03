@@ -4,13 +4,20 @@
 import { Sidebar } from "@/components/ui/sidebar";
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
-import React, { useState, useEffect, type ReactNode } from "react";
+import React, { useState, useEffect, type ReactNode, Suspense } from "react";
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
-import { CookiePreferencesDialog } from "@/components/cookie-preferences-dialog";
-import { WhatsAppVerificationModal } from "@/components/whatsapp-verification-modal";
+import dynamic from "next/dynamic";
+
+const CookiePreferencesDialog = dynamic(() =>
+  import("@/components/cookie-preferences-dialog").then((mod) => mod.CookiePreferencesDialog)
+);
+const WhatsAppVerificationModal = dynamic(() =>
+  import("@/components/whatsapp-verification-modal").then((mod) => mod.WhatsAppVerificationModal)
+);
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -190,9 +197,9 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         setUser(userPayload);
         
         const needsVerification = userData.role === 'faculty' || userData.role === 'admin';
-        const isVerified = userData.whatsappVerified === true;
-
-        if (needsVerification && !isVerified) {
+        
+        // Use a more robust check. It should trigger if whatsappVerified is not explicitly true.
+        if (needsVerification && userPayload.whatsappVerified !== true) {
              setUserForVerification(userData);
              setIsVerificationModalOpen(true);
         } else {
@@ -270,8 +277,8 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
       </main>
       <Footer onCookiePreferencesClick={() => setIsCookiePrefsOpen(true)} />
     </div>
-    <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />
-    <WhatsAppVerificationModal
+    {isCookiePrefsOpen && <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />}
+    {isVerificationModalOpen && <WhatsAppVerificationModal
         isOpen={isVerificationModalOpen}
         user={userForVerification}
         onSuccess={() => {
@@ -283,7 +290,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
                 setUser({ ...user, whatsappVerified: true });
             }
         }}
-    />
+    />}
     </>
   );
 }
