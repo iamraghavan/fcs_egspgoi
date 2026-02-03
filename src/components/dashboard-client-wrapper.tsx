@@ -10,6 +10,7 @@ import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 import { CookiePreferencesDialog } from "@/components/cookie-preferences-dialog";
+import { WhatsAppVerificationModal } from "@/components/whatsapp-verification-modal";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
@@ -134,50 +135,16 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
   const [isCookiePrefsOpen, setIsCookiePrefsOpen] = useState(false);
+  const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+  const [userForVerification, setUserForVerification] = useState<any | null>(null);
 
-
-  useEffect(() => {
-    if (user) {
-        const { title, description } = getPageMetadata(pathname, user.name);
-        document.title = title;
-        
-        let metaDescription = document.querySelector('meta[name="description"]');
-        if (!metaDescription) {
-            metaDescription = document.createElement('meta');
-            metaDescription.setAttribute('name', 'description');
-            document.head.appendChild(metaDescription);
-        }
-        metaDescription.setAttribute('content', description);
-    }
-  }, [pathname, user]);
-
-  useEffect(() => {
+  const fetchUser = async () => {
     const token = localStorage.getItem("token");
-    const role = localStorage.getItem("userRole");
-
     if (!token) {
-      router.push("/u/portal/auth?faculty_login");
-      return;
+        setLoading(false);
+        router.push("/u/portal/auth?faculty_login");
+        return;
     }
-
-    const fetchUser = async () => {
-      if (role === 'oa' && token === 'mock_oa_token') {
-          const oaUser: User = {
-              id: 'oa_user_01',
-              name: 'Office Assistant',
-              email: process.env.NEXT_PUBLIC_OA_USERNAME || 'oa@egspec.org',
-              role: 'oa',
-              avatar: `https://ui-avatars.com/api/?name=OA&background=random`,
-          };
-          setUser(oaUser);
-          setLoading(false);
-          const uid = searchParams.get('uid');
-          if (uid !== oaUser.id || !pathname.startsWith('/u/portal/dashboard/oa')) {
-              router.replace(`/u/portal/dashboard/oa?uid=${oaUser.id}`);
-          }
-          return;
-      }
-
       try {
         const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
           headers: {
@@ -221,35 +188,33 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         setUser(userPayload);
         
         if (userData.whatsappVerified === false && (userData.role === 'faculty' || userData.role === 'admin')) {
-             if (!pathname.includes('/verify-whatsapp')) {
-                router.replace(`/u/portal/auth/verify-whatsapp?uid=${userData._id}`);
-                return;
-             }
-        }
-        
-        const uid = searchParams.get('uid');
-        const getExpectedPath = () => {
-            switch (userPayload.role) {
-                case 'admin':
-                    return '/u/portal/dashboard/admin';
-                case 'oa':
-                    return '/u/portal/dashboard/oa';
-                default:
-                    return '/u/portal/dashboard';
+             setUserForVerification(userData);
+             setIsVerificationModalOpen(true);
+        } else {
+            const uid = searchParams.get('uid');
+            const getExpectedPath = () => {
+                switch (userPayload.role) {
+                    case 'admin':
+                        return '/u/portal/dashboard/admin';
+                    case 'oa':
+                        return '/u/portal/dashboard/oa';
+                    default:
+                        return '/u/portal/dashboard';
+                }
             }
-        }
-        
-        const expectedPathPrefix = getExpectedPath();
-        
-        if (userPayload.id !== uid) {
-          const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
-          router.replace(expectedUrl);
-        } else if (userPayload.role === 'oa' && !pathname.startsWith('/u/portal/dashboard/oa')) {
-            router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
-        } else if (userPayload.role === 'faculty' && (pathname.includes('/admin') || pathname.includes('/oa'))) {
-           router.replace(`/u/portal/dashboard?uid=${userPayload.id}`);
-        } else if (userPayload.role === 'admin' && !pathname.startsWith('/u/portal/dashboard/admin')) {
-           router.replace(`/u/portal/dashboard/admin?uid=${userPayload.id}`);
+            
+            const expectedPathPrefix = getExpectedPath();
+            
+            if (userPayload.id !== uid) {
+              const expectedUrl = `${expectedPathPrefix}?uid=${userPayload.id}`;
+              router.replace(expectedUrl);
+            } else if (userPayload.role === 'oa' && !pathname.startsWith('/u/portal/dashboard/oa')) {
+                router.replace(`/u/portal/dashboard/oa?uid=${userPayload.id}`);
+            } else if (userPayload.role === 'faculty' && (pathname.includes('/admin') || pathname.includes('/oa'))) {
+               router.replace(`/u/portal/dashboard?uid=${userPayload.id}`);
+            } else if (userPayload.role === 'admin' && !pathname.startsWith('/u/portal/dashboard/admin')) {
+               router.replace(`/u/portal/dashboard/admin?uid=${userPayload.id}`);
+            }
         }
 
 
@@ -261,8 +226,25 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
       } finally {
         setLoading(false);
       }
-    };
+  };
 
+
+  useEffect(() => {
+    if (user) {
+        const { title, description } = getPageMetadata(pathname, user.name);
+        document.title = title;
+        
+        let metaDescription = document.querySelector('meta[name="description"]');
+        if (!metaDescription) {
+            metaDescription = document.createElement('meta');
+            metaDescription.setAttribute('name', 'description');
+            document.head.appendChild(metaDescription);
+        }
+        metaDescription.setAttribute('content', description);
+    }
+  }, [pathname, user]);
+
+  useEffect(() => {
     fetchUser();
   }, [router, pathname, searchParams, showAlert]);
 
@@ -281,6 +263,15 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
       <Footer onCookiePreferencesClick={() => setIsCookiePrefsOpen(true)} />
     </div>
     <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />
+    <WhatsAppVerificationModal
+        isOpen={isVerificationModalOpen}
+        user={userForVerification}
+        onSuccess={() => {
+            setIsVerificationModalOpen(false);
+            setUserForVerification(null);
+            fetchUser(); // Re-fetch user profile to confirm verification
+        }}
+    />
     </>
   );
 }
