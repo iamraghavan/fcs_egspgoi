@@ -187,10 +187,13 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         
         setUser(userPayload);
         
-        if (userData.whatsappVerified === false && (userData.role === 'faculty' || userData.role === 'admin')) {
+        if (!userData.whatsappVerified && (userData.role === 'faculty' || userData.role === 'admin')) {
              setUserForVerification(userData);
              setIsVerificationModalOpen(true);
         } else {
+            setIsVerificationModalOpen(false);
+            setUserForVerification(null);
+            
             const uid = searchParams.get('uid');
             const getExpectedPath = () => {
                 switch (userPayload.role) {
