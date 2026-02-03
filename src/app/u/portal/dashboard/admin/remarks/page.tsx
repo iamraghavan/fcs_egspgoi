@@ -757,8 +757,64 @@ export default function ManageRemarksPage() {
                                     <DialogDescription>A complete overview of the recorded remark.</DialogDescription>
                                     </DialogHeader>
                                     {selectedRemarkDetails && (
-                                    <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4">
-                                        {/* Faculty Info, Remark Details, etc. */}
+                                    <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
+                                        <Card>
+                                            <CardHeader className="flex flex-row items-center gap-4">
+                                                <Avatar className="h-12 w-12">
+                                                    <AvatarImage src={getProofUrl(selectedRemarkDetails.facultySnapshot.profileImage || '')} />
+                                                    <AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <CardTitle className="text-lg">{selectedRemarkDetails.facultySnapshot.name}</CardTitle>
+                                                    <CardDescription>{selectedRemarkDetails.facultySnapshot.facultyID}</CardDescription>
+                                                </div>
+                                            </CardHeader>
+                                            <CardContent>
+                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">Department:</strong> {selectedRemarkDetails.facultySnapshot.department}</p>
+                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">College:</strong> {selectedRemarkDetails.facultySnapshot.college}</p>
+                                            </CardContent>
+                                        </Card>
+                                
+                                        <Card>
+                                            <CardHeader>
+                                                <CardTitle className="text-base">Remark Details</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-3">
+                                                 <p><strong className="font-medium text-muted-foreground block">Remark Title:</strong> {selectedRemarkDetails.title}</p>
+                                                <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemarkDetails.points}</span></p>
+                                                <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemarkDetails.createdAt).toLocaleString()}</p>
+                                                <div>
+                                                    <strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong>
+                                                    <p className="mt-1 pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemarkDetails.notes || 'N/A'}</p>
+                                                </div>
+                                                 <div>
+                                                    <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
+                                                    {selectedRemarkDetails.proofUrl ? (
+                                                         <Button asChild variant="link" className="p-0 h-auto">
+                                                            <a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                        </Button>
+                                                    ) : "Not Provided"}
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+                                
+                                        {selectedRemarkDetails.appeal && (
+                                            <Card>
+                                                <CardHeader>
+                                                    <CardTitle className="text-base">Appeal Information</CardTitle>
+                                                </CardHeader>
+                                                <CardContent className="space-y-3">
+                                                    <p><strong className="font-medium text-muted-foreground block">Appeal Status:</strong> {selectedRemarkDetails.appeal.status}</p>
+                                                    <p><strong className="font-medium text-muted-foreground block">Date Appealed:</strong> {new Date(selectedRemarkDetails.appeal.createdAt).toLocaleString()}</p>
+                                                    <div>
+                                                        <strong className="font-medium text-muted-foreground block">Appeal Reason:</strong>
+                                                        <p className="mt-1 pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemarkDetails.appeal.reason}</p>
+                                                    </div>
+                                                </CardContent>
+                                            </Card>
+                                        )}
+                                
+                                        <p className="border-t pt-4 mt-4"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemarkDetails._id}</span></p>
                                     </div>
                                     )}
                                     <DialogFooter>
