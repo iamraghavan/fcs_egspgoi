@@ -1,8 +1,8 @@
 
 import { Suspense } from "react";
 import { Metadata } from "next";
-import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import LoginPageContent from "./login-page-content";
 
 const LoginLoadingSkeleton = () => (
     <div className="w-full min-h-screen flex flex-col md:flex-row">
@@ -26,11 +26,6 @@ const LoginLoadingSkeleton = () => (
     </div>
 );
 
-const LoginPageContent = dynamic(() => import("./login-page-content"), {
-  loading: () => <LoginLoadingSkeleton />,
-  ssr: false, // The login form relies heavily on client-side state and browser APIs
-});
-
 export const metadata: Metadata = {
   title: "Login - CreditWise",
   description: "Login to the Faculty Credit System.",
@@ -43,4 +38,3 @@ export default function LoginPage() {
     </Suspense>
   );
 }
-// 04
