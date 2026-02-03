@@ -93,6 +93,7 @@ export function LoginScreen() {
   const processSuccessfulLogin = (loginResponse: any) => {
     const token = loginResponse.data?.token || loginResponse.token;
     const sessionId = loginResponse.data?.sessionId || loginResponse.sessionId;
+    const user = loginResponse.data?.user || loginResponse.user;
 
     if (!token) {
       showAlert("Login Error", "Incomplete login data received from server. The authentication token is missing.");
@@ -107,32 +108,44 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     
-    let userId: string | undefined;
-    let userRole: string | undefined;
+    let userId = user?._id;
+    let userRole = user?.role;
 
-    try {
-        const payloadBase64 = token.split('.')[1];
-        const decodedPayload = JSON.parse(atob(payloadBase64));
-        userId = decodedPayload.id;
-        userRole = decodedPayload.role;
-    } catch (e) {
-        showAlert("Login Error", "Could not parse user information from token.");
-        return;
+    // Fallback to decoding token if user object isn't in response or is incomplete
+    if (!userId || !userRole) {
+        try {
+            const payloadBase64 = token.split('.')[1];
+            const decodedPayload = JSON.parse(atob(payloadBase64));
+            userId = decodedPayload.id;
+            userRole = decodedPayload.role;
+        } catch (e) {
+            showAlert("Login Error", "Could not parse user information from token.");
+            localStorage.removeItem("token"); // Clean up failed login
+            return;
+        }
     }
     
     if (!userId || !userRole) {
        showAlert("Login Error", "Could not determine user role or ID from token.");
+       localStorage.removeItem("token");
        return;
     }
-
+    
     localStorage.setItem("userRole", userRole);
-
+    
     if (sessionId) {
       localStorage.setItem("sessionId", sessionId);
     }
     
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
+
+    // Check for WhatsApp verification AFTER setting token and role
+    // This applies only to 'faculty' and 'admin' roles, not 'oa'
+    if (user && user.whatsappVerified === false && (user.role === 'faculty' || user.role === 'admin')) {
+      router.push(`/u/portal/auth/verify-whatsapp?uid=${userId}`);
+      return;
+    }
 
     let redirectUrl;
     switch (userRole) {
