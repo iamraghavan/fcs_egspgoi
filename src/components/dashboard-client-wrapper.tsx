@@ -20,6 +20,7 @@ type User = {
   email: string;
   role: 'faculty' | 'admin' | 'oa';
   avatar: string;
+  whatsappVerified: boolean;
 }
 
 const getPageMetadata = (pathname: string, userName: string) => {
@@ -182,7 +183,8 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           name: userData.name,
           email: userData.email,
           role: userData.role,
-          avatar: getAvatarUrl(userData)
+          avatar: getAvatarUrl(userData),
+          whatsappVerified: userData.whatsappVerified
         };
         
         setUser(userPayload);
@@ -272,7 +274,11 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         onSuccess={() => {
             setIsVerificationModalOpen(false);
             setUserForVerification(null);
-            fetchUser(); // Re-fetch user profile to confirm verification
+            // Optimistically update the user state to prevent the modal from reappearing
+            // on subsequent re-renders before the next full fetch.
+            if (user) {
+                setUser({ ...user, whatsappVerified: true });
+            }
         }}
     />
     </>
