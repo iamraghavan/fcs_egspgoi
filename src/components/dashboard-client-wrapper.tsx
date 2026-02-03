@@ -220,6 +220,13 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         
         setUser(userPayload);
         
+        if (userData.whatsappVerified === false && (userData.role === 'faculty' || userData.role === 'admin')) {
+             if (!pathname.includes('/verify-whatsapp')) {
+                router.replace(`/u/portal/auth/verify-whatsapp?uid=${userData._id}`);
+                return;
+             }
+        }
+        
         const uid = searchParams.get('uid');
         const getExpectedPath = () => {
             switch (userPayload.role) {

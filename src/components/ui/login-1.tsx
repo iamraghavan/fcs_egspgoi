@@ -140,13 +140,6 @@ export function LoginScreen() {
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
 
-    // Check for WhatsApp verification AFTER setting token and role
-    // This applies only to 'faculty' and 'admin' roles, not 'oa'
-    if (user && user.whatsappVerified === false && (user.role === 'faculty' || user.role === 'admin')) {
-      router.push(`/u/portal/auth/verify-whatsapp?uid=${userId}`);
-      return;
-    }
-
     let redirectUrl;
     switch (userRole) {
       case 'admin':
