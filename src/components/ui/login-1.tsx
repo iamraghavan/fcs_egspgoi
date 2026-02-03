@@ -91,7 +91,9 @@ export function LoginScreen() {
   }, [searchParams]);
   
   const processSuccessfulLogin = (loginResponse: any) => {
-    const userData = loginResponse.data || {};
+    // This is the key change: it checks for user data in `loginResponse.data` first,
+    // and falls back to `loginResponse` itself if `data` is not present.
+    const userData = loginResponse.data || loginResponse;
     const token = userData.token || loginResponse.token;
     const sessionId = userData.sessionId || loginResponse.sessionId;
 
@@ -409,3 +411,5 @@ export function LoginScreen() {
     </>
   );
 }
+
+    
