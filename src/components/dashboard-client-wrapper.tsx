@@ -166,7 +166,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           throw new Error(responseData.message || "Failed to fetch user data");
         }
 
-        const userData = responseData.user || responseData.data;
+        const userData = responseData.data;
         
         const getAvatarUrl = (user: any) => {
             if (user.profileImage) {
@@ -179,7 +179,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         };
 
         const userPayload: User = {
-          id: userData._id || userData.id,
+          id: userData.id,
           name: userData.name,
           email: userData.email,
           role: userData.role,
@@ -189,7 +189,10 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         
         setUser(userPayload);
         
-        if (!userData.whatsappVerified && (userData.role === 'faculty' || userData.role === 'admin')) {
+        const needsVerification = userData.role === 'faculty' || userData.role === 'admin';
+        const isVerified = userData.whatsappVerified === true;
+
+        if (needsVerification && !isVerified) {
              setUserForVerification(userData);
              setIsVerificationModalOpen(true);
         } else {
@@ -251,7 +254,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
 
   useEffect(() => {
     fetchUser();
-  }, [router, pathname, searchParams, showAlert]);
+  }, [pathname, searchParams]);
 
   if (loading || !user) {
     return <LoadingSkeleton />;

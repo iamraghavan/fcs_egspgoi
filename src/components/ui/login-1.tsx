@@ -108,25 +108,11 @@ export function LoginScreen() {
 
     localStorage.setItem("token", token);
     
-    let userId = userData.id;
-    let userRole = userData.role;
-
-    // Fallback to decoding token if user object isn't in response or is incomplete
-    if (!userId || !userRole) {
-        try {
-            const payloadBase64 = token.split('.')[1];
-            const decodedPayload = JSON.parse(atob(payloadBase64));
-            userId = decodedPayload.id;
-            userRole = decodedPayload.role;
-        } catch (e) {
-            showAlert("Login Error", "Could not parse user information from token.");
-            localStorage.removeItem("token"); // Clean up failed login
-            return;
-        }
-    }
+    const userId = userData.id;
+    const userRole = userData.role;
     
     if (!userId || !userRole) {
-       showAlert("Login Error", "Could not determine user role or ID from token.");
+       showAlert("Login Error", "Could not determine user role or ID from the server response.");
        localStorage.removeItem("token");
        return;
     }
