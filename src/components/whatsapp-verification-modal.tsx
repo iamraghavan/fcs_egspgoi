@@ -94,10 +94,14 @@ export function WhatsAppVerificationModal({ isOpen, user, onSuccess }: WhatsAppV
     setIsSubmitting(true);
     const token = localStorage.getItem("token");
     try {
+      // The backend expects a 10-digit number, so we strip non-digit characters and take the last 10.
+      const digitsOnly = phone.replace(/\D/g, '');
+      const last10Digits = digitsOnly.slice(-10);
+
       const res = await fetch(`${API_BASE_URL}/api/v1/auth/whatsapp/send-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify({ phone: last10Digits }),
       });
       const data = await res.json();
        if (!res.ok || !data.success) {
