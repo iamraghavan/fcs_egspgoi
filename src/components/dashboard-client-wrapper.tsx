@@ -173,7 +173,11 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           throw new Error(responseData.message || "Failed to fetch user data");
         }
 
-        const userData = responseData.data;
+        const userData = responseData.user || responseData.data;
+
+        if (!userData) {
+          throw new Error("User data not found in server response.");
+        }
         
         const getAvatarUrl = (user: any) => {
             if (user.profileImage) {
@@ -196,10 +200,9 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         
         setUser(userPayload);
         
-        const needsVerification = userData.role === 'faculty' || userData.role === 'admin';
+        const needsVerification = (userData.role === 'faculty' || userData.role === 'admin') && !userData.whatsappVerified;
         
-        // Use a more robust check. It should trigger if whatsappVerified is not explicitly true.
-        if (needsVerification && userPayload.whatsappVerified !== true) {
+        if (needsVerification) {
              setUserForVerification(userData);
              setIsVerificationModalOpen(true);
         } else {
@@ -284,8 +287,6 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         onSuccess={() => {
             setIsVerificationModalOpen(false);
             setUserForVerification(null);
-            // Optimistically update the user state to prevent the modal from reappearing
-            // on subsequent re-renders before the next full fetch.
             if (user) {
                 setUser({ ...user, whatsappVerified: true });
             }
