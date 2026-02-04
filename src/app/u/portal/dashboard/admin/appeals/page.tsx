@@ -23,6 +23,7 @@ import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { shortenUrl } from "@/lib/url-shortener"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -70,6 +71,7 @@ export default function AppealReviewPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
+  const [shortenedProofUrl, setShortenedProofUrl] = useState<string | null>(null);
   
   const totalPages = Math.ceil(total / limit);
 
@@ -170,6 +172,20 @@ export default function AppealReviewPage() {
     setDepartmentFilter("all"); 
   }, [collegeFilter]);
 
+  const getProofUrl = (url: string) => {
+    if (!url) return '#';
+    if (url.startsWith('http')) return url;
+    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  useEffect(() => {
+    if (selectedAppeal?.proofUrl) {
+      setShortenedProofUrl(null); // Reset on selection change
+      shortenUrl(getProofUrl(selectedAppeal.proofUrl))
+          .then(url => setShortenedProofUrl(url))
+          .catch(() => setShortenedProofUrl(getProofUrl(selectedAppeal.proofUrl))); // Fallback to original
+    }
+  }, [selectedAppeal]);
 
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
     if (!selectedAppeal) {
@@ -224,12 +240,6 @@ export default function AppealReviewPage() {
           case 'pending': return 'bg-yellow-100 text-yellow-800';
           default: return 'bg-gray-100 text-gray-800';
       }
-  };
-
-  const getProofUrl = (url: string) => {
-    if (!url) return '#';
-    if (url.startsWith('http')) return url;
-    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   return (
@@ -404,12 +414,14 @@ export default function AppealReviewPage() {
                              <p className="text-sm font-medium text-muted-foreground">Original Admin Notes:</p>
                              <p className="text-sm italic bg-muted/50 p-3 rounded-md">"{selectedAppeal.notes || 'No notes provided.'}"</p>
                               {selectedAppeal.proofUrl && (
-                                <Button asChild variant="link" className="p-0 h-auto">
-                                    <a href={getProofUrl(selectedAppeal.proofUrl)} target="_blank" rel="noopener noreferrer">
-                                        <FileIcon className="mr-2 h-4 w-4" />
-                                        View Original Proof
-                                    </a>
-                                </Button>
+                                shortenedProofUrl ? (
+                                    <Button asChild variant="link" className="p-0 h-auto">
+                                        <a href={shortenedProofUrl} target="_blank" rel="noopener noreferrer">
+                                            <FileIcon className="mr-2 h-4 w-4" />
+                                            View Original Proof
+                                        </a>
+                                    </Button>
+                                ) : <p className="text-xs text-muted-foreground">Generating secure link...</p>
                              )}
                         </div>
                     </TabsContent>
@@ -484,5 +496,3 @@ export default function AppealReviewPage() {
     </div>
   )
 }
-
-    

@@ -52,6 +52,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
+import { shortenUrl } from "@/lib/url-shortener";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -172,6 +173,7 @@ export default function ManageRemarksPage() {
   // Details view state
   const [selectedRemarkDetails, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
 
   // Edit State
   const [editingRemark, setEditingRemark] = useState<NegativeRemark | null>(null);
@@ -339,6 +341,19 @@ export default function ManageRemarksPage() {
     }
   }, [collegeFilter]);
 
+  const getProofUrl = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('http')) {
+        return url;
+    }
+    // Handle cases where the base URL might be duplicated
+    if (url.includes(API_BASE_URL)) {
+        const urlParts = url.split(API_BASE_URL);
+        return `${API_BASE_URL}${urlParts[urlParts.length - 1]}`;
+    }
+    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   useEffect(() => {
     if (editingRemark) {
         setEditNotes(editingRemark.notes || "");
@@ -346,6 +361,15 @@ export default function ManageRemarksPage() {
         setEditProof(null);
     }
   }, [editingRemark]);
+
+  useEffect(() => {
+    if (selectedRemarkDetails?.proofUrl) {
+      setShortProofUrl(null);
+      shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl))
+        .then(setShortProofUrl)
+        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails.proofUrl))); // Fallback to full URL on error
+    }
+  }, [selectedRemarkDetails]);
 
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -501,19 +525,6 @@ export default function ManageRemarksPage() {
       } catch (error: any) {
           showAlert("Delete Failed", error.message);
       }
-  };
-
-  const getProofUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http')) {
-        return url;
-    }
-    // Handle cases where the base URL might be duplicated
-    if (url.includes(API_BASE_URL)) {
-        const urlParts = url.split(API_BASE_URL);
-        return `${API_BASE_URL}${urlParts[urlParts.length - 1]}`;
-    }
-    return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
   
  const creditTitleOptions = useMemo(() => {
@@ -790,9 +801,11 @@ export default function ManageRemarksPage() {
                                                  <div>
                                                     <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
                                                     {selectedRemarkDetails.proofUrl ? (
-                                                         <Button asChild variant="link" className="p-0 h-auto">
-                                                            <a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                        </Button>
+                                                        shortProofUrl ? (
+                                                            <Button asChild variant="link" className="p-0 h-auto">
+                                                                <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                            </Button>
+                                                        ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
                                                     ) : "Not Provided"}
                                                 </div>
                                             </CardContent>

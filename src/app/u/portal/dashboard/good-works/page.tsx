@@ -49,6 +49,7 @@ import {
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
+import { shortenUrl } from "@/lib/url-shortener";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -118,6 +119,7 @@ export default function GoodWorksPage() {
   const [isViewModalOpen, setIsViewModalOpen] = useState(false);
   const [detailedWork, setDetailedWork] = useState<GoodWork | null>(null);
   const [isFetchingDetails, setIsFetchingDetails] = useState(false);
+  const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
 
 
   const fetchGoodWorks = async (currentPage: number, currentYear: string, currentStatus: string) => {
@@ -204,6 +206,17 @@ export default function GoodWorksPage() {
       setEditProof(null); // Reset file input
     }
   }, [editingWork]);
+  
+  useEffect(() => {
+    if (detailedWork?.proofUrl) {
+      setShortProofUrl(null);
+      shortenUrl(detailedWork.proofUrl)
+        .then(setShortProofUrl)
+        .catch(() => {
+          if (detailedWork.proofUrl) setShortProofUrl(detailedWork.proofUrl)
+        });
+    }
+  }, [detailedWork]);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -562,7 +575,16 @@ export default function GoodWorksPage() {
                       <div><strong className="font-medium text-muted-foreground block">Notes:</strong> {detailedWork.notes || 'N/A'}</div>
                       <div><strong className="font-medium text-muted-foreground block">Submission Date:</strong> {new Date(detailedWork.createdAt).toLocaleString()}</div>
                       {detailedWork.proofUrl && (
-                        <div><strong className="font-medium text-muted-foreground block">Proof:</strong> <Button asChild variant="link" className="p-0 h-auto"><a href={detailedWork.proofUrl} target="_blank" rel="noopener noreferrer">View Document</a></Button></div>
+                        <div>
+                          <strong className="font-medium text-muted-foreground block">Proof:</strong>
+                          {shortProofUrl ? (
+                            <Button asChild variant="link" className="p-0 h-auto">
+                              <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                            </Button>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">Generating secure link...</span>
+                          )}
+                        </div>
                       )}
                   </div>
               )}
@@ -574,4 +596,3 @@ export default function GoodWorksPage() {
     </div>
   )
 }
-    

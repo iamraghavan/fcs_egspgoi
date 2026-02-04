@@ -49,6 +49,7 @@ import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
+import { shortenUrl } from "@/lib/url-shortener";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -139,6 +140,7 @@ export default function IssuedHistoryPage() {
   // Details view state
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
+  const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
   
   // Edit State
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
@@ -243,6 +245,20 @@ export default function IssuedHistoryPage() {
     }
   }, [editingRemark]);
 
+  const getProofUrl = (url: string) => {
+    if (!url) return '#';
+    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
+  useEffect(() => {
+    if (selectedRemark?.proofUrl) {
+        setShortProofUrl(null);
+        shortenUrl(getProofUrl(selectedRemark.proofUrl))
+            .then(setShortProofUrl)
+            .catch(() => setShortProofUrl(getProofUrl(selectedRemark!.proofUrl))); // Fallback to original
+    }
+}, [selectedRemark]);
+
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRemark) return;
@@ -304,11 +320,6 @@ export default function IssuedHistoryPage() {
     } catch (error: any) {
         showAlert("Delete Failed", error.message);
     }
-  };
-  
-  const getProofUrl = (url: string) => {
-    if (!url) return '#';
-    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   const getStatusBadge = (status: IssuedRemark['status']) => {
@@ -474,9 +485,11 @@ export default function IssuedHistoryPage() {
                                      <div>
                                         <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
                                         {selectedRemark.proofUrl ? (
-                                             <Button asChild variant="link" className="p-0 h-auto">
-                                                <a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Document</a>
-                                            </Button>
+                                             shortProofUrl ? (
+                                                <Button asChild variant="link" className="p-0 h-auto">
+                                                   <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                                               </Button>
+                                           ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
                                         ) : "Not Provided"}
                                     </div>
                                     <p className="border-t pt-4 mt-4"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemark._id}</span></p>
