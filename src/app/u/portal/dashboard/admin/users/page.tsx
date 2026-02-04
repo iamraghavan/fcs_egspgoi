@@ -30,12 +30,14 @@ import {
   DialogTitle,
   DialogTrigger,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAlert } from "@/context/alert-context";
 import { useToast } from "@/hooks/use-toast";
 import { gsap } from "gsap";
 import { Label } from "@/components/ui/label";
+import { WhatsAppShareButton } from "@/components/whatsapp-share-button";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -387,40 +389,49 @@ export default function FacultyAccountsPage() {
                             </DialogDescription>
                           </DialogHeader>
                           {selectedFaculty && (
-                            <div className="space-y-4">
-                                <div className="flex items-center space-x-4">
-                                  <Avatar className="h-16 w-16">
-                                      <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFaculty.name)}&background=random`} />
-                                      <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
-                                  </Avatar>
-                                  <div>
-                                      <p className="text-lg font-semibold">{selectedFaculty.name}</p>
-                                      <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
-                                  </div>
+                            <>
+                              <div className="space-y-4">
+                                  <div className="flex items-center space-x-4">
+                                    <Avatar className="h-16 w-16">
+                                        <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFaculty.name)}&background=random`} />
+                                        <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <p className="text-lg font-semibold">{selectedFaculty.name}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
+                                    </div>
+                                </div>
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-muted-foreground">College</p>
+                                        <p className="font-medium">{selectedFaculty.college || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Department</p>
+                                        <p className="font-medium">{selectedFaculty.department || 'N/A'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Current Credits</p>
+                                        <p className="font-medium">{selectedFaculty.currentCredit ?? 0}</p>
+                                    </div>
+                                     <div>
+                                        <p className="text-muted-foreground">Status</p>
+                                        <p className="font-medium">{selectedFaculty.isActive ? 'Active' : 'Inactive'}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-muted-foreground">Last Submission Date</p>
+                                        <p className="font-medium">N/A</p>
+                                    </div>
+                                </div>
                               </div>
-                              <div className="grid grid-cols-2 gap-4 text-sm">
-                                  <div>
-                                      <p className="text-muted-foreground">College</p>
-                                      <p className="font-medium">{selectedFaculty.college || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                      <p className="text-muted-foreground">Department</p>
-                                      <p className="font-medium">{selectedFaculty.department || 'N/A'}</p>
-                                  </div>
-                                  <div>
-                                      <p className="text-muted-foreground">Current Credits</p>
-                                      <p className="font-medium">{selectedFaculty.currentCredit ?? 0}</p>
-                                  </div>
-                                   <div>
-                                      <p className="text-muted-foreground">Status</p>
-                                      <p className="font-medium">{selectedFaculty.isActive ? 'Active' : 'Inactive'}</p>
-                                  </div>
-                                  <div>
-                                      <p className="text-muted-foreground">Last Submission Date</p>
-                                      <p className="font-medium">N/A</p>
-                                  </div>
-                              </div>
-                            </div>
+                              <DialogFooter className="pt-4 mt-4 border-t">
+                                <WhatsAppShareButton 
+                                  facultyName={selectedFaculty.name}
+                                  creditScore={selectedFaculty.currentCredit ?? 0}
+                                  facultyId={selectedFaculty._id}
+                                />
+                              </DialogFooter>
+                            </>
                           )}
                         </DialogContent>
                       </Dialog>
