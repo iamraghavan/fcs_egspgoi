@@ -26,9 +26,9 @@
     },
     {
       "id": "maintenance-car",
-      "description": "Illustration of car maintenance",
-      "imageUrl": "https://images.unsplash.com/photo-1702146713922-613313be011d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjYXIlMjByZXBhaXIlMjBpbGx1c3RyYXRpb258ZW58MHx8fHwxNzcwMzEwMTU2fDA&ixlib=rb-4.1.0&q=80&w=1080",
-      "imageHint": "car repair illustration"
+      "description": "Illustration of a person changing a tire on a pickup truck",
+      "imageUrl": "https://storage.googleapis.com/project-spark-b1b06.appspot.com/static/scio/3c2a611b-8012-4752-9b51-5b72e50085a6.png",
+      "imageHint": "tire change illustration"
     }
   ]
 }
