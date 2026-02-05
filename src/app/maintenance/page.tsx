@@ -37,7 +37,7 @@ export default function MaintenancePage() {
                         We'll be back up and running again shortly, around {maintenanceEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
                     </p>
                     <p className="mt-1 text-sm text-gray-500">
-                         Please check out our social channels for further updates.
+                         Our mechanics are busy tuning up the engine. Please wait patiently, we're making things even better for you!
                     </p>
                     <div className="mt-8">
                         <Image
