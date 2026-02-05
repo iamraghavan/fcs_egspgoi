@@ -23,12 +23,6 @@
       "description": "Faculty user avatar",
       "imageUrl": "https://images.unsplash.com/photo-1573165850883-9b0e18c44bd2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxwcm9mZXNzaW9uYWwlMjB3b21hbnxlbnwwfHx8fDE3NTkxMzA2NDZ8MA&ixlib=rb-4.1.0&q=80&w=1080",
       "imageHint": "professional woman"
-    },
-    {
-      "id": "maintenance-car",
-      "description": "Illustration of a person changing a tire on a pickup truck",
-      "imageUrl": "https://storage.googleapis.com/project-spark-b1b06.appspot.com/static/scio/3c2a611b-8012-4752-9b51-5b72e50085a6.png",
-      "imageHint": "tire change illustration"
     }
   ]
 }

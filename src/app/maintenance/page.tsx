@@ -4,11 +4,9 @@ import { Twitter, Instagram, Facebook } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
-import { PlaceHolderImages } from '@/lib/placeholder-images';
+import CarMechanicImage from '@/app/car-mechanic-rolling-tire-change-it_3446-270.jpg';
 
 export default function MaintenancePage() {
-  const maintenanceImage = PlaceHolderImages.find(img => img.id === 'maintenance-car');
-
   const maintenanceEndDate = new Date();
   maintenanceEndDate.setDate(maintenanceEndDate.getDate() + 14);
 
@@ -42,20 +40,14 @@ export default function MaintenancePage() {
                          Please check out our social channels for further updates.
                     </p>
                     <div className="mt-8">
-                         {maintenanceImage ? (
-                            <Image
-                                src={maintenanceImage.imageUrl}
-                                alt={maintenanceImage.description}
-                                data-ai-hint={maintenanceImage.imageHint}
-                                width={800}
-                                height={400}
-                                className="mx-auto rounded-lg object-cover"
-                            />
-                         ) : (
-                             <div className="w-full h-[400px] bg-gray-200 rounded-lg flex items-center justify-center">
-                                <p className="text-gray-500">Illustration loading...</p>
-                            </div>
-                         )}
+                        <Image
+                            src={CarMechanicImage}
+                            alt="Mechanic rolling a tire to fix a car"
+                            width={800}
+                            height={400}
+                            className="mx-auto rounded-lg object-cover"
+                            priority
+                        />
                     </div>
                 </CardContent>
                 <div className="flex justify-between items-center p-8 sm:p-12 text-sm">
