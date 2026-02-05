@@ -21,7 +21,7 @@ export default function MaintenancePage() {
             <Card className="w-full bg-white/80 backdrop-blur-lg border-gray-200/50 shadow-2xl shadow-yellow-100/50">
                 <CardHeader className="p-8 sm:p-12">
                     <div className="flex justify-between items-center">
-                        <Image src={EgspgoiLogo} alt="CreditWise Logo" width={60} height={60} />
+                        <Image src={EgspgoiLogo} alt="CreditWise Logo" width={80} height={80} />
                         <div className="flex items-center gap-4">
                            <Link href="#" aria-label="Twitter"><Twitter className="w-5 h-5 text-gray-500 hover:text-primary" /></Link>
                            <Link href="#" aria-label="Facebook"><Facebook className="w-5 h-5 text-gray-500 hover:text-primary" /></Link>
