@@ -3,20 +3,12 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
+import { messaging } from '@/lib/firebase';
+import { getToken } from 'firebase/messaging';
+
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-const PUBLIC_VAPID_KEY = 'BLrsFHmq1niUPGhfcviZiDTdf1Kc64jci92HlSno45R2BdbFuyKTMxh0H2OtH-iCP6ftG46dL5dssJaoeYg0bLc';
-
-function urlBase64ToUint8Array(base64String: string) {
-  const padding = '='.repeat((4 - base64String.length % 4) % 4);
-  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-  const rawData = window.atob(base64);
-  const outputArray = new Uint8Array(rawData.length);
-  for (let i = 0; i < rawData.length; ++i) {
-    outputArray[i] = rawData.charCodeAt(i);
-  }
-  return outputArray;
-}
+const PUBLIC_VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || '';
 
 export function usePushNotifications() {
     const { toast } = useToast();
@@ -26,15 +18,23 @@ export function usePushNotifications() {
     const [isProcessing, setIsProcessing] = useState(true);
 
     useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && messaging()) {
             setIsSupported(true);
             setPermission(Notification.permission);
-            navigator.serviceWorker.ready.then(reg => {
-                reg.pushManager.getSubscription().then(subscription => {
+            // Check current subscription status
+            const checkSubscription = async () => {
+                try {
+                    const registration = await navigator.serviceWorker.ready;
+                    const subscription = await registration.pushManager.getSubscription();
                     setIsSubscribed(!!subscription);
+                } catch (error) {
+                    console.error("Error checking push manager subscription:", error);
+                    setIsSubscribed(false);
+                } finally {
                     setIsProcessing(false);
-                });
-            });
+                }
+            };
+            checkSubscription();
         } else {
             setIsSupported(false);
             setIsProcessing(false);
@@ -42,8 +42,9 @@ export function usePushNotifications() {
     }, []);
 
     const subscribeUser = useCallback(async () => {
-        if (!isSupported) {
-            toast({ variant: 'destructive', title: 'Unsupported', description: 'Push notifications are not supported in your browser.' });
+        const messagingInstance = messaging();
+        if (!isSupported || !messagingInstance) {
+            toast({ variant: 'destructive', title: 'Unsupported', description: 'Push notifications are not supported in this browser.' });
             return;
         }
 
@@ -71,30 +72,36 @@ export function usePushNotifications() {
                 setIsProcessing(false);
                 return;
             }
+            
+            // Ensure service worker is active
+            await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            await navigator.serviceWorker.ready;
 
-            await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
-            const registration = await navigator.serviceWorker.ready;
-
-            const subscription = await registration.pushManager.subscribe({
-                userVisibleOnly: true,
-                applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
+            const fcmToken = await getToken(messagingInstance, {
+                vapidKey: PUBLIC_VAPID_KEY,
+                serviceWorkerRegistration: await navigator.serviceWorker.ready
             });
-
-            const response = await fetch(`${API_BASE_URL}/api/v1/notifications/subscribe`, {
-                method: 'POST',
-                body: JSON.stringify(subscription),
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${userToken}`
+            
+            if (fcmToken) {
+                // Send token to backend
+                const response = await fetch(`${API_BASE_URL}/api/v1/users/device-token`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${userToken}`,
+                    },
+                    body: JSON.stringify({ fcmToken }),
+                });
+                
+                if (response.ok) {
+                    toast({ title: 'Notifications Enabled', description: 'You will now receive updates via push notifications.' });
+                    setIsSubscribed(true);
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.message || 'Failed to register token on the server.');
                 }
-            });
-
-            if (response.ok) {
-                toast({ title: 'Notifications Enabled', description: 'You will now receive updates via push notifications.' });
-                setIsSubscribed(true);
             } else {
-                 const errorData = await response.json();
-                 throw new Error(errorData.message || 'Failed to subscribe on the server.');
+                throw new Error('Could not get FCM token. Please try again.');
             }
         } catch (error: any) {
             toast({ variant: 'destructive', title: 'Subscription Failed', description: error.message });
