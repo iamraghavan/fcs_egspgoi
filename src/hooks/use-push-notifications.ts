@@ -57,11 +57,13 @@ export function usePushNotifications() {
         }
 
         try {
+            console.log("Requesting notification permission...");
             let currentPermission = Notification.permission;
             if (currentPermission === 'default') {
                 currentPermission = await Notification.requestPermission();
                 setPermission(currentPermission);
             }
+            console.log("Notification permission status:", currentPermission);
 
             if (currentPermission !== 'granted') {
                 toast({
@@ -73,7 +75,6 @@ export function usePushNotifications() {
                 return;
             }
             
-            // Construct the service worker URL with config as query parameters
             const firebaseConfig = {
                 apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
                 authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -85,18 +86,14 @@ export function usePushNotifications() {
 
             const queryString = new URLSearchParams(firebaseConfig as any).toString();
             
-            // Ensure the old service worker is unregistered before registering the new one.
-            const oldRegistrations = await navigator.serviceWorker.getRegistrations();
-            for (const registration of oldRegistrations) {
-                if (registration.scope.endsWith('/')) { // A way to target the old generic SW
-                    await registration.unregister();
-                }
-            }
-            
+            console.log("Registering service worker...");
             const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${queryString}`);
-            await navigator.serviceWorker.ready;
             
-            console.log("Service Worker is ready. Attempting to get FCM token...");
+            // Wait for the service worker to be active
+            await navigator.serviceWorker.ready;
+            console.log("Service Worker is active and ready.");
+            
+            console.log("Attempting to get FCM token...");
 
             const fcmToken = await getToken(messagingInstance, {
                 vapidKey: PUBLIC_VAPID_KEY,
@@ -104,12 +101,8 @@ export function usePushNotifications() {
             });
             
             if (fcmToken) {
-                console.log('FCM TOKEN IS:', fcmToken); // Make it very clear
-            } else {
-                console.error('Could not retrieve FCM token. getToken() returned a falsy value.');
-            }
-            
-            if (fcmToken) {
+                console.log('FCM TOKEN IS:', fcmToken); // THE IMPORTANT LOG
+                
                 // Send token to backend
                 const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
                     method: 'PUT',
@@ -128,11 +121,12 @@ export function usePushNotifications() {
                     throw new Error(errorData.message || 'Failed to register token on the server.');
                 }
             } else {
-                throw new Error('Could not get FCM token. Please try again.');
+                 console.error('Could not retrieve FCM token. getToken() returned a falsy value. This can happen if the service worker is not set up correctly, the VAPID key is invalid, or due to a browser/network issue.');
+                 throw new Error('Could not get FCM token. Please check browser console for details.');
             }
         } catch (error: any) {
+            console.error('Full error during push subscription:', error);
             toast({ variant: 'destructive', title: 'Subscription Failed', description: error.message });
-            console.error('Failed to subscribe user: ', error);
             setIsSubscribed(false);
         } finally {
             setIsProcessing(false);
