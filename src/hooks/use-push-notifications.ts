@@ -33,12 +33,13 @@ export function usePushNotifications() {
         }
 
         try {
+            console.log("Requesting notification permission...");
             let currentPermission = Notification.permission;
             if (currentPermission === 'default') {
-                console.log("Requesting notification permission...");
                 currentPermission = await Notification.requestPermission();
                 setPermission(currentPermission);
             }
+             console.log(`Permission status: ${currentPermission}`);
 
             if (currentPermission !== 'granted') {
                 toast({
@@ -76,8 +77,7 @@ export function usePushNotifications() {
             
             console.log("Attempting to get FCM token...");
             getToken(messagingInstance, {
-                vapidKey: PUBLIC_VAPID_KEY,
-                serviceWorkerRegistration: registration
+                vapidKey: PUBLIC_VAPID_KEY
             }).then(async (fcmToken) => {
                 if (fcmToken) {
                     console.log('%c FCM TOKEN IS: ', 'color: white; background: #007bff; font-size: 16px; padding: 4px;', fcmToken);

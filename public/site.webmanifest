@@ -1,0 +1,9 @@
+{
+  "name": "CreditWise",
+  "short_name": "CreditWise",
+  "description": "A comprehensive faculty performance management system for EGS Pillay Engineering College.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#222f5a"
+}
