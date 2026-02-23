@@ -72,8 +72,10 @@ export function usePushNotifications() {
                 return;
             }
 
-            const register = await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
-            const subscription = await register.pushManager.subscribe({
+            await navigator.serviceWorker.register('/service-worker.js', { scope: '/' });
+            const registration = await navigator.serviceWorker.ready;
+
+            const subscription = await registration.pushManager.subscribe({
                 userVisibleOnly: true,
                 applicationServerKey: urlBase64ToUint8Array(PUBLIC_VAPID_KEY)
             });
