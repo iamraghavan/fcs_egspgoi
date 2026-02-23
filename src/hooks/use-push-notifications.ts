@@ -80,7 +80,7 @@ export function usePushNotifications() {
                 serviceWorkerRegistration: registration
             }).then(async (fcmToken) => {
                 if (fcmToken) {
-                    console.log('FCM TOKEN IS:', fcmToken);
+                    console.log('%c FCM TOKEN IS: ', 'color: white; background: #007bff; font-size: 16px; padding: 4px;', fcmToken);
                     
                     const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
                         method: 'PUT',
