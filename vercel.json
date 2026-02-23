@@ -13,11 +13,11 @@
   "rewrites": [
     {
       "source": "/s/:id",
-      "destination": "https://fcs.egspgroup.in/s/:id"
+      "destination": "https://faculty-credit-system.vercel.app/s/:id"
     },
     {
       "source": "/cdn/(.*)",
-      "destination": "https://fcs.egspgroup.in/cdn/$1"
+      "destination": "https://faculty-credit-system.vercel.app/cdn/$1"
     }
   ]
 }
