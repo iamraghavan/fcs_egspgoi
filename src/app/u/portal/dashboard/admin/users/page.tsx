@@ -398,29 +398,22 @@ export default function FacultyAccountsPage() {
                                     </Avatar>
                                     <div>
                                         <p className="text-lg font-semibold">{selectedFaculty.name}</p>
+                                        <p className="text-sm text-muted-foreground">{selectedFaculty.department || 'N/A'} - {selectedFaculty.college || 'N/A'}</p>
                                         <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
                                     </div>
                                 </div>
-                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="space-y-2 text-sm pt-2">
                                     <div>
-                                        <p className="text-muted-foreground">College</p>
-                                        <p className="font-medium">{selectedFaculty.college || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Department</p>
-                                        <p className="font-medium">{selectedFaculty.department || 'N/A'}</p>
-                                    </div>
-                                    <div>
-                                        <p className="text-muted-foreground">Current Credits</p>
-                                        <p className="font-medium">{selectedFaculty.currentCredit ?? 0}</p>
+                                        <span className="text-muted-foreground font-medium">Current Credits: </span>
+                                        <span className="font-semibold text-primary">{selectedFaculty.currentCredit ?? 0}</span>
                                     </div>
                                      <div>
-                                        <p className="text-muted-foreground">Status</p>
-                                        <p className="font-medium">{selectedFaculty.isActive ? 'Active' : 'Inactive'}</p>
+                                        <span className="text-muted-foreground font-medium">Status: </span>
+                                        <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
                                     </div>
                                     <div>
-                                        <p className="text-muted-foreground">Last Submission Date</p>
-                                        <p className="font-medium">N/A</p>
+                                        <span className="text-muted-foreground font-medium">Last Submission Date: </span>
+                                        <span className="font-medium">N/A</span>
                                     </div>
                                 </div>
                               </div>
