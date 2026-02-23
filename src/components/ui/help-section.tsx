@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Award, FileText, Fingerprint, LayoutDashboard, MessageSquareWarning, ShieldCheck, User, GanttChart, BarChart3, BotMessageSquare } from "lucide-react";
+import { Award, FileText, Fingerprint, LayoutDashboard, MessageSquareWarning, ShieldCheck, User, GanttChart, BarChart3, BotMessageSquare, Users } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 const helpTopics = [
