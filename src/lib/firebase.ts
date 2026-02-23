@@ -1,6 +1,7 @@
 
 import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/app";
 import { getMessaging } from "firebase/messaging";
+import { getPerformance } from "firebase/performance";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,6 +13,14 @@ const firebaseConfig: FirebaseOptions = {
 };
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+
+if (typeof window !== "undefined") {
+    try {
+        getPerformance(app);
+    } catch (err) {
+        console.error("Failed to initialize Firebase Performance", err);
+    }
+}
 
 const messaging = () => {
     if (typeof window !== 'undefined') {
