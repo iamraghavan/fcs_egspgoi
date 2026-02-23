@@ -16,46 +16,6 @@ export function usePushNotifications() {
     const [isSupported, setIsSupported] = useState(false);
     const [permission, setPermission] = useState<NotificationPermission>('default');
     const [isProcessing, setIsProcessing] = useState(true);
-    
-    // This function sends the config to the service worker and waits for a reply
-    const initializeFirebaseInSW = useCallback(async (registration: ServiceWorkerRegistration) => {
-        const firebaseConfig = {
-            apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-            authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-            projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-            storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-            messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-            appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-        };
-
-        if (!firebaseConfig.apiKey) {
-            throw new Error("Client-side Firebase config is missing. Check environment variables.");
-        }
-
-        return new Promise<void>((resolve, reject) => {
-            const messageChannel = new MessageChannel();
-            messageChannel.port1.onmessage = (event) => {
-                if (event.data.type === 'INIT_SUCCESS') {
-                    console.log('Service Worker initialized successfully.');
-                    resolve();
-                } else if (event.data.type === 'INIT_FAILURE') {
-                    console.error('Service Worker initialization failed:', event.data.error);
-                    reject(new Error(event.data.error || "Unknown service worker initialization error."));
-                }
-            };
-            
-            const serviceWorker = registration.active;
-            if (serviceWorker) {
-                console.log('Sending INIT_FIREBASE to active service worker.');
-                serviceWorker.postMessage({
-                    type: 'INIT_FIREBASE',
-                    config: firebaseConfig,
-                }, [messageChannel.port2]);
-            } else {
-                reject(new Error("No active service worker found to initialize."));
-            }
-        });
-    }, []);
 
     const subscribeUser = useCallback(async () => {
         const messagingInstance = messaging();
@@ -75,6 +35,7 @@ export function usePushNotifications() {
         try {
             let currentPermission = Notification.permission;
             if (currentPermission === 'default') {
+                console.log("Requesting notification permission...");
                 currentPermission = await Notification.requestPermission();
                 setPermission(currentPermission);
             }
@@ -89,15 +50,29 @@ export function usePushNotifications() {
                 return;
             }
             
-            console.log("Registering service worker...");
-            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            console.log("Permission granted. Proceeding with service worker registration.");
             
-            // Wait for the service worker to be active
+            const firebaseConfig = {
+                apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
+                authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+                projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
+                storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+                messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
+                appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+            };
+
+            if (!firebaseConfig.apiKey) {
+                throw new Error("Client-side Firebase config is missing. Check environment variables.");
+            }
+
+            const swUrl = `/firebase-messaging-sw.js?firebaseConfig=${encodeURIComponent(JSON.stringify(firebaseConfig))}`;
+
+            console.log(`Registering service worker from: ${swUrl}`);
+            const registration = await navigator.serviceWorker.register(swUrl);
+            
+            console.log("Service worker registered. Waiting for it to be ready...");
             await navigator.serviceWorker.ready;
             console.log("Service Worker is active and ready.");
-            
-            // Initialize Firebase in the Service Worker and wait for it to be ready
-            await initializeFirebaseInSW(registration);
             
             console.log("Attempting to get FCM token...");
             const fcmToken = await getToken(messagingInstance, {
@@ -106,7 +81,7 @@ export function usePushNotifications() {
             });
             
             if (fcmToken) {
-                console.log('FCM TOKEN IS:', fcmToken);
+                console.log('FCM TOKEN IS:', fcmToken); // Key logging statement
                 
                 const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
                     method: 'PUT',
@@ -132,13 +107,13 @@ export function usePushNotifications() {
         } finally {
             setIsProcessing(false);
         }
-    }, [isSupported, toast, initializeFirebaseInSW]);
+    }, [isSupported, toast]);
     
      useEffect(() => {
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && messaging()) {
             setIsSupported(true);
             setPermission(Notification.permission);
-            // Check current subscription status
+            
             const checkSubscription = async () => {
                 try {
                     const registration = await navigator.serviceWorker.ready;
