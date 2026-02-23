@@ -82,6 +82,8 @@ export function usePushNotifications() {
                 vapidKey: PUBLIC_VAPID_KEY,
                 serviceWorkerRegistration: registration
             });
+
+            console.log('FCM Token:', fcmToken);
             
             if (fcmToken) {
                 // Send token to backend
