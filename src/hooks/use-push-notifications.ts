@@ -50,6 +50,8 @@ export function usePushNotifications() {
                 return;
             }
             
+            console.log("Permission granted. Proceeding with service worker registration.");
+            
             const firebaseConfig = {
                 apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
                 authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -103,14 +105,23 @@ export function usePushNotifications() {
                      setIsSubscribed(false);
                 }
             }).catch((error: any) => {
-                console.error('Error during getToken() or token registration:', error);
-                let errorMessage = error.message || 'An unknown error occurred.';
-                if (error.code === 'messaging/permission-blocked') {
+                console.error('Full error during push subscription:', error);
+                
+                let errorMessage = 'An unknown error occurred while setting up notifications.';
+                let errorTitle = 'Subscription Failed';
+
+                if (error.name === 'AbortError') {
+                    errorTitle = 'Push Service Error';
+                    errorMessage = 'The browser push service failed to subscribe. This might be a temporary network issue or a problem with your browser. Please try again later.';
+                } else if (error.code === 'messaging/permission-blocked' || error.code === 'messaging/notifications-blocked') {
                     errorMessage = 'Notification permission was blocked. Please enable it in your browser settings.';
                 } else if (error.code === 'messaging/unsupported-browser') {
                     errorMessage = 'This browser does not support push notifications.';
+                } else {
+                    errorMessage = error.message || errorMessage;
                 }
-                toast({ variant: 'destructive', title: 'Subscription Failed', description: errorMessage });
+                
+                toast({ variant: 'destructive', title: errorTitle, description: errorMessage });
                 setIsSubscribed(false);
             }).finally(() => {
                 setIsProcessing(false);
