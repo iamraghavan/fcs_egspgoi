@@ -10,6 +10,11 @@ import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { Skeleton } from "./ui/skeleton";
 import dynamic from "next/dynamic";
+import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "./ui/button";
+import { BellRing } from "lucide-react";
+
 
 const CookiePreferencesDialog = dynamic(() =>
   import("@/components/cookie-preferences-dialog").then((mod) => mod.CookiePreferencesDialog)
@@ -142,9 +147,12 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
+  const { toast } = useToast();
   const [isCookiePrefsOpen, setIsCookiePrefsOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [userForVerification, setUserForVerification] = useState<any | null>(null);
+
+  const { permission, subscribeUser, isSupported } = usePushNotifications();
 
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
@@ -265,6 +273,44 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   useEffect(() => {
     fetchUser();
   }, [pathname, searchParams]);
+
+  useEffect(() => {
+    if (!user || !isSupported || permission !== 'default') {
+        return;
+    }
+
+    const PROMPT_DISMISSED_KEY = 'notificationPromptDismissedAt';
+    const PROMPT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+
+    const lastDismissed = localStorage.getItem(PROMPT_DISMISSED_KEY);
+    if (lastDismissed && (Date.now() - parseInt(lastDismissed, 10) < PROMPT_COOLDOWN_MS)) {
+        return;
+    }
+
+    const timer = setTimeout(() => {
+        toast({
+            title: "Get instant updates",
+            description: "Enable push notifications to stay informed about your account.",
+            action: (
+                <Button variant="outline" size="sm" onClick={async () => {
+                    await subscribeUser();
+                }}>
+                    <BellRing className="mr-2" />
+                    Enable
+                </Button>
+            ),
+            duration: 15000,
+            onOpenChange: (open) => {
+                if (!open) {
+                    localStorage.setItem(PROMPT_DISMISSED_KEY, Date.now().toString());
+                }
+            }
+        });
+    }, 7000); // 7 seconds after dashboard loads
+
+    return () => clearTimeout(timer);
+
+  }, [user, isSupported, permission, subscribeUser, toast]);
 
   if (loading || !user) {
     return <LoadingSkeleton />;
