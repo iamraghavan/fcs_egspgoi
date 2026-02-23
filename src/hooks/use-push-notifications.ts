@@ -50,8 +50,6 @@ export function usePushNotifications() {
                 return;
             }
             
-            console.log("Permission granted. Proceeding with service worker registration.");
-            
             const firebaseConfig = {
                 apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
                 authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
@@ -75,36 +73,53 @@ export function usePushNotifications() {
             console.log("Service Worker is active and ready.");
             
             console.log("Attempting to get FCM token...");
-            const fcmToken = await getToken(messagingInstance, {
+            getToken(messagingInstance, {
                 vapidKey: PUBLIC_VAPID_KEY,
                 serviceWorkerRegistration: registration
-            });
-            
-            if (fcmToken) {
-                console.log('FCM TOKEN IS:', fcmToken); // Key logging statement
-                
-                const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
-                    body: JSON.stringify({ fcmToken }),
-                });
-                
-                if (response.ok) {
-                    toast({ title: 'Notifications Enabled', description: 'You will now receive updates via push notifications.' });
-                    setIsSubscribed(true);
+            }).then(async (fcmToken) => {
+                if (fcmToken) {
+                    console.log('FCM TOKEN IS:', fcmToken);
+                    
+                    const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
+                        body: JSON.stringify({ fcmToken }),
+                    });
+                    
+                    if (response.ok) {
+                        toast({ title: 'Notifications Enabled', description: 'You will now receive updates via push notifications.' });
+                        setIsSubscribed(true);
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Failed to register token on the server.');
+                    }
                 } else {
-                    const errorData = await response.json();
-                    throw new Error(errorData.message || 'Failed to register token on the server.');
+                     console.error('Could not retrieve FCM token. getToken() returned a falsy value.');
+                     toast({
+                        variant: 'destructive',
+                        title: 'Subscription Failed',
+                        description: 'Could not get notification token. Ensure third-party cookies are not blocked in your browser settings.'
+                     });
+                     setIsSubscribed(false);
                 }
-            } else {
-                 console.error('Could not retrieve FCM token. getToken() returned a falsy value.');
-                 throw new Error('Could not get FCM token. Please check browser console for details.');
-            }
+            }).catch((error: any) => {
+                console.error('Error during getToken() or token registration:', error);
+                let errorMessage = error.message || 'An unknown error occurred.';
+                if (error.code === 'messaging/permission-blocked') {
+                    errorMessage = 'Notification permission was blocked. Please enable it in your browser settings.';
+                } else if (error.code === 'messaging/unsupported-browser') {
+                    errorMessage = 'This browser does not support push notifications.';
+                }
+                toast({ variant: 'destructive', title: 'Subscription Failed', description: errorMessage });
+                setIsSubscribed(false);
+            }).finally(() => {
+                setIsProcessing(false);
+            });
+
         } catch (error: any) {
-            console.error('Full error during push subscription:', error);
-            toast({ variant: 'destructive', title: 'Subscription Failed', description: error.message });
+            console.error('Error during service worker registration:', error);
+            toast({ variant: 'destructive', title: 'Setup Failed', description: error.message });
             setIsSubscribed(false);
-        } finally {
             setIsProcessing(false);
         }
     }, [isSupported, toast]);
