@@ -73,13 +73,14 @@ export function usePushNotifications() {
                 return;
             }
             
-            // Ensure service worker is active
-            await navigator.serviceWorker.register('/firebase-messaging-sw.js');
+            // Ensure service worker is active by registering it.
+            // If already registered, this will not do anything.
+            const registration = await navigator.serviceWorker.register('/firebase-messaging-sw.js');
             await navigator.serviceWorker.ready;
-
+            
             const fcmToken = await getToken(messagingInstance, {
                 vapidKey: PUBLIC_VAPID_KEY,
-                serviceWorkerRegistration: await navigator.serviceWorker.ready
+                serviceWorkerRegistration: registration
             });
             
             if (fcmToken) {
