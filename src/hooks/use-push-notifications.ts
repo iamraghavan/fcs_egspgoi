@@ -84,15 +84,30 @@ export function usePushNotifications() {
             };
 
             const queryString = new URLSearchParams(firebaseConfig as any).toString();
+            
+            // Ensure the old service worker is unregistered before registering the new one.
+            const oldRegistrations = await navigator.serviceWorker.getRegistrations();
+            for (const registration of oldRegistrations) {
+                if (registration.scope.endsWith('/')) { // A way to target the old generic SW
+                    await registration.unregister();
+                }
+            }
+            
             const registration = await navigator.serviceWorker.register(`/firebase-messaging-sw.js?${queryString}`);
             await navigator.serviceWorker.ready;
             
+            console.log("Service Worker is ready. Attempting to get FCM token...");
+
             const fcmToken = await getToken(messagingInstance, {
                 vapidKey: PUBLIC_VAPID_KEY,
                 serviceWorkerRegistration: registration
             });
-
-            console.log('FCM Token:', fcmToken);
+            
+            if (fcmToken) {
+                console.log('FCM TOKEN IS:', fcmToken); // Make it very clear
+            } else {
+                console.error('Could not retrieve FCM token. getToken() returned a falsy value.');
+            }
             
             if (fcmToken) {
                 // Send token to backend
