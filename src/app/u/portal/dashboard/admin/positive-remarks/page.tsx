@@ -281,8 +281,8 @@ export default function ManagePositiveCreditsPage() {
   
           const data = await response.json();
           if (data.success) {
-              setCredits(data.items);
-              setTotal(data.meta.total);
+              setCredits(data.items || []);
+              setTotal(data.meta?.total || 0);
           } else {
               throw new Error(data.message || "Failed to fetch credits");
           }
