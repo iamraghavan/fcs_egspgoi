@@ -137,27 +137,23 @@ export function usePushNotifications() {
     }, [isSupported, toast]);
     
      useEffect(() => {
-        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && messaging()) {
-            setIsSupported(true);
-            setPermission(Notification.permission);
-            
-            const checkSubscription = async () => {
-                try {
-                    const registration = await navigator.serviceWorker.ready;
-                    const subscription = await registration.pushManager.getSubscription();
-                    setIsSubscribed(!!subscription);
-                } catch (error) {
-                    console.error("Error checking push manager subscription:", error);
-                    setIsSubscribed(false);
-                } finally {
-                    setIsProcessing(false);
-                }
-            };
-            checkSubscription();
+        if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
+            try {
+                 const messagingInstance = messaging();
+                 if(messagingInstance) {
+                    setIsSupported(true);
+                    setPermission(Notification.permission);
+                 } else {
+                    setIsSupported(false);
+                 }
+            } catch (err) {
+                 console.error("Firebase Messaging not supported in this environment:", err);
+                 setIsSupported(false);
+            }
         } else {
             setIsSupported(false);
-            setIsProcessing(false);
         }
+        setIsProcessing(false);
     }, []);
     
     return { isSupported, isSubscribed, permission, isProcessing, subscribeUser };

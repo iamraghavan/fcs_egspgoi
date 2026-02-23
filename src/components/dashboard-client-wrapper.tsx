@@ -275,41 +275,45 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }, [pathname, searchParams]);
 
   useEffect(() => {
-    if (!user || !isSupported || permission !== 'default') {
+    if (!user || !isSupported) {
         return;
     }
 
-    const PROMPT_DISMISSED_KEY = 'notificationPromptDismissedAt';
-    const PROMPT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
+    if (permission === 'granted') {
+        console.log("Notification permission already granted. Refreshing token.");
+        subscribeUser();
+    } else if (permission === 'default') {
+        const PROMPT_DISMISSED_KEY = 'notificationPromptDismissedAt';
+        const PROMPT_COOLDOWN_MS = 24 * 60 * 60 * 1000; // 24 hours
 
-    const lastDismissed = localStorage.getItem(PROMPT_DISMISSED_KEY);
-    if (lastDismissed && (Date.now() - parseInt(lastDismissed, 10) < PROMPT_COOLDOWN_MS)) {
-        return;
-    }
+        const lastDismissed = localStorage.getItem(PROMPT_DISMISSED_KEY);
+        if (lastDismissed && (Date.now() - parseInt(lastDismissed, 10) < PROMPT_COOLDOWN_MS)) {
+            return;
+        }
 
-    const timer = setTimeout(() => {
-        toast({
-            title: "Get instant updates",
-            description: "Enable push notifications to stay informed about your account.",
-            action: (
-                <Button variant="outline" size="sm" onClick={async () => {
-                    await subscribeUser();
-                }}>
-                    <BellRing className="mr-2" />
-                    Enable
-                </Button>
-            ),
-            duration: 15000,
-            onOpenChange: (open) => {
-                if (!open) {
-                    localStorage.setItem(PROMPT_DISMISSED_KEY, Date.now().toString());
+        const timer = setTimeout(() => {
+            toast({
+                title: "Get instant updates",
+                description: "Enable push notifications to stay informed about your account.",
+                action: (
+                    <Button variant="outline" size="sm" onClick={async () => {
+                        await subscribeUser();
+                    }}>
+                        <BellRing className="mr-2" />
+                        Enable
+                    </Button>
+                ),
+                duration: 15000,
+                onOpenChange: (open) => {
+                    if (!open) {
+                        localStorage.setItem(PROMPT_DISMISSED_KEY, Date.now().toString());
+                    }
                 }
-            }
-        });
-    }, 7000); // 7 seconds after dashboard loads
+            });
+        }, 7000); // 7 seconds after dashboard loads
 
-    return () => clearTimeout(timer);
-
+        return () => clearTimeout(timer);
+    }
   }, [user, isSupported, permission, subscribeUser, toast]);
 
   if (loading || !user) {
