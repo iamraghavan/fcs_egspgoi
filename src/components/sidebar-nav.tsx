@@ -39,6 +39,7 @@ const getAdminNav = (uid: string) => [
   { name: "Credit Titles", href: `/u/portal/dashboard/admin/credits?uid=${uid}`, icon: ListPlus },
   { name: "Submissions", href: `/u/portal/dashboard/admin/review?uid=${uid}`, icon: FolderKanban },
   { name: "Negative Remarks", href: `/u/portal/dashboard/admin/remarks?uid=${uid}`, icon: MessageSquareWarning },
+  { name: "Positive Credits", href: `/u/portal/dashboard/admin/positive-remarks?uid=${uid}`, icon: Award },
   { name: "Appeals", href: `/u/portal/dashboard/admin/appeals?uid=${uid}`, icon: ShieldAlert },
   { name: "Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
 ];
