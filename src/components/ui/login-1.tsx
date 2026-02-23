@@ -91,8 +91,6 @@ export function LoginScreen() {
   }, [searchParams]);
   
   const processSuccessfulLogin = (loginResponse: any) => {
-    // This is the key change: it checks for user data in `loginResponse.data` first,
-    // and falls back to `loginResponse` itself if `data` is not present.
     const userData = loginResponse.data || loginResponse;
     const token = userData.token || loginResponse.token;
     const sessionId = userData.sessionId || loginResponse.sessionId;
@@ -102,16 +100,33 @@ export function LoginScreen() {
       return;
     }
 
+    const parseJwt = (token: string) => {
+        try {
+            const base64Url = token.split('.')[1];
+            const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+            const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+                return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+            }).join(''));
+            return JSON.parse(jsonPayload);
+        } catch (e) {
+            console.error("Failed to parse JWT", e);
+            return null;
+        }
+    };
+    
+    localStorage.setItem("token", token);
     if (rememberMe) {
         localStorage.setItem("rememberedEmail", email);
     } else {
         localStorage.removeItem("rememberedEmail");
     }
+    if (sessionId) {
+      localStorage.setItem("sessionId", sessionId);
+    }
 
-    localStorage.setItem("token", token);
-    
-    const userId = userData.id;
-    const userRole = userData.role;
+    const decodedToken = parseJwt(token);
+    const userId = userData.id || decodedToken?.id;
+    const userRole = userData.role || decodedToken?.role;
     
     if (!userId || !userRole) {
        showAlert("Login Error", "Could not determine user role or ID from the server response.");
@@ -120,10 +135,6 @@ export function LoginScreen() {
     }
     
     localStorage.setItem("userRole", userRole);
-    
-    if (sessionId) {
-      localStorage.setItem("sessionId", sessionId);
-    }
     
     const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
     localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
