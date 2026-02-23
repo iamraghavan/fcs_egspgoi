@@ -45,6 +45,7 @@ const getAdminNav = (uid: string) => [
 ];
 
 const getOANav = (uid: string) => [
+  { name: "Issue Positive Credit", href: `/u/portal/dashboard/oa/positive?uid=${uid}`, icon: Award },
   { name: "Issue Remark", href: `/u/portal/dashboard/oa?uid=${uid}`, icon: MessageSquareWarning },
   { name: "Issued History", href: `/u/portal/dashboard/oa/history?uid=${uid}`, icon: History },
 ];
