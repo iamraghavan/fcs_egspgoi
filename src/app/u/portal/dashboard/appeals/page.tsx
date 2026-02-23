@@ -126,7 +126,7 @@ export default function AppealsPage() {
 
         if (resData.success) {
             const fetchedAppeals = resData.items.filter((credit: NegativeCredit): credit is Appeal => 
-              !!credit.appeal
+              !!credit.appeal && !!credit.appeal._id
             );
             
             setAppeals(fetchedAppeals);
@@ -155,8 +155,8 @@ export default function AppealsPage() {
   }, [facultyId, filter]);
   
   const handleAppealSubmit = async () => {
-    if (!selectedAppeal || !appealReason.trim()) {
-        showAlert("Incomplete Form", "Please provide a reason for your appeal.");
+    if (!selectedAppeal || !selectedAppeal.appeal?._id || !appealReason.trim()) {
+        showAlert("Incomplete Form", "Cannot submit appeal: ID is missing or reason is empty.");
         return;
     }
     setIsSubmittingAppeal(true);
@@ -491,6 +491,3 @@ export default function AppealsPage() {
     </div>
   )
 }
-
-
-    
