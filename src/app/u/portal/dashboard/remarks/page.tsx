@@ -55,6 +55,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useAlert } from "@/context/alert-context";
+import { shortenUrl } from "@/lib/url-shortener";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -91,10 +92,13 @@ export default function NegativeRemarksPage() {
   // Modal/Dialog states
   const [isAppealDialogOpen, setIsAppealDialogOpen] = useState(false);
   const [isEditAppealDialogOpen, setIsEditAppealDialogOpen] = useState(false);
+  const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false);
   
   const [appealReason, setAppealReason] = useState("");
   const [appealProof, setAppealProof] = useState<File | null>(null);
   const [isSubmittingAppeal, setIsSubmittingAppeal] = useState(false);
+  const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
+
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const facultyId = searchParams.get('uid');
@@ -144,6 +148,17 @@ export default function NegativeRemarksPage() {
     }
   }, [token, facultyId]);
   
+  useEffect(() => {
+    if (selectedRemark?.proofUrl) {
+        setShortProofUrl(null); // Reset
+        shortenUrl(getProofUrl(selectedRemark.proofUrl))
+            .then(url => setShortProofUrl(url))
+            .catch(() => {
+                if(selectedRemark.proofUrl) setShortProofUrl(getProofUrl(selectedRemark.proofUrl))
+            }); // Fallback
+    }
+}, [selectedRemark]);
+
   const handleAppealSubmit = async (isEdit: boolean) => {
     if (!selectedRemark || !appealReason.trim()) {
         showAlert("Incomplete Form", "Please provide a reason for your appeal.");
@@ -312,7 +327,7 @@ export default function NegativeRemarksPage() {
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => setSelectedRemark(remark)}>View Details</DropdownMenuItem>
+                                <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsDetailsDialogOpen(true); }}>View Details</DropdownMenuItem>
                                  <DropdownMenuSeparator />
                                 {!remark.appeal && (remark.appealCount || 0) < 2 && (
                                     <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsAppealDialogOpen(true); setAppealReason(""); setAppealProof(null); }}>
@@ -366,6 +381,50 @@ export default function NegativeRemarksPage() {
       
       {renderAppealDialog(false)}
       {renderAppealDialog(true)}
+      
+       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>Remark Details</DialogTitle>
+                <DialogDescription>A detailed overview of the remark issued to you.</DialogDescription>
+            </DialogHeader>
+            {selectedRemark && (
+                <div className="space-y-4 py-4 text-sm">
+                    <div>
+                        <p className="font-medium text-muted-foreground">Title</p>
+                        <p className="font-semibold">{selectedRemark.title}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-muted-foreground">Points Deducted</p>
+                        <p className="font-bold text-destructive">{selectedRemark.points}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-muted-foreground">Date Issued</p>
+                        <p>{new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                    </div>
+                    <div>
+                        <p className="font-medium text-muted-foreground">Administrator's Notes</p>
+                        <blockquote className="mt-1 border-l-2 pl-4 italic bg-muted/50 p-2 rounded-r-md">
+                            {selectedRemark.notes || "No notes were provided."}
+                        </blockquote>
+                    </div>
+                    {selectedRemark.proofUrl && (
+                        <div>
+                            <p className="font-medium text-muted-foreground">Proof Document</p>
+                             {shortProofUrl ? (
+                                <Button asChild variant="link" className="p-0 h-auto">
+                                <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                            </Button>
+                            ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>}
+                        </div>
+                    )}
+                </div>
+            )}
+            <DialogFooter>
+                <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 
     </div>
   )
