@@ -4,7 +4,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { messaging } from '@/lib/firebase';
-import { getToken } from 'firebase/messaging';
+import { getToken, onMessage } from 'firebase/messaging';
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
@@ -137,12 +137,23 @@ export function usePushNotifications() {
     }, [isSupported, toast]);
     
      useEffect(() => {
+        setIsProcessing(true);
         if (typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window) {
             try {
                  const messagingInstance = messaging();
                  if(messagingInstance) {
                     setIsSupported(true);
                     setPermission(Notification.permission);
+
+                    // Handle foreground messages
+                    onMessage(messagingInstance, (payload) => {
+                        console.log('Foreground message received.', payload);
+                        toast({
+                            title: payload.notification?.title,
+                            description: payload.notification?.body,
+                        });
+                    });
+
                  } else {
                     setIsSupported(false);
                  }
@@ -154,7 +165,7 @@ export function usePushNotifications() {
             setIsSupported(false);
         }
         setIsProcessing(false);
-    }, []);
+    }, [toast]);
     
     return { isSupported, isSubscribed, permission, isProcessing, subscribeUser };
 }

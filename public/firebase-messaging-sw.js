@@ -1,89 +1,73 @@
-// This file must be in the public directory.
+// public/firebase-messaging-sw.js
 
-// The service worker needs to be able to import the Firebase libraries.
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
+// This file should be in the public directory
+if (typeof importScripts === 'function') {
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js');
+  importScripts('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js');
 
-console.log("Service Worker: Script loaded.");
+  self.addEventListener('install', (event) => {
+    console.log('Service Worker: Installing...');
+    // Force the waiting service worker to become the active service worker.
+    self.skipWaiting();
+  });
 
-// The service worker needs to take control of the page immediately
-// to ensure it can handle push events from the start.
-self.addEventListener('install', (event) => {
-  console.log("Service Worker: Installing...");
-  self.skipWaiting();
-});
+  self.addEventListener('activate', (event) => {
+    console.log('Service Worker: Activating...');
+    // Take control of all clients as soon as the service worker is activated.
+    event.waitUntil(self.clients.claim());
+  });
 
-self.addEventListener('activate', (event) => {
-  console.log("Service Worker: Activating...");
-  event.waitUntil(self.clients.claim());
-});
+  self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const targetUrl = event.notification.data?.url || '/';
 
+    event.waitUntil(
+      self.clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then((clientList) => {
+          for (const client of clientList) {
+            // Check if there's a window for the target URL
+            if (client.url.includes(targetUrl) && 'focus' in client) {
+              return client.focus();
+            }
+          }
+          // If no window found, open a new one
+          if (self.clients.openWindow) {
+            return self.clients.openWindow(targetUrl);
+          }
+        })
+    );
+  });
 
-// The configuration is passed as a URL parameter when the service worker is registered.
-const urlParams = new URL(location).searchParams;
-const firebaseConfigParam = urlParams.get('firebaseConfig');
+  const urlParams = new URL(location).searchParams;
+  const firebaseConfigParam = urlParams.get('firebaseConfig');
 
-if (firebaseConfigParam) {
-    // The config is URI-encoded, so it needs to be decoded.
-    const firebaseConfig = JSON.parse(decodeURIComponent(firebaseConfigParam));
-    console.log("Service Worker: Firebase config received and parsed.", firebaseConfig);
-
+  if (firebaseConfigParam) {
     try {
-        // Initialize the Firebase app with the config.
+      const firebaseConfig = JSON.parse(decodeURIComponent(firebaseConfigParam));
+      
+      if (firebase.apps.length === 0) {
         firebase.initializeApp(firebaseConfig);
-        console.log("Service Worker: Firebase app initialized.");
-
-        // Get an instance of Firebase Messaging.
         const messaging = firebase.messaging();
-        console.log("Service Worker: Firebase Messaging initialized.");
-
-        // This is the handler for background notifications.
-        // It's what runs when a push notification is received and the app tab is not in the foreground.
+        
         messaging.onBackgroundMessage((payload) => {
             console.log('Service Worker: Received background message ', payload);
-
-            const notificationTitle = payload.notification?.title || "New Notification";
+            const notificationTitle = payload.notification?.title || 'New Message';
             const notificationOptions = {
-                body: payload.notification?.body || "You have a new update.",
-                icon: payload.notification?.icon || '/favicon-32x32.png',
-                data: { url: payload.fcmOptions?.link || "/" },
+                body: payload.notification?.body || 'You have a new message.',
+                data: { url: payload.fcmOptions?.link || '/' }
             };
 
-            // Display the notification to the user.
             self.registration.showNotification(notificationTitle, notificationOptions);
         });
-        
-        console.log("Service Worker: Firebase initialized and background handler set up.");
-        
+        console.log('Service Worker: Firebase initialized and background handler set up.');
+      }
     } catch (e) {
-        console.error("Service Worker: Error during Firebase initialization.", e);
+      console.error('Service Worker: Error parsing Firebase config or initializing.', e);
     }
+  } else {
+    console.error('Service Worker: Firebase config not found in URL.');
+  }
+
 } else {
-    console.error("Service Worker: Firebase config not found in URL. Background notifications will not work.");
+    console.log('Service Worker: importScripts is not supported.');
 }
-
-// This handler is for when a user clicks on a notification.
-self.addEventListener("notificationclick", (event) => {
-  console.log("Service Worker: Notification clicked.", event.notification);
-  event.notification.close(); // Close the notification
-
-  const targetUrl = event.notification.data?.url || "/";
-
-  // This code tries to focus an existing tab with the target URL,
-  // or opens a new one if it can't find one.
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        // Check if the client URL includes the target.
-        // You might want to make this check stricter depending on your needs.
-        if (client.url === targetUrl && "focus" in client) {
-          return client.focus();
-        }
-      }
-      // If no client was found, open a new window.
-      if (clients.openWindow) {
-        return clients.openWindow(targetUrl);
-      }
-    })
-  );
-});
