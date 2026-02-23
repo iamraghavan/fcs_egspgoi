@@ -96,7 +96,7 @@ export function usePushNotifications() {
             
             if (fcmToken) {
                 // Send token to backend
-                const response = await fetch(`${API_BASE_URL}/api/v1/users/device-token`, {
+                const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json',
