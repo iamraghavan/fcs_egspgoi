@@ -70,19 +70,13 @@ export default function NotificationsPage() {
 
         const storedReadIds: string[] = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
         const readIdsSet = new Set(storedReadIds);
-        const newUnreadIds: string[] = [];
-
+        
         const generatedNotifications: Notification[] = fetchedCredits.map(credit => {
           let notificationType: Notification['type'] = 'pending';
           let title = '';
           let message = '';
           let icon = '';
-          const isRead = readIdsSet.has(credit._id);
-
-          if (!isRead) {
-            newUnreadIds.push(credit._id);
-          }
-
+          
           if (credit.type === 'negative') {
             notificationType = 'negative_remark';
             title = 'Negative Remark Received';
@@ -117,17 +111,15 @@ export default function NotificationsPage() {
             title,
             message,
             time: formatDistanceToNow(new Date(credit.createdAt), { addSuffix: true }),
-            read: isRead,
+            read: readIdsSet.has(credit._id),
             icon,
           };
         });
 
-        setNotifications(generatedNotifications.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime()));
+        // Sort by date after creating all notifications
+        generatedNotifications.sort((a, b) => new Date(b.time).getTime() - new Date(a.time).getTime());
 
-        if (newUnreadIds.length > 0) {
-          const updatedReadIds = [...storedReadIds, ...newUnreadIds];
-          localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(updatedReadIds));
-        }
+        setNotifications(generatedNotifications);
 
       } catch (error: any) {
         showAlert(
@@ -151,6 +143,17 @@ export default function NotificationsPage() {
     localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(allIds));
     setNotifications(notifications.map(n => ({ ...n, read: true })));
   };
+
+  const markAsRead = (id: string) => {
+    const updatedNotifications = notifications.map(n => n.id === id ? { ...n, read: true } : n);
+    setNotifications(updatedNotifications);
+    
+    const storedReadIds: string[] = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
+    const readIdsSet = new Set(storedReadIds);
+    readIdsSet.add(id);
+    localStorage.setItem(READ_NOTIFICATIONS_KEY, JSON.stringify(Array.from(readIdsSet)));
+  };
+
 
   const filteredNotifications = notifications.filter(n => {
     if (filter === 'all') return true;
@@ -189,6 +192,7 @@ export default function NotificationsPage() {
             <div
               key={notification.id}
               className={`group flex cursor-pointer items-start gap-4 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow ${notification.read ? 'bg-card' : 'bg-primary/5'}`}
+              onClick={() => markAsRead(notification.id)}
             >
               <div
                 className={`relative flex shrink-0 items-center justify-center rounded-full size-12 ${
@@ -220,3 +224,5 @@ export default function NotificationsPage() {
     </main>
   )
 }
+
+    

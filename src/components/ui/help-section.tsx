@@ -55,27 +55,6 @@ const helpTopics = [
         isWide: false,
     },
     {
-        icon: Users,
-        title: "Admin: User Management",
-        slug: "admin-user-management",
-        description: "Create single user accounts, perform bulk imports, and manage faculty data.",
-        isWide: true,
-    },
-    {
-        icon: GanttChart,
-        title: "Admin: Credit & Remark Management",
-        slug: "admin-credit-management",
-        description: "Review submissions, issue direct positive credits, and manage negative remarks.",
-        isWide: true,
-    },
-     {
-        icon: BarChart3,
-        title: "Admin: Appeals & Reports",
-        slug: "admin-appeals-reports",
-        description: "Process faculty appeals for negative remarks and generate performance reports.",
-        isWide: false,
-    },
-    {
         icon: BotMessageSquare,
         title: "Office Assistant Guide",
         slug: "oa-dashboard",
@@ -137,3 +116,5 @@ function HelpSection() {
 }
 
 export { HelpSection };
+
+    
