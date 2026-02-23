@@ -1,9 +1,8 @@
 
 "use client";
 
-import { Award, FileText, Fingerprint, LayoutDashboard, Lock, MessageSquareWarning, ShieldCheck, User } from "lucide-react";
+import { Award, FileText, Fingerprint, LayoutDashboard, MessageSquareWarning, ShieldCheck, User, GanttChart, BarChart3, BotMessageSquare } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "./card";
 
 const helpTopics = [
     {
@@ -48,7 +47,42 @@ const helpTopics = [
         description: "Manage your profile, change your password, and enhance security with Multi-Factor Authentication (MFA).",
         isWide: false,
     },
-]
+    {
+        icon: Fingerprint,
+        title: "WhatsApp Verification",
+        slug: "whatsapp-verification",
+        description: "Secure your account and enable notifications by verifying your WhatsApp number.",
+        isWide: false,
+    },
+    {
+        icon: Users,
+        title: "Admin: User Management",
+        slug: "admin-user-management",
+        description: "Create single user accounts, perform bulk imports, and manage faculty data.",
+        isWide: true,
+    },
+    {
+        icon: GanttChart,
+        title: "Admin: Credit & Remark Management",
+        slug: "admin-credit-management",
+        description: "Review submissions, issue direct positive credits, and manage negative remarks.",
+        isWide: true,
+    },
+     {
+        icon: BarChart3,
+        title: "Admin: Appeals & Reports",
+        slug: "admin-appeals-reports",
+        description: "Process faculty appeals for negative remarks and generate performance reports.",
+        isWide: false,
+    },
+    {
+        icon: BotMessageSquare,
+        title: "Office Assistant Guide",
+        slug: "oa-dashboard",
+        description: "A guide for Office Assistants on how to issue positive credits and negative remarks to faculty.",
+        isWide: false,
+    },
+];
 
 function HelpSection() {
 
