@@ -1,63 +1,89 @@
-// Purpose: Handle incoming push notifications with firebase
+// This file must be in the public directory.
 
-importScripts("https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js");
-importScripts("https://www.gstatic.com/firebasejs/9.22.1/firebase-messaging-compat.js");
-
-
-self.addEventListener('install', (event) => {
-    console.log('Service Worker: Installing...');
-    event.waitUntil(self.skipWaiting());
-});
-
-self.addEventListener('activate', (event) => {
-    console.log('Service Worker: Activating...');
-    event.waitUntil(self.clients.claim());
-});
+// The service worker needs to be able to import the Firebase libraries.
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js");
+importScripts("https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging-compat.js");
 
 console.log("Service Worker: Script loaded.");
 
-const urlParams = new URLSearchParams(location.search);
+// The service worker needs to take control of the page immediately
+// to ensure it can handle push events from the start.
+self.addEventListener('install', (event) => {
+  console.log("Service Worker: Installing...");
+  self.skipWaiting();
+});
+
+self.addEventListener('activate', (event) => {
+  console.log("Service Worker: Activating...");
+  event.waitUntil(self.clients.claim());
+});
+
+
+// The configuration is passed as a URL parameter when the service worker is registered.
+const urlParams = new URL(location).searchParams;
 const firebaseConfigParam = urlParams.get('firebaseConfig');
 
 if (firebaseConfigParam) {
+    // The config is URI-encoded, so it needs to be decoded.
     const firebaseConfig = JSON.parse(decodeURIComponent(firebaseConfigParam));
-    console.log("Service Worker: Firebase config received and parsed.");
-    
-    firebase.initializeApp(firebaseConfig);
-    console.log("Service Worker: Firebase app initialized.");
+    console.log("Service Worker: Firebase config received and parsed.", firebaseConfig);
 
-    const messaging = firebase.messaging();
-    console.log("Service Worker: Firebase Messaging initialized.");
-    
-    messaging.onBackgroundMessage((payload) => {
-        console.log('[firebase-messaging-sw.js] Received background message ', payload);
-        const notificationTitle = payload.notification?.title || "New Notification";
-        const notificationOptions = {
-            body: payload.notification?.body || "You have a new message.",
-            icon: '/logo.png',
-            data: { url: payload.fcmOptions?.link || "/" }
-        };
-        self.registration.showNotification(notificationTitle, notificationOptions);
-    });
+    try {
+        // Initialize the Firebase app with the config.
+        firebase.initializeApp(firebaseConfig);
+        console.log("Service Worker: Firebase app initialized.");
 
-    console.log("Service Worker: Firebase initialized and background handler set up.");
+        // Get an instance of Firebase Messaging.
+        const messaging = firebase.messaging();
+        console.log("Service Worker: Firebase Messaging initialized.");
+
+        // This is the handler for background notifications.
+        // It's what runs when a push notification is received and the app tab is not in the foreground.
+        messaging.onBackgroundMessage((payload) => {
+            console.log('Service Worker: Received background message ', payload);
+
+            const notificationTitle = payload.notification?.title || "New Notification";
+            const notificationOptions = {
+                body: payload.notification?.body || "You have a new update.",
+                icon: payload.notification?.icon || '/favicon-32x32.png',
+                data: { url: payload.fcmOptions?.link || "/" },
+            };
+
+            // Display the notification to the user.
+            self.registration.showNotification(notificationTitle, notificationOptions);
+        });
+        
+        console.log("Service Worker: Firebase initialized and background handler set up.");
+        
+    } catch (e) {
+        console.error("Service Worker: Error during Firebase initialization.", e);
+    }
 } else {
-    console.error("Firebase config not found in service worker.");
+    console.error("Service Worker: Firebase config not found in URL. Background notifications will not work.");
 }
 
+// This handler is for when a user clicks on a notification.
 self.addEventListener("notificationclick", (event) => {
-    event.notification.close();
-    const targetUrl = event.notification.data?.url || "/";
+  console.log("Service Worker: Notification clicked.", event.notification);
+  event.notification.close(); // Close the notification
 
-    event.waitUntil( 
-        self.clients.matchAll({ type: "window", includeUncontrolled: true })
-        .then((clientList) => {
-            for (const client of clientList) {
-                if (client.url.includes(targetUrl) && "focus" in client) {
-                    return client.focus();
-                }
-            }
-            return self.clients.openWindow(targetUrl);
-        })
-    );
+  const targetUrl = event.notification.data?.url || "/";
+
+  // This code tries to focus an existing tab with the target URL,
+  // or opens a new one if it can't find one.
+  event.waitUntil(
+    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
+      for (const client of clientList) {
+        // Check if the client URL includes the target.
+        // You might want to make this check stricter depending on your needs.
+        if (client.url === targetUrl && "focus" in client) {
+          return client.focus();
+        }
+      }
+      // If no client was found, open a new window.
+      if (clients.openWindow) {
+        return clients.openWindow(targetUrl);
+      }
+    })
+  );
 });

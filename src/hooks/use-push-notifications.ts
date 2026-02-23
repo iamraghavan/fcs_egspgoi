@@ -77,7 +77,8 @@ export function usePushNotifications() {
             
             console.log("Attempting to get FCM token...");
             getToken(messagingInstance, {
-                vapidKey: PUBLIC_VAPID_KEY
+                vapidKey: PUBLIC_VAPID_KEY,
+                serviceWorkerRegistration: registration,
             }).then(async (fcmToken) => {
                 if (fcmToken) {
                     console.log('%c FCM TOKEN IS: ', 'color: white; background: #007bff; font-size: 16px; padding: 4px;', fcmToken);
