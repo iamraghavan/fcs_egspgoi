@@ -60,6 +60,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgr
 type User = {
   _id: string;
   name: string;
+  college: string;
   department?: string;
   facultyID?: string;
   role?: string;
@@ -577,11 +578,12 @@ export default function ManageRemarksPage() {
                                 {suggestedFaculty.map(faculty => (
                                   <div
                                     key={faculty._id}
-                                    className="cursor-pointer p-2 hover:bg-accent"
+                                    className="cursor-pointer p-3 hover:bg-accent"
                                     onClick={() => handleFacultySelect(faculty)}
                                   >
-                                    <p className="font-medium">{faculty.name}</p>
-                                    <p className="text-sm text-muted-foreground">{faculty.department}</p>
+                                    <p className="font-semibold">{faculty.name}</p>
+                                    <p className="text-sm text-muted-foreground">{faculty.department || 'N/A'} - {faculty.college || 'N/A'}</p>
+                                    <p className="text-xs text-muted-foreground">{faculty.email || ''}</p>
                                   </div>
                                 ))}
                               </div>
