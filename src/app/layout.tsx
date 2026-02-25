@@ -27,6 +27,7 @@ export default function RootLayout({
         <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
         <link rel="manifest" href="/site.webmanifest" />
         <link rel="icon" href="/favicon.ico" />
+        <script async src="https://unpkg.com/first-input-delay@0.1.3/dist/first-input-delay.min.js"></script>
       </head>
       <body className="font-display antialiased" suppressHydrationWarning>
           <AlertProvider>
