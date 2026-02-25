@@ -475,26 +475,54 @@ export default function IssuedHistoryPage() {
                                 </DialogHeader>
                                 {selectedRemark && (
                                 <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
-                                    <p><strong className="font-medium text-muted-foreground block">Faculty Name:</strong> {selectedRemark.facultySnapshot.name}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Faculty ID:</strong> {selectedRemark.facultySnapshot.facultyID}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Department:</strong> {selectedRemark.facultySnapshot.department}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Remark Title:</strong> {selectedRemark.title}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
-                                    <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Issued By:</strong> {selectedRemark.issuedBySnapshot?.name || 'N/A'}</p>
-                                    <p><strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong></p>
-                                    <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
-                                     <div>
-                                        <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
-                                        {selectedRemark.proofUrl ? (
-                                             shortProofUrl ? (
-                                                <Button asChild variant="link" className="p-0 h-auto">
-                                                   <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-                                               </Button>
-                                           ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
-                                        ) : "Not Provided"}
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                                        <div>
+                                            <p className="font-medium text-muted-foreground">Faculty Name</p>
+                                            <p>{selectedRemark.facultySnapshot.name}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-muted-foreground">Faculty ID</p>
+                                            <p>{selectedRemark.facultySnapshot.facultyID}</p>
+                                        </div>
+                                        <div className="col-span-full">
+                                            <p className="font-medium text-muted-foreground">Department</p>
+                                            <p>{selectedRemark.facultySnapshot.department}</p>
+                                        </div>
+                                        <div className="col-span-full border-t pt-3 mt-1">
+                                            <p className="font-medium text-muted-foreground">Remark Title</p>
+                                            <p>{selectedRemark.title}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-muted-foreground">Points</p>
+                                            <p className="font-bold text-destructive">{selectedRemark.points}</p>
+                                        </div>
+                                        <div>
+                                            <p className="font-medium text-muted-foreground">Date Issued</p>
+                                            <p>{new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                                        </div>
+                                        <div className="col-span-full">
+                                            <p className="font-medium text-muted-foreground">Issued By</p>
+                                            <p>{selectedRemark.issuedBySnapshot?.name || 'N/A'}</p>
+                                        </div>
+                                        <div className="col-span-full">
+                                            <p className="font-medium text-muted-foreground">Notes / Rationale</p>
+                                            <p className="mt-1 italic bg-muted/50 p-2 rounded-md">{selectedRemark.notes || 'N/A'}</p>
+                                        </div>
+                                        <div className="col-span-full">
+                                            <p className="font-medium text-muted-foreground">Proof Document</p>
+                                            {selectedRemark.proofUrl ? (
+                                                shortProofUrl ? (
+                                                    <Button asChild variant="link" className="p-0 h-auto">
+                                                       <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                   </Button>
+                                               ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
+                                            ) : "Not Provided"}
+                                        </div>
+                                        <div className="col-span-full border-t pt-3 mt-1">
+                                            <p className="font-medium text-muted-foreground">Remark ID</p>
+                                            <p className="font-mono text-xs">{selectedRemark._id}</p>
+                                        </div>
                                     </div>
-                                    <p className="border-t pt-4 mt-4"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemark._id}</span></p>
                                 </div>
                                 )}
                                 <DialogFooter>
