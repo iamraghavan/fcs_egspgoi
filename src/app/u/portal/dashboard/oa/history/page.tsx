@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -481,6 +481,7 @@ export default function IssuedHistoryPage() {
                                     <p><strong className="font-medium text-muted-foreground block">Remark Title:</strong> {selectedRemark.title}</p>
                                     <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemark.points}</span></p>
                                     <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                                    <p><strong className="font-medium text-muted-foreground block">Issued By:</strong> {selectedRemark.issuedBySnapshot?.name || 'N/A'}</p>
                                     <p><strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong></p>
                                     <p className="pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemark.notes || 'N/A'}</p>
                                      <div>
