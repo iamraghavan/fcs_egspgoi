@@ -15,7 +15,11 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
 import { gsap } from "gsap";
-import { Users, FolderKanban, ShieldAlert, BarChartHorizontal } from 'lucide-react';
+import { Users, FolderKanban, ShieldAlert, BarChartHorizontal, Megaphone, Send } from 'lucide-react';
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { useToast } from "@/hooks/use-toast";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -64,10 +68,16 @@ export default function AdminDashboard() {
   const containerRef = useRef(null);
   const [loading, setLoading] = useState(true);
   const { showAlert } = useAlert();
+  const { toast } = useToast();
   
   const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
   const [creditTrends, setCreditTrends] = useState<CreditTrendData | null>(null);
   const [trendsTimescale, setTrendsTimescale] = useState<'daily' | 'weekly' | 'monthly'>('monthly');
+
+  // Announcement state
+  const [announcementTitle, setAnnouncementTitle] = useState("");
+  const [announcementBody, setAnnouncementBody] = useState("");
+  const [isBroadcasting, setIsBroadcasting] = useState(false);
 
   useEffect(() => {
     const fetchAnalytics = async () => {
@@ -152,6 +162,45 @@ export default function AdminDashboard() {
     return data.map(item => ({...item, name: item[key as keyof typeof item]}));
   }, [creditTrends, trendsTimescale]);
 
+  const handleBroadcast = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!announcementTitle || !announcementBody) {
+        showAlert("Incomplete Form", "Title and message are required.");
+        return;
+    }
+
+    setIsBroadcasting(true);
+    const token = localStorage.getItem("token");
+    
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/v1/notifications/broadcast`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                title: announcementTitle,
+                body: announcementBody,
+                role: 'faculty'
+            })
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.message || "Failed to send broadcast.");
+        }
+
+        toast({ title: "Broadcast Sent", description: "Announcement sent to all faculty members." });
+        setAnnouncementTitle("");
+        setAnnouncementBody("");
+    } catch (err: any) {
+        showAlert("Broadcast Failed", err.message);
+    } finally {
+        setIsBroadcasting(false);
+    }
+  };
+
   return (
     <div className="space-y-8" ref={containerRef}>
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -184,6 +233,78 @@ export default function AdminDashboard() {
             </Card>
         ))}
       </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <Card className="lg:col-span-2 dashboard-card">
+              <CardHeader className="flex flex-row items-center justify-between">
+                  <div>
+                      <CardTitle className="flex items-center gap-2">
+                          <Megaphone className="h-5 w-5 text-primary" />
+                          Broadcast Announcement
+                      </CardTitle>
+                      <CardDescription>Send a push notification to all faculty members instantly.</CardDescription>
+                  </div>
+              </CardHeader>
+              <CardContent>
+                  <form onSubmit={handleBroadcast} className="space-y-4">
+                      <div>
+                          <Input 
+                            placeholder="Announcement Title (e.g., Appeal Window Extended!)" 
+                            value={announcementTitle}
+                            onChange={(e) => setAnnouncementTitle(e.target.value)}
+                            required
+                          />
+                      </div>
+                      <div>
+                          <Textarea 
+                            placeholder="Type your message here..." 
+                            rows={3} 
+                            value={announcementBody}
+                            onChange={(e) => setAnnouncementBody(e.target.value)}
+                            required
+                          />
+                      </div>
+                      <div className="flex justify-end">
+                          <Button type="submit" disabled={isBroadcasting || loading}>
+                              {isBroadcasting ? "Sending..." : (
+                                  <><Send className="mr-2 h-4 w-4" /> Send Announcement</>
+                              )}
+                          </Button>
+                      </div>
+                  </form>
+              </CardContent>
+          </Card>
+          
+          <Card className="lg:col-span-1 dashboard-card">
+              <CardHeader>
+                  <CardTitle>Credits by Status</CardTitle>
+                  <CardDescription>Breakdown of all credits.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                 {loading ? <Skeleton className="h-[200px] w-full" /> : 
+                  <ResponsiveContainer width="100%" height={200}>
+                      <PieChart>
+                          <Pie
+                            data={analytics?.creditStatus}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={false}
+                            outerRadius={60}
+                            fill="#8884d8"
+                            dataKey="value"
+                            nameKey="name"
+                          >
+                            {analytics?.creditStatus.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={entry.color} />
+                            ))}
+                          </Pie>
+                          <Tooltip />
+                          <Legend />
+                      </PieChart>
+                  </ResponsiveContainer>}
+              </CardContent>
+          </Card>
+      </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <Card className="lg:col-span-3 dashboard-card">
@@ -206,37 +327,30 @@ export default function AdminDashboard() {
           </Card>
           <Card className="lg:col-span-2 dashboard-card">
               <CardHeader>
-                  <CardTitle>Credits by Status</CardTitle>
-                  <CardDescription>A breakdown of all submitted credits.</CardDescription>
+                  <CardTitle>Recent Activity</CardTitle>
+                  <CardDescription>A log of recent important events.</CardDescription>
               </CardHeader>
               <CardContent>
-                 {loading ? <Skeleton className="h-[250px] w-full" /> : 
-                  <ResponsiveContainer width="100%" height={250}>
-                      <PieChart>
-                          <Pie
-                            data={analytics?.creditStatus}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={80}
-                            fill="#8884d8"
-                            dataKey="value"
-                            nameKey="name"
-                          >
-                            {analytics?.creditStatus.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                      </PieChart>
-                  </ResponsiveContainer>}
+                {loading ? <Skeleton className="h-[250px] w-full" /> : 
+                  <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
+                    {analytics?.recentActivities?.map((activity) => (
+                      <div key={activity.id} className="flex items-start gap-4">
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
+                          <FolderKanban className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-snug">{activity.description}</p>
+                          <p className="text-xs text-muted-foreground">{activity.user} &middot; {activity.date}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>}
               </CardContent>
           </Card>
       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card className="lg:col-span-3 dashboard-card">
+       <div className="grid grid-cols-1 gap-6">
+          <Card className="dashboard-card">
                 <CardHeader className="flex flex-row items-center justify-between">
                     <div>
                         <CardTitle>Credit Request Trends</CardTitle>
@@ -269,28 +383,6 @@ export default function AdminDashboard() {
                     </ResponsiveContainer>}
                 </CardContent>
             </Card>
-          <Card className="lg:col-span-2 dashboard-card">
-              <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>A log of recent important events.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? <Skeleton className="h-[280px] w-full" /> : 
-                  <div className="space-y-4">
-                    {analytics?.recentActivities?.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <FolderKanban className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-snug">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">{activity.user} &middot; {activity.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>}
-              </CardContent>
-          </Card>
       </div>
 
     </div>

@@ -56,9 +56,9 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAlert } from "@/context/alert-context";
 import { shortenUrl } from "@/lib/url-shortener";
+import { useRemoteConfig } from "@/hooks/use-remote-config";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
-const APPEAL_WINDOW_DAYS = 7;
 
 type AppealData = {
     _id: string;
@@ -85,6 +85,10 @@ export default function NegativeRemarksPage() {
   const { showAlert } = useAlert();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Remote Config for dynamic window
+  const remoteAppealWindow = useRemoteConfig('appeal_window_days')?.asNumber();
+  const APPEAL_WINDOW_DAYS = remoteAppealWindow || 7;
 
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);

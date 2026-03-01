@@ -8,13 +8,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle, Info } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAlert } from '@/context/alert-context';
 import { gsap } from 'gsap';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
+import { useRemoteConfig } from '@/hooks/use-remote-config';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
@@ -30,6 +31,9 @@ export function LoginScreen() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
+
+  // Remote Config for Announcement
+  const loginAnnouncement = useRemoteConfig('login_announcement')?.asString();
 
   // Login form state
   const [email, setEmail] = useState("");
@@ -160,12 +164,11 @@ export function LoginScreen() {
 
     if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
       const oaUser = {
-        token: 'mock_oa_token', // This will be handled client-side
+        token: 'mock_oa_token', 
         role: 'oa',
         id: 'oa_user_01',
         sessionId: 'mock_session_id_oa',
       };
-      // For mock OA user, we need to manually set local storage and redirect
       localStorage.setItem("token", oaUser.token);
       localStorage.setItem("userRole", oaUser.role);
       localStorage.setItem("sessionId", oaUser.sessionId);
@@ -205,7 +208,6 @@ export function LoginScreen() {
         });
         setStep('mfa');
       } else if (responseData.success && !responseData.mfaRequired) {
-        // Non-MFA login success
         processSuccessfulLogin(responseData);
       } else {
         throw new Error(responseData.message || "Login failed");
@@ -261,6 +263,12 @@ export function LoginScreen() {
 
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
+      {loginAnnouncement && (
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3 items-start animate-pulse">
+            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <p className="text-sm font-medium text-primary leading-tight">{loginAnnouncement}</p>
+        </div>
+      )}
       <div>
         <Label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
           Your email
@@ -422,5 +430,3 @@ export function LoginScreen() {
     </>
   );
 }
-
-    
