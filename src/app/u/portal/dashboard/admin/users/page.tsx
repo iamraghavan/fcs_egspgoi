@@ -22,7 +22,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select"
 import { colleges } from "@/lib/colleges";
-import { Edit, Eye } from "lucide-react";
+import { Edit, Eye, ShieldCheck, User, Mail, School, Building2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,6 +31,7 @@ import {
   DialogTrigger,
   DialogDescription,
   DialogFooter,
+  DialogClose,
 } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAlert } from "@/context/alert-context";
@@ -38,6 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { gsap } from "gsap";
 import { Label } from "@/components/ui/label";
 import { WhatsAppShareButton } from "@/components/whatsapp-share-button";
+import { Switch } from "@/components/ui/switch";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -61,7 +63,8 @@ type Departments = {
 export default function FacultyAccountsPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
-  // Form state
+  
+  // Create Account Form state
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -70,6 +73,17 @@ export default function FacultyAccountsPage() {
   const [role, setRole] = useState<'faculty' | 'oa'>('faculty');
   const [departments, setDepartments] = useState<Departments>({});
   const [isLoading, setIsLoading] = useState(false);
+  
+  // Edit state
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingFaculty, setEditingFaculty] = useState<FacultyAccount | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editEmail, setEditEmail] = useState("");
+  const [editCollege, setEditCollege] = useState("");
+  const [editDepartment, setEditDepartment] = useState("");
+  const [editIsActive, setEditIsActive] = useState(true);
+  const [editRole, setEditRole] = useState<'faculty' | 'admin' | 'oa'>('faculty');
+  const [editDepartments, setEditDepartments] = useState<Departments>({});
   
   // Table state
   const [allFaculty, setAllFaculty] = useState<FacultyAccount[]>([]);
@@ -97,7 +111,6 @@ export default function FacultyAccountsPage() {
       return;
     }
     try {
-      // Fetch all users - limit is high to get all of them
       const response = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
         headers: { "Authorization": `Bearer ${adminToken}` },
       });
@@ -126,16 +139,24 @@ export default function FacultyAccountsPage() {
             { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power3.out" }
         );
     }
-  }, [isLoadingUsers, page]); // Rerun animation on page change
+  }, [isLoadingUsers, page]);
 
   useEffect(() => {
     if (college && colleges[college as keyof typeof colleges]) {
       setDepartments(colleges[college as keyof typeof colleges]);
-      setDepartment(""); // Reset department when college changes
+      setDepartment("");
     } else {
       setDepartments({});
     }
   }, [college]);
+
+  useEffect(() => {
+    if (editCollege && colleges[editCollege as keyof typeof colleges]) {
+        setEditDepartments(colleges[editCollege as keyof typeof colleges]);
+    } else {
+        setEditDepartments({});
+    }
+  }, [editCollege]);
 
     useEffect(() => {
     if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
@@ -202,7 +223,6 @@ export default function FacultyAccountsPage() {
         description: `Account for ${name} has been successfully created.`,
       });
 
-      // Reset form and refresh user list
       setName("");
       setEmail("");
       setPassword("");
@@ -218,6 +238,56 @@ export default function FacultyAccountsPage() {
       );
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleEditClick = (account: FacultyAccount) => {
+    setEditingFaculty(account);
+    setEditName(account.name);
+    setEditEmail(account.email);
+    setEditCollege(account.college || "");
+    setEditDepartment(account.department || "");
+    setEditIsActive(account.isActive);
+    setEditRole(account.role);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateFaculty = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingFaculty) return;
+    setIsLoading(true);
+
+    const adminToken = localStorage.getItem("token");
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/v1/users/${editingFaculty._id}`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${adminToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                name: editName,
+                email: editEmail,
+                college: editCollege,
+                department: editDepartment,
+                isActive: editIsActive,
+                role: editRole
+            })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "Failed to update account");
+        }
+
+        toast({ title: "Account Updated", description: `Updated details for ${editName}.` });
+        setIsEditDialogOpen(false);
+        setEditingFaculty(null);
+        fetchAllUsers();
+    } catch (error: any) {
+        showAlert("Update Failed", error.message);
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -255,7 +325,6 @@ export default function FacultyAccountsPage() {
     };
   }, [allFaculty, page, limit, searchTerm, statusFilter, collegeFilter, departmentFilter]);
   
-  // Handlers to reset page to 1 when filters change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
     setPage(1);
@@ -375,62 +444,65 @@ export default function FacultyAccountsPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-center">
-                      <Dialog>
-                        <DialogTrigger asChild>
-                           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFaculty(account)}>
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="sm:max-w-md">
-                          <DialogHeader>
-                            <DialogTitle>Faculty Details</DialogTitle>
-                            <DialogDescription>
-                              Detailed information about the faculty member.
-                            </DialogDescription>
-                          </DialogHeader>
-                          {selectedFaculty && (
-                            <>
-                              <div className="space-y-4">
-                                  <div className="flex items-center space-x-4">
-                                    <Avatar className="h-16 w-16">
-                                        <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFaculty.name)}&background=random`} />
-                                        <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <p className="text-lg font-semibold">{selectedFaculty.name}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedFaculty.department || 'N/A'} - {selectedFaculty.college || 'N/A'}</p>
-                                        <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
+                      <div className="flex items-center justify-center gap-1">
+                        <Dialog>
+                            <DialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFaculty(account)}>
+                                <Eye className="h-4 w-4" />
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-md">
+                            <DialogHeader>
+                                <DialogTitle>Faculty Details</DialogTitle>
+                                <DialogDescription>
+                                Detailed information about the faculty member.
+                                </DialogDescription>
+                            </DialogHeader>
+                            {selectedFaculty && (
+                                <>
+                                <div className="space-y-4">
+                                    <div className="flex items-center space-x-4">
+                                        <Avatar className="h-16 w-16">
+                                            <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFaculty.name)}&background=random`} />
+                                            <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                                        </Avatar>
+                                        <div>
+                                            <p className="text-lg font-semibold">{selectedFaculty.name}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedFaculty.department || 'N/A'} - {selectedFaculty.college || 'N/A'}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2 text-sm pt-2">
+                                        <div>
+                                            <span className="text-muted-foreground font-medium">Current Credits: </span>
+                                            <span className="font-semibold text-primary">{selectedFaculty.currentCredit ?? 0}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground font-medium">Status: </span>
+                                            <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
+                                        </div>
+                                        <div>
+                                            <span className="text-muted-foreground font-medium">Role: </span>
+                                            <span className="font-medium capitalize">{selectedFaculty.role}</span>
+                                        </div>
                                     </div>
                                 </div>
-                                <div className="space-y-2 text-sm pt-2">
-                                    <div>
-                                        <span className="text-muted-foreground font-medium">Current Credits: </span>
-                                        <span className="font-semibold text-primary">{selectedFaculty.currentCredit ?? 0}</span>
-                                    </div>
-                                     <div>
-                                        <span className="text-muted-foreground font-medium">Status: </span>
-                                        <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
-                                    </div>
-                                    <div>
-                                        <span className="text-muted-foreground font-medium">Last Submission Date: </span>
-                                        <span className="font-medium">N/A</span>
-                                    </div>
-                                </div>
-                              </div>
-                              <DialogFooter className="pt-4 mt-4 border-t">
-                                <WhatsAppShareButton 
-                                  facultyName={selectedFaculty.name}
-                                  creditScore={selectedFaculty.currentCredit ?? 0}
-                                  facultyId={selectedFaculty._id}
-                                />
-                              </DialogFooter>
-                            </>
-                          )}
-                        </DialogContent>
-                      </Dialog>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                                <DialogFooter className="pt-4 mt-4 border-t">
+                                    <WhatsAppShareButton 
+                                    facultyName={selectedFaculty.name}
+                                    creditScore={selectedFaculty.currentCredit ?? 0}
+                                    facultyId={selectedFaculty._id}
+                                    />
+                                </DialogFooter>
+                                </>
+                            )}
+                            </DialogContent>
+                        </Dialog>
+                        
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(account)}>
+                            <Edit className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -458,6 +530,106 @@ export default function FacultyAccountsPage() {
           </div>
         </div>
       </div>
+
+      {/* Edit Faculty Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>Edit Faculty Account</DialogTitle>
+                <DialogDescription>Update the profile details for this account.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleUpdateFaculty} className="space-y-4 pt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-name">Full Name</Label>
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="pl-10" required />
+                        </div>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-email">Email Address</Label>
+                        <div className="relative">
+                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                            <Input id="edit-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="pl-10" required />
+                        </div>
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <Label htmlFor="edit-role">Role</Label>
+                        <Select value={editRole} onValueChange={(v: any) => setEditRole(v)}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Select Role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="faculty">Faculty</SelectItem>
+                                <SelectItem value="admin">Administrator</SelectItem>
+                                <SelectItem value="oa">Office Assistant</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex items-center space-x-2 pt-8">
+                        <Switch id="edit-status" checked={editIsActive} onCheckedChange={setEditIsActive} />
+                        <Label htmlFor="edit-status">{editIsActive ? "Active Account" : "Inactive Account"}</Label>
+                    </div>
+                </div>
+
+                {editRole === 'faculty' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-college">College</Label>
+                            <div className="relative">
+                                <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                                <Select value={editCollege} onValueChange={setEditCollege}>
+                                    <SelectTrigger className="pl-10">
+                                        <SelectValue placeholder="Select College" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.keys(colleges).map(c => (
+                                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-department">Department</Label>
+                            <div className="relative">
+                                <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                                <Select value={editDepartment} onValueChange={setEditDepartment} disabled={!editCollege}>
+                                    <SelectTrigger className="pl-10">
+                                        <SelectValue placeholder="Select Department" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {Object.entries(editDepartments).map(([group, courses]) => (
+                                            <SelectGroup key={group}>
+                                                <SelectLabel>{group}</SelectLabel>
+                                                {courses.map(course => (
+                                                    <SelectItem key={course} value={course}>{course}</SelectItem>
+                                                ))}
+                                            </SelectGroup>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <DialogFooter className="pt-4">
+                    <DialogClose asChild>
+                        <Button type="button" variant="secondary">Cancel</Button>
+                    </DialogClose>
+                    <Button type="submit" disabled={isLoading}>
+                        {isLoading ? "Saving Changes..." : "Save Changes"}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
+
       <div className="mt-10">
         <h3 className="text-2xl font-bold text-foreground mb-6">
           Create New Account
