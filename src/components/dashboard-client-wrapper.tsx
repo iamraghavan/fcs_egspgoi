@@ -118,7 +118,7 @@ const LoadingSkeleton = () => (
             </div>
         </main>
         {/* Footer Skeleton */}
-        <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 col-span-2">
+        <footer className="shrink-0 bg-sidebar text-sidebar-foreground opacity-60 border-t border-sidebar-border px-6 py-4 col-span-2">
             <div className="flex items-center justify-between text-xs">
                 <Skeleton className="h-4 w-1/3 bg-sidebar-accent" />
                  <Skeleton className="h-4 w-1/4 bg-sidebar-accent" />
@@ -128,9 +128,9 @@ const LoadingSkeleton = () => (
 );
 
 const Footer = ({ onCookiePreferencesClick }: { onCookiePreferencesClick: () => void }) => (
-    <footer className="shrink-0 bg-sidebar text-sidebar-foreground/60 border-t border-sidebar-border px-6 py-4 col-span-full">
-        <div className="flex flex-col md:flex-row items-center justify-between text-xs gap-4 md:gap-0">
-            <span className="text-center md:text-left">© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions, Inc. All rights reserved.</span>
+    <footer className="shrink-0 bg-sidebar text-sidebar-foreground border-t border-sidebar-border px-6 py-4 col-span-full">
+        <div className="flex flex-col md:flex-row items-center justify-between text-xs gap-4 md:gap-0 opacity-60">
+            <span className="text-center md:text-left">© {new Date().getFullYear()} E.G.S. Pillay Group of Institutions. All rights reserved.</span>
             <div className="flex items-center gap-4">
                 <Link href="/u/portal/privacy-policy" className="hover:text-sidebar-foreground">Privacy Policy</Link>
                 <Link href="/u/portal/terms" className="hover:text-sidebar-foreground">Terms</Link>
