@@ -43,10 +43,14 @@ import {
   Loader2,
   PieChart as PieChartIcon,
   TrendingUp,
-  History
+  History,
+  ChevronLeft,
+  ChevronRight,
+  Calendar as CalendarIcon
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
+import { format, parseISO } from "date-fns"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -86,6 +90,10 @@ export default function DynamicReportsPage() {
   const [status, setStatus] = useState<"all" | "approved" | "pending" | "rejected">("all");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  // Pagination State for Table Preview
+  const [previewPage, setPreviewPage] = useState(1);
+  const previewLimit = 15;
 
   // Search/Autocomplete States
   const [facultyQuery, setFacultyQuery] = useState("");
@@ -140,6 +148,7 @@ export default function DynamicReportsPage() {
       const data = await response.json();
       if (data.success) {
         setReportData(data);
+        setPreviewPage(1); // Reset pagination on new fetch
       } else {
         throw new Error(data.message || "Failed to fetch report preview");
       }
@@ -147,9 +156,7 @@ export default function DynamicReportsPage() {
       showAlert("Report Error", error.message);
       setReportData(null);
     } finally {
-      setIsLoading(true);
-      // Simulating a small delay for smoother transitions
-      setTimeout(() => setIsLoading(false), 400);
+      setIsLoading(false);
     }
   }, [level, levelId, academicYear, creditType, status, startDate, endDate, token, showAlert]);
 
@@ -242,7 +249,13 @@ export default function DynamicReportsPage() {
         );
     }
 
-    const { summary } = reportData;
+    const { summary, data } = reportData;
+    const totalRecords = data?.length || 0;
+    const totalPages = Math.ceil(totalRecords / previewLimit);
+    const paginatedData = (data || []).slice(
+        (previewPage - 1) * previewLimit,
+        previewPage * previewLimit
+    );
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -326,33 +339,82 @@ export default function DynamicReportsPage() {
                 </Card>
             </div>
 
-            {/* List Preview */}
+            {/* Detailed Data Table */}
             <Card>
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-sm font-medium">Recent Records</CardTitle>
+                <CardHeader className="flex flex-row items-center justify-between space-y-0">
+                    <div>
+                        <CardTitle className="text-base">Data Preview</CardTitle>
+                        <CardDescription>Displaying {totalRecords} records found.</CardDescription>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            disabled={previewPage === 1}
+                            onClick={() => setPreviewPage(p => Math.max(1, p - 1))}
+                        >
+                            <ChevronLeft className="h-4 w-4" />
+                        </Button>
+                        <span className="text-xs font-medium px-2">Page {previewPage} of {totalPages || 1}</span>
+                        <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-8 w-8" 
+                            disabled={previewPage >= totalPages}
+                            onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}
+                        >
+                            <ChevronRight className="h-4 w-4" />
+                        </Button>
+                    </div>
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                             <thead className="bg-muted/50">
                                 <tr className="text-left">
-                                    <th className="p-3 font-medium text-muted-foreground">Title</th>
+                                    <th className="p-3 font-medium text-muted-foreground">Date</th>
+                                    <th className="p-3 font-medium text-muted-foreground">Faculty</th>
+                                    <th className="p-3 font-medium text-muted-foreground">Activity</th>
                                     <th className="p-3 font-medium text-muted-foreground">Type</th>
                                     <th className="p-3 font-medium text-muted-foreground">Status</th>
-                                    <th className="p-3 font-medium text-muted-foreground text-right">Points</th>
+                                    <th className="p-3 font-medium text-muted-foreground text-right">Pts</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {(reportData.data || []).slice(0, 10).map((row, i) => (
+                                {paginatedData.map((row, i) => (
                                     <tr key={i} className="hover:bg-muted/20 transition-colors">
-                                        <td className="p-3 font-medium">{row.title}</td>
+                                        <td className="p-3 whitespace-nowrap text-muted-foreground tabular-nums">
+                                            {row.createdAt ? format(parseISO(row.createdAt), 'dd MMM yyyy') : 'N/A'}
+                                        </td>
+                                        <td className="p-3">
+                                            <div className="font-medium text-foreground">
+                                                {row.facultySnapshot?.name || 'Unknown'}
+                                            </div>
+                                            <div className="text-[10px] text-muted-foreground uppercase font-mono">
+                                                {row.facultySnapshot?.facultyID || row.faculty || 'N/A'}
+                                            </div>
+                                        </td>
+                                        <td className="p-3">
+                                            <p className="max-w-[200px] truncate" title={row.title}>
+                                                {row.title}
+                                            </p>
+                                        </td>
                                         <td className="p-3">
                                             <Badge variant="outline" className={row.type === 'positive' ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-600 border-red-200 bg-red-50'}>
                                                 {row.type}
                                             </Badge>
                                         </td>
-                                        <td className="p-3 capitalize">{row.status}</td>
-                                        <td className={`p-3 text-right font-bold ${row.type === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
+                                        <td className="p-3 capitalize">
+                                            <div className="flex items-center gap-1.5">
+                                                <div 
+                                                    className="h-1.5 w-1.5 rounded-full" 
+                                                    style={{backgroundColor: getStatusColor(row.status)}}
+                                                />
+                                                {row.status}
+                                            </div>
+                                        </td>
+                                        <td className={`p-3 text-right font-bold tabular-nums ${row.type === 'positive' ? 'text-green-600' : 'text-red-600'}`}>
                                             {row.type === 'positive' ? `+${row.points}` : row.points}
                                         </td>
                                     </tr>
@@ -360,12 +422,12 @@ export default function DynamicReportsPage() {
                             </tbody>
                         </table>
                     </div>
-                    {(reportData.data || []).length > 10 && (
-                        <div className="p-3 text-center border-t text-xs text-muted-foreground">
-                            Previewing first 10 of {reportData.data.length} records. Download PDF for full list.
-                        </div>
-                    )}
                 </CardContent>
+                <CardFooter className="py-3 border-t bg-muted/10">
+                    <p className="text-[10px] text-muted-foreground text-center w-full">
+                        Showing {(previewPage-1)*previewLimit + 1} to {Math.min(previewPage*previewLimit, totalRecords)} of {totalRecords} records.
+                    </p>
+                </CardFooter>
             </Card>
         </div>
     );
