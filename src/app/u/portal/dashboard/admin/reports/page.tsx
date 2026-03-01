@@ -39,14 +39,12 @@ import {
   LayoutDashboard, 
   Building2, 
   User, 
-  ArrowRight, 
   Loader2,
   PieChart as PieChartIcon,
   TrendingUp,
   History,
   ChevronLeft,
   ChevronRight,
-  Calendar as CalendarIcon
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -72,14 +70,14 @@ type ReportSummary = {
 type ReportData = {
   success: boolean;
   count: number;
-  summary: ReportSummary;
+  summary?: ReportSummary;
   data: any[];
 };
 
 export default function DynamicReportsPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
   
   // Filter States
@@ -128,7 +126,10 @@ export default function DynamicReportsPage() {
 
   const fetchReportPreview = useCallback(async () => {
     if (!token) return;
-    if ((level === 'department' || level === 'faculty') && !levelId) return;
+    if ((level === 'department' || level === 'faculty') && !levelId) {
+        setIsLoading(false);
+        return;
+    }
 
     setIsLoading(true);
     const params = new URLSearchParams({
@@ -164,6 +165,47 @@ export default function DynamicReportsPage() {
     const timer = setTimeout(fetchReportPreview, 500);
     return () => clearTimeout(timer);
   }, [fetchReportPreview]);
+
+  // Derived Statistics (Summary)
+  const computedSummary = useMemo((): ReportSummary | null => {
+    if (!reportData || !reportData.data || !Array.isArray(reportData.data)) return null;
+    
+    // If server already provided summary, use it
+    if (reportData.summary) return reportData.summary;
+
+    const data = reportData.data;
+    const stats: ReportSummary = {
+        totalPoints: 0,
+        count: data.length,
+        avgPoints: 0,
+        byStatus: [],
+        byType: [
+            { type: 'positive', points: 0 },
+            { type: 'negative', points: 0 }
+        ]
+    };
+
+    const statusCounts: Record<string, number> = {};
+
+    data.forEach(item => {
+        const pts = Number(item.points) || 0;
+        stats.totalPoints += pts;
+        
+        // Group by status
+        const s = item.status || 'unknown';
+        statusCounts[s] = (statusCounts[s] || 0) + 1;
+
+        // Group by type
+        const t = item.type === 'positive' ? 'positive' : 'negative';
+        const typeObj = stats.byType.find(obj => obj.type === t);
+        if (typeObj) typeObj.points += pts;
+    });
+
+    stats.avgPoints = stats.count > 0 ? stats.totalPoints / stats.count : 0;
+    stats.byStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
+
+    return stats;
+  }, [reportData]);
 
   const handleDownload = (format: 'pdf' | 'excel') => {
     const params = new URLSearchParams({
@@ -217,6 +259,7 @@ export default function DynamicReportsPage() {
         case 'approved': return '#10b981';
         case 'pending': return '#f59e0b';
         case 'rejected': return '#ef4444';
+        case 'appealed': return '#3b82f6';
         default: return '#6b7280';
     }
   };
@@ -235,21 +278,21 @@ export default function DynamicReportsPage() {
         );
     }
 
-    if (!reportData || !reportData.summary) {
+    if (!reportData || !computedSummary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed rounded-xl bg-muted/20">
                 <div className="p-4 bg-background rounded-full shadow-sm mb-4">
                     <History className="h-10 w-10 text-muted-foreground" />
                 </div>
-                <h3 className="text-lg font-semibold">Ready to generate</h3>
+                <h3 className="text-lg font-semibold">No data available</h3>
                 <p className="text-sm text-muted-foreground max-w-xs mx-auto mt-1">
-                    Select a level and filters on the left to generate your live report preview.
+                    Try adjusting your filters or selecting a different reporting level.
                 </p>
             </div>
         );
     }
 
-    const { summary, data } = reportData;
+    const { data } = reportData;
     const totalRecords = data?.length || 0;
     const totalPages = Math.ceil(totalRecords / previewLimit);
     const paginatedData = (data || []).slice(
@@ -264,19 +307,19 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase text-primary">Total Points</CardDescription>
-                        <CardTitle className="text-2xl">{summary.totalPoints ?? 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary.totalPoints ?? 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Total Activities</CardDescription>
-                        <CardTitle className="text-2xl">{summary.count ?? 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary.count ?? 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Avg per Activity</CardDescription>
-                        <CardTitle className="text-2xl">{(summary.avgPoints ?? 0).toFixed(1)}</CardTitle>
+                        <CardTitle className="text-2xl">{(computedSummary.avgPoints ?? 0).toFixed(1)}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -294,7 +337,7 @@ export default function DynamicReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={summary.byStatus || []}
+                                    data={computedSummary.byStatus || []}
                                     dataKey="count"
                                     nameKey="status"
                                     cx="50%"
@@ -303,7 +346,7 @@ export default function DynamicReportsPage() {
                                     outerRadius={80}
                                     paddingAngle={5}
                                 >
-                                    {(summary.byStatus || []).map((entry, index) => (
+                                    {(computedSummary.byStatus || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={getStatusColor(entry.status)} />
                                     ))}
                                 </Pie>
@@ -323,13 +366,13 @@ export default function DynamicReportsPage() {
                     </CardHeader>
                     <CardContent className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={summary.byType || []}>
+                            <BarChart data={computedSummary.byType || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                                 <Tooltip cursor={{fill: 'transparent'}} />
                                 <Bar dataKey="points" radius={[4, 4, 0, 0]}>
-                                    {(summary.byType || []).map((entry, index) => (
+                                    {(computedSummary.byType || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.type === 'positive' ? '#10b981' : '#ef4444'} />
                                     ))}
                                 </Bar>
@@ -578,6 +621,7 @@ export default function DynamicReportsPage() {
                                 <SelectItem value="approved">Approved</SelectItem>
                                 <SelectItem value="pending">Pending</SelectItem>
                                 <SelectItem value="rejected">Rejected</SelectItem>
+                                <SelectItem value="appealed">Appealed</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
