@@ -34,7 +34,7 @@ import {
   DialogClose,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge as BadgeIcon, AlertTriangle, Info, MoreHorizontal, Edit, Trash2 } from "lucide-react";
+import { Eye, Badge as BadgeIcon, AlertTriangle, Info, MoreHorizontal, Edit, Trash2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -58,6 +58,7 @@ import { useAlert } from "@/context/alert-context";
 import { shortenUrl } from "@/lib/url-shortener";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const APPEAL_WINDOW_DAYS = 7;
 
 type AppealData = {
     _id: string;
@@ -88,6 +89,7 @@ export default function NegativeRemarksPage() {
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [selectedRemark, setSelectedRemark] = useState<NegativeCredit | null>(null);
+  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   // Modal/Dialog states
   const [isAppealDialogOpen, setIsAppealDialogOpen] = useState(false);
@@ -102,6 +104,11 @@ export default function NegativeRemarksPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const facultyId = searchParams.get('uid');
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   const fetchRemarks = async () => {
       setIsLoadingRemarks(true);
@@ -247,6 +254,13 @@ export default function NegativeRemarksPage() {
     return <Badge variant={variant} className={remark.status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{remark.status}</Badge>;
   };
 
+  const isWithinAppealWindow = (createdAt: string) => {
+    const createdDate = new Date(createdAt);
+    const diffTime = Math.abs(currentTime.getTime() - createdDate.getTime());
+    const diffDays = diffTime / (1000 * 60 * 60 * 24);
+    return diffDays <= APPEAL_WINDOW_DAYS;
+  };
+
   const renderAppealDialog = (isEdit = false) => (
      <Dialog open={isEdit ? isEditAppealDialogOpen : isAppealDialogOpen} onOpenChange={isEdit ? setIsEditAppealDialogOpen : setIsAppealDialogOpen}>
         <DialogContent className="sm:max-w-lg">
@@ -299,7 +313,7 @@ export default function NegativeRemarksPage() {
       <Card>
         <CardHeader>
             <CardTitle>Remarks History</CardTitle>
-            <CardDescription>A log of all negative remarks issued to you.</CardDescription>
+            <CardDescription>A log of all negative remarks issued to you. Appeals must be filed within {APPEAL_WINDOW_DAYS} days of issuance.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto border rounded-lg">
@@ -317,59 +331,71 @@ export default function NegativeRemarksPage() {
                 {isLoadingRemarks ? (
                    <TableRow><TableCell colSpan={5} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
-                  remarks.map((remark) => (
-                  <TableRow key={remark._id}>
-                    <TableCell className="font-medium text-foreground">{remark.title}</TableCell>
-                    <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell>{getStatusBadge(remark)}</TableCell>
-                    <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
-                    <TableCell className="text-center">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsDetailsDialogOpen(true); }}>View Details</DropdownMenuItem>
-                                 <DropdownMenuSeparator />
-                                {!remark.appeal && (remark.appealCount || 0) < 2 && (
-                                    <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsAppealDialogOpen(true); setAppealReason(""); setAppealProof(null); }}>
-                                        Appeal
-                                    </DropdownMenuItem>
-                                )}
-                                {remark.appeal?.status === 'pending' && (
-                                    <>
-                                    <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsEditAppealDialogOpen(true); setAppealReason(remark.appeal?.reason || ""); setAppealProof(null); }}>
-                                        <Edit className="mr-2 h-4 w-4" /> Edit Appeal
-                                    </DropdownMenuItem>
-                                     <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
-                                              <Trash2 className="mr-2 h-4 w-4"/> Withdraw Appeal
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Withdraw Appeal?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will cancel your pending appeal. You may not be able to appeal this remark again. Are you sure?
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleWithdrawAppeal(remark.appeal!._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                      </AlertDialog>
-                                    </>
-                                )}
-                                 {remark.appeal && (
-                                    <DropdownMenuItem onSelect={() => router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`)}>
-                                        View Appeal Status
-                                    </DropdownMenuItem>
-                                 )}
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
+                  remarks.map((remark) => {
+                    const canAppeal = !remark.appeal && (remark.appealCount || 0) < 1 && isWithinAppealWindow(remark.createdAt);
+                    const windowExpired = !remark.appeal && (remark.appealCount || 0) < 1 && !isWithinAppealWindow(remark.createdAt);
+
+                    return (
+                      <TableRow key={remark._id}>
+                        <TableCell className="font-medium text-foreground">
+                          {remark.title}
+                          {windowExpired && (
+                            <span className="ml-2 inline-flex items-center text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                              <Clock className="h-3 w-3 mr-1" /> Window Expired
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell>{getStatusBadge(remark)}</TableCell>
+                        <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
+                        <TableCell className="text-center">
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                    <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsDetailsDialogOpen(true); }}>View Details</DropdownMenuItem>
+                                     <DropdownMenuSeparator />
+                                    {canAppeal && (
+                                        <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsAppealDialogOpen(true); setAppealReason(""); setAppealProof(null); }}>
+                                            Appeal
+                                        </DropdownMenuItem>
+                                    )}
+                                    {remark.appeal?.status === 'pending' && (
+                                        <>
+                                        <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsEditAppealDialogOpen(true); setAppealReason(remark.appeal?.reason || ""); setAppealProof(null); }}>
+                                            <Edit className="mr-2 h-4 w-4" /> Edit Appeal
+                                        </DropdownMenuItem>
+                                         <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:bg-destructive/10 focus:text-destructive">
+                                                  <Trash2 className="mr-2 h-4 w-4"/> Withdraw Appeal
+                                                </DropdownMenuItem>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Withdraw Appeal?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will cancel your pending appeal. You may not be able to appeal this remark again. Are you sure?
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleWithdrawAppeal(remark.appeal!._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                          </AlertDialog>
+                                        </>
+                                    )}
+                                     {remark.appeal && (
+                                        <DropdownMenuItem onSelect={() => router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`)}>
+                                            View Appeal Status
+                                        </DropdownMenuItem>
+                                     )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                     <TableRow><TableCell colSpan={5} className="text-center h-24">No remarks found.</TableCell></TableRow>
                 )}

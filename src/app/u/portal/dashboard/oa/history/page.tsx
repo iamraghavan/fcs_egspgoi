@@ -450,152 +450,155 @@ export default function IssuedHistoryPage() {
                 {isLoadingRemarks ? (
                    <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
-                  remarks.map((remark) => (
-                  <TableRow key={remark._id} className={cn(remark.status === 'deleted' && 'bg-red-50/50 text-muted-foreground')}>
-                    <TableCell>
-                        <div className="font-medium text-foreground">{remark.facultySnapshot.name}</div>
-                        <div className="text-sm text-muted-foreground">{remark.facultySnapshot.facultyID}</div>
-                        <div className="text-xs text-muted-foreground">{remark.facultySnapshot.department}</div>
-                    </TableCell>
-                    <TableCell>{remark.title}</TableCell>
-                    <TableCell>{getStatusBadge(remark.status)}</TableCell>
-                    <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
-                    <TableCell className="text-center">
-                      <div className="flex items-center justify-center gap-1">
-                        <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={setIsDetailsOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setSelectedRemark(remark)}>
-                                    <Eye className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent className="max-w-2xl">
-                                <DialogHeader>
-                                <DialogTitle>Remark Details</DialogTitle>
-                                </DialogHeader>
-                                {selectedRemark && (
-                                <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Faculty Name</p>
-                                            <p>{selectedRemark.facultySnapshot.name}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Faculty ID</p>
-                                            <p>{selectedRemark.facultySnapshot.facultyID}</p>
-                                        </div>
-                                        <div className="col-span-full">
-                                            <p className="font-medium text-muted-foreground">Department</p>
-                                            <p>{selectedRemark.facultySnapshot.department}</p>
-                                        </div>
-                                        <div className="col-span-full border-t pt-3 mt-1">
-                                            <p className="font-medium text-muted-foreground">Remark Title</p>
-                                            <p>{selectedRemark.title}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Points</p>
-                                            <p className="font-bold text-destructive">{selectedRemark.points}</p>
-                                        </div>
-                                        <div>
-                                            <p className="font-medium text-muted-foreground">Date Issued</p>
-                                            <p>{new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                                        </div>
-                                        <div className="col-span-full">
-                                            <p className="font-medium text-muted-foreground">Issued By</p>
-                                            <p>{selectedRemark.issuedBySnapshot?.name || 'N/A'}</p>
-                                        </div>
-                                        <div className="col-span-full">
-                                            <p className="font-medium text-muted-foreground">Notes / Rationale</p>
-                                            <p className="mt-1 italic bg-muted/50 p-2 rounded-md">{selectedRemark.notes || 'N/A'}</p>
-                                        </div>
-                                        <div className="col-span-full">
-                                            <p className="font-medium text-muted-foreground">Proof Document</p>
-                                            {selectedRemark.proofUrl ? (
-                                                shortProofUrl ? (
-                                                    <Button asChild variant="link" className="p-0 h-auto">
-                                                       <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                   </Button>
-                                               ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
-                                            ) : "Not Provided"}
-                                        </div>
-                                        <div className="col-span-full border-t pt-3 mt-1">
-                                            <p className="font-medium text-muted-foreground">Remark ID</p>
-                                            <p className="font-mono text-xs">{selectedRemark._id}</p>
+                  remarks.map((remark) => {
+                    const isModifiable = remark.status === 'pending';
+                    return (
+                      <TableRow key={remark._id} className={cn(remark.status === 'deleted' && 'bg-red-50/50 text-muted-foreground')}>
+                        <TableCell>
+                            <div className="font-medium text-foreground">{remark.facultySnapshot.name}</div>
+                            <div className="text-sm text-muted-foreground">{remark.facultySnapshot.facultyID}</div>
+                            <div className="text-xs text-muted-foreground">{remark.facultySnapshot.department}</div>
+                        </TableCell>
+                        <TableCell>{remark.title}</TableCell>
+                        <TableCell>{getStatusBadge(remark)}</TableCell>
+                        <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Dialog open={isDetailsOpen && selectedRemark?._id === remark._id} onOpenChange={setIsDetailsOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setSelectedRemark(remark)}>
+                                        <Eye className="h-4 w-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-2xl">
+                                    <DialogHeader>
+                                    <DialogTitle>Remark Details</DialogTitle>
+                                    </DialogHeader>
+                                    {selectedRemark && (
+                                    <div className="space-y-4 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Faculty Name</p>
+                                                <p>{selectedRemark.facultySnapshot.name}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Faculty ID</p>
+                                                <p>{selectedRemark.facultySnapshot.facultyID}</p>
+                                            </div>
+                                            <div className="col-span-full">
+                                                <p className="font-medium text-muted-foreground">Department</p>
+                                                <p>{selectedRemark.facultySnapshot.department}</p>
+                                            </div>
+                                            <div className="col-span-full border-t pt-3 mt-1">
+                                                <p className="font-medium text-muted-foreground">Remark Title</p>
+                                                <p>{selectedRemark.title}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Points</p>
+                                                <p className="font-bold text-destructive">{selectedRemark.points}</p>
+                                            </div>
+                                            <div>
+                                                <p className="font-medium text-muted-foreground">Date Issued</p>
+                                                <p>{new Date(selectedRemark.createdAt).toLocaleString()}</p>
+                                            </div>
+                                            <div className="col-span-full">
+                                                <p className="font-medium text-muted-foreground">Issued By</p>
+                                                <p>{selectedRemark.issuedBySnapshot?.name || 'N/A'}</p>
+                                            </div>
+                                            <div className="col-span-full">
+                                                <p className="font-medium text-muted-foreground">Notes / Rationale</p>
+                                                <p className="mt-1 italic bg-muted/50 p-2 rounded-md">{selectedRemark.notes || 'N/A'}</p>
+                                            </div>
+                                            <div className="col-span-full">
+                                                <p className="font-medium text-muted-foreground">Proof Document</p>
+                                                {selectedRemark.proofUrl ? (
+                                                    shortProofUrl ? (
+                                                        <Button asChild variant="link" className="p-0 h-auto">
+                                                           <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
+                                                       </Button>
+                                                   ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
+                                                ) : "Not Provided"}
+                                            </div>
+                                            <div className="col-span-full border-t pt-3 mt-1">
+                                                <p className="font-medium text-muted-foreground">Remark ID</p>
+                                                <p className="font-mono text-xs">{selectedRemark._id}</p>
+                                            </div>
                                         </div>
                                     </div>
-                                </div>
-                                )}
-                                <DialogFooter>
-                                    <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <Dialog open={isEditDialogOpen && editingRemark?._id === remark._id} onOpenChange={setIsEditDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="ghost" size="icon" onClick={() => setEditingRemark(remark)}>
-                                    <Edit className="h-4 w-4" />
-                                </Button>
-                            </DialogTrigger>
-                             <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>Edit Negative Remark</DialogTitle>
-                                    <DialogDescription>Update the details for this remark.</DialogDescription>
-                                </DialogHeader>
-                                <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                                    <div>
-                                        <Label htmlFor="edit-creditTitle">Remark Template (Optional)</Label>
-                                        <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
-                                            <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
-                                            <SelectContent>
-                                                {creditTitles.map(ct => (
-                                                    <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
-                                                ))}
-                                            </SelectContent>
-                                        </Select>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="edit-notes">Notes / Rationale</Label>
-                                        <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
-                                    </div>
-                                    <div>
-                                        <Label>Proof Document (Optional)</Label>
-                                        {editingRemark?.proofUrl && !editProof && (
-                                            <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingRemark.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
-                                        )}
-                                        <FileUpload onFileSelect={setEditProof} />
-                                    </div>
+                                    )}
                                     <DialogFooter>
-                                        <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                                        <Button type="submit" disabled={isSubmittingEdit}>
-                                            {isSubmittingEdit ? "Saving..." : "Save Changes"}
-                                        </Button>
+                                        <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
                                     </DialogFooter>
-                                </form>
-                            </DialogContent>
-                        </Dialog>
-                         <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={remark.status === 'deleted'}>
-                                    <Trash2 className="h-4 w-4" />
-                                </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                                <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                    This will permanently delete this remark. This action cannot be undone.
-                                </AlertDialogDescription>
-                                </AlertDialogHeader>
-                                <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
-                                </AlertDialogFooter>
-                            </AlertDialogContent>
-                        </AlertDialog>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                                </DialogContent>
+                            </Dialog>
+                            <Dialog open={isEditDialogOpen && editingRemark?._id === remark._id} onOpenChange={setIsEditDialogOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" onClick={() => setEditingRemark(remark)} disabled={!isModifiable}>
+                                        <Edit className="h-4 w-4" />
+                                    </Button>
+                                </DialogTrigger>
+                                 <DialogContent>
+                                    <DialogHeader>
+                                        <DialogTitle>Edit Negative Remark</DialogTitle>
+                                        <DialogDescription>Update the details for this remark. This is only available for pending remarks.</DialogDescription>
+                                    </DialogHeader>
+                                    <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                                        <div>
+                                            <Label htmlFor="edit-creditTitle">Remark Template (Optional)</Label>
+                                            <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                                                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                                                <SelectContent>
+                                                    {creditTitles.map(ct => (
+                                                        <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
+                                                    ))}
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div>
+                                            <Label htmlFor="edit-notes">Notes / Rationale</Label>
+                                            <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                                        </div>
+                                        <div>
+                                            <Label>Proof Document (Optional)</Label>
+                                            {editingRemark?.proofUrl && !editProof && (
+                                                <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingRemark.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
+                                            )}
+                                            <FileUpload onFileSelect={setEditProof} />
+                                        </div>
+                                        <DialogFooter>
+                                            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
+                                            <Button type="submit" disabled={isSubmittingEdit}>
+                                                {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                                            </Button>
+                                        </DialogFooter>
+                                    </form>
+                                </DialogContent>
+                            </Dialog>
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive" disabled={!isModifiable}>
+                                        <Trash2 className="h-4 w-4" />
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This will permanently delete this remark. This action cannot be undone and is only allowed for pending remarks.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 ) : (
                     <TableRow><TableCell colSpan={6} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
                 )}

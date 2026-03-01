@@ -145,7 +145,7 @@ const helpContent = {
                     <li>The date the remark was issued.</li>
                     <li>Any notes or rationale provided by the administrator.</li>
                 </ul>
-                 <p className="pt-4">It is your responsibility to review these remarks promptly. If you disagree with a remark, you have a limited time to file an appeal.</p>
+                 <p className="pt-4">It is your responsibility to review these remarks promptly. If you disagree with a remark, you have **7 days** to file an appeal.</p>
             </CardContent>
         </Card>
       </div>
@@ -160,7 +160,7 @@ const helpContent = {
              <Alert>
               <Info className="h-4 w-4" />
               <AlertTitle>Right to Appeal</AlertTitle>
-              <AlertDescription>If you believe a negative remark was issued in error or is unjust, you have the right to appeal the decision. You may only appeal a specific remark once.</AlertDescription>
+              <AlertDescription>If you believe a negative remark was issued in error or is unjust, you have the right to appeal the decision. You must file your appeal within **7 days** of the remark being issued. You may only appeal a specific remark **once**.</AlertDescription>
             </Alert>
              <h3 className="text-2xl font-bold pt-4">How to File an Appeal</h3>
              <ol className="relative border-l border-gray-200 dark:border-gray-700 space-y-8">                  
@@ -168,14 +168,14 @@ const helpContent = {
                     <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">1</span>
                     <div className="p-4 bg-card border rounded-lg">
                         <h4 className="font-semibold">Locate the Remark</h4>
-                        <p className="text-muted-foreground">Navigate to the "Negative Remarks" page and find the specific remark you wish to dispute.</p>
+                        <p className="text-muted-foreground">Navigate to the "Negative Remarks" page and find the specific remark you wish to dispute. Ensure the 7-day window has not expired.</p>
                     </div>
                 </li>
                 <li className="ml-6">
                     <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">2</span>
                      <div className="p-4 bg-card border rounded-lg">
                         <h4 className="font-semibold">Initiate the Appeal</h4>
-                        <p className="text-muted-foreground">Click the "Appeal" button next to the remark. This will open the appeal submission form.</p>
+                        <p className="text-muted-foreground">Click the "Appeal" button next to the remark. This will open the appeal submission form. If the button is not visible, the 7-day window has passed or you have already appealed.</p>
                     </div>
                 </li>
                 <li className="ml-6">
@@ -301,7 +301,7 @@ const helpContent = {
               <li><strong>Upload Proof (Optional):</strong> Attach any supporting documents.</li>
               <li><strong>Submit:</strong> Click the "Issue" button to record the transaction.</li>
             </ol>
-             <p className="pt-4">You can view a complete log of all remarks you have issued by clicking the "View Issued History" button.</p>
+             <p className="pt-4">You can view a complete log of all remarks you have issued by clicking the "View Issued History" button. Note that you cannot edit or delete a remark once it has been appealed or reviewed by an admin.</p>
           </CardContent>
         </Card>
       </div>
