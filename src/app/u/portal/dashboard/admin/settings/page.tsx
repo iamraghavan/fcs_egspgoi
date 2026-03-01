@@ -10,12 +10,13 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useToast } from "@/hooks/use-toast"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Camera, ShieldCheck, Star } from "lucide-react"
+import { Camera, ShieldCheck, UserCircle, Briefcase } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
 import { MfaSettings } from "@/components/mfa-settings"
 import { SessionManager } from "@/components/session-manager"
 import { PushNotificationManager } from "@/components/push-notification-manager"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
@@ -29,6 +30,8 @@ type UserProfile = {
   role: string;
   facultyID: string;
   currentCredit: number;
+  prefix?: string;
+  designation?: string;
 };
 
 export default function AdminSettingsPage() {
@@ -83,6 +86,8 @@ export default function AdminSettingsPage() {
           role: userData.role || 'N/A',
           facultyID: userData.facultyID || 'N/A',
           currentCredit: userData.currentCredit || 0,
+          prefix: userData.prefix || "",
+          designation: userData.designation || "",
         };
         setUser(userProfile);
         setPreviewImage(userProfile.avatar);
@@ -116,6 +121,11 @@ export default function AdminSettingsPage() {
     setUser({ ...user, [name]: value });
   };
 
+  const handleSelectChange = (name: string, value: string) => {
+    if (!user) return;
+    setUser({ ...user, [name]: value });
+  };
+
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
@@ -137,7 +147,8 @@ export default function AdminSettingsPage() {
     const formData = new FormData();
 
     formData.append('name', user.name);
-    formData.append('email', user.email);
+    if(user.prefix) formData.append('prefix', user.prefix);
+    if(user.designation) formData.append('designation', user.designation);
     if(user.phone) formData.append('phone', user.phone);
     if (profileImage) {
         formData.append('profileImage', profileImage);
@@ -178,8 +189,8 @@ export default function AdminSettingsPage() {
     const token = localStorage.getItem("token");
     
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/change-password`, {
-        method: 'POST',
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/me/password`, {
+        method: 'PUT',
         headers: {
             "Authorization": `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -187,7 +198,6 @@ export default function AdminSettingsPage() {
         body: JSON.stringify({
             currentPassword,
             newPassword,
-            confirmPassword,
         }),
       });
 
@@ -233,7 +243,7 @@ export default function AdminSettingsPage() {
     <div className="mx-auto max-w-4xl space-y-8" ref={containerRef}>
         <div>
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Admin Settings</h1>
-            <p className="mt-1 text-muted-foreground">Manage your administrator account settings.</p>
+            <p className="mt-1 text-muted-foreground">Manage your administrator account settings and preferences.</p>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="md:col-span-1">
@@ -282,14 +292,40 @@ export default function AdminSettingsPage() {
                                             <p className="font-mono text-sm mt-2">{user?.facultyID}</p>
                                         </div>
                                     </div>
+                                    <div className="grid grid-cols-3 gap-4">
+                                        <div className="col-span-1">
+                                            <Label htmlFor="prefix">Prefix</Label>
+                                            <Select onValueChange={(v) => handleSelectChange('prefix', v)} value={user?.prefix}>
+                                                <SelectTrigger id="prefix" className="mt-1">
+                                                    <SelectValue placeholder="Prefix" />
+                                                </SelectTrigger>
+                                                <SelectContent>
+                                                    <SelectItem value="Mr.">Mr.</SelectItem>
+                                                    <SelectItem value="Ms.">Ms.</SelectItem>
+                                                    <SelectItem value="Dr.">Dr.</SelectItem>
+                                                    <SelectItem value="Prof.">Prof.</SelectItem>
+                                                </SelectContent>
+                                            </Select>
+                                        </div>
+                                        <div className="col-span-2">
+                                            <Label htmlFor="name">Full Name</Label>
+                                            <div className="relative mt-1">
+                                                <UserCircle className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input id="name" name="name" value={user?.name} onChange={handleInputChange} className="pl-10" />
+                                            </div>
+                                        </div>
+                                    </div>
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         <div>
-                                            <Label htmlFor="name">Full Name</Label>
-                                            <Input id="name" name="name" value={user?.name} onChange={handleInputChange} />
+                                            <Label htmlFor="designation">Designation</Label>
+                                            <div className="relative mt-1">
+                                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                                <Input id="designation" name="designation" value={user?.designation} onChange={handleInputChange} placeholder="Job Title" className="pl-10" />
+                                            </div>
                                         </div>
                                         <div>
                                             <Label htmlFor="phone">Phone</Label>
-                                            <Input id="phone" name="phone" type="tel" value={user?.phone} onChange={handleInputChange} />
+                                            <Input id="phone" name="phone" type="tel" value={user?.phone} onChange={handleInputChange} className="mt-1" />
                                         </div>
                                     </div>
                                      <div>
@@ -308,7 +344,7 @@ export default function AdminSettingsPage() {
                              <Card>
                                 <CardHeader>
                                     <CardTitle>Change Password</CardTitle>
-                                    <CardDescription>For security, choose a strong password.</CardDescription>
+                                    <CardDescription>Choose a strong, secure password.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <div>
@@ -342,7 +378,7 @@ export default function AdminSettingsPage() {
                         <Card className="mt-6">
                             <CardHeader>
                                 <CardTitle>Push Notifications</CardTitle>
-                                <CardDescription>Enable push notifications to receive instant updates. Your browser will ask for permission after you click the button below.</CardDescription>
+                                <CardDescription>Receive instant updates about your account on this device.</CardDescription>
                             </CardHeader>
                             <CardContent>
                                 <PushNotificationManager />

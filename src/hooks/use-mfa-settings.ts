@@ -13,85 +13,79 @@ export function useMfaSettings() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
 
-  const makeMfaRequest = async (endpoint: string, body: object, successMessage: string) => {
+  const setupAppMfa = async () => {
     setIsLoading(true);
-    const token = localStorage.getItem("token");
-    if (!token) {
-      showAlert("Authentication Error", "Please log in again.");
-      setIsLoading(false);
-      return { success: false, data: null };
-    }
-
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/mfa/${endpoint}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(body),
+      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/setup`, {
+        headers: { "Authorization": `Bearer ${token}` }
       });
-
-      const responseData = await response.json();
-
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || `Failed to update MFA settings.`);
-      }
-      
-      toast({ title: "Success", description: successMessage });
-      return { success: true, data: responseData };
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to setup MFA");
+      setQrCode(data.qrCode);
+      return true;
     } catch (error: any) {
-      showAlert("Operation Failed", error.message);
-      return { success: false, data: null };
+      showAlert("MFA Setup Failed", error.message);
+      return false;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const toggleEmailMfa = async (enable: boolean) => {
-    return await makeMfaRequest(
-      "toggle-email",
-      { enable },
-      `Email-based MFA has been ${enable ? 'enabled' : 'disabled'}.`
-    );
-  };
-
-  const enableAppMfa = async () => {
-    const { success, data } = await makeMfaRequest(
-      "enable-app",
-      {},
-      "Scan the QR code with your authenticator app."
-    );
-    if (success && data?.qrCodeDataURL) {
-      setQrCode(data.qrCodeDataURL);
+  const enableMfa = async (type: 'app' | 'email', verificationCode: string) => {
+    setIsLoading(true);
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/enable`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ type, token: verificationCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to enable MFA");
+      toast({ title: "Success", description: `${type === 'app' ? 'Authenticator app' : 'Email MFA'} has been enabled.` });
+      return true;
+    } catch (error: any) {
+      showAlert("Operation Failed", error.message);
+      return false;
+    } finally {
+      setIsLoading(false);
     }
-    return success;
   };
 
-  const verifyAppSetup = async (token: string) => {
-    const { success } = await makeMfaRequest(
-      "verify-app-setup",
-      { token },
-      "Authenticator app has been successfully set up."
-    );
-    return success;
-  };
-  
-  const disableAllMfa = async () => {
-    return await makeMfaRequest(
-      "disable-all",
-      {},
-      "All MFA methods have been disabled."
-    );
+  const disableMfa = async (verificationCode: string) => {
+    setIsLoading(true);
+    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/disable`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ token: verificationCode }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to disable MFA");
+      toast({ title: "Success", description: "MFA has been disabled." });
+      return true;
+    } catch (error: any) {
+      showAlert("Operation Failed", error.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return {
     isLoading,
     qrCode,
     setQrCode,
-    toggleEmailMfa,
-    enableAppMfa,
-    verifyAppSetup,
-    disableAllMfa,
+    setupAppMfa,
+    enableMfa,
+    disableMfa,
   };
 }
