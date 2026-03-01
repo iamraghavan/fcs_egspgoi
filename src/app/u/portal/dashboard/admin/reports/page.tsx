@@ -50,7 +50,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { format, parseISO } from "date-fns"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = ''; // Empty string to use relative paths and trigger proxy
 
 type Faculty = {
   _id: string;
@@ -127,6 +127,7 @@ export default function DynamicReportsPage() {
   const fetchReportPreview = useCallback(async () => {
     if (!token) return;
     if ((level === 'department' || level === 'faculty') && !levelId) {
+        // Don't auto-fetch if ID is missing for these levels
         setIsLoading(false);
         return;
     }
@@ -149,7 +150,7 @@ export default function DynamicReportsPage() {
       const data = await response.json();
       if (data.success) {
         setReportData(data);
-        setPreviewPage(1); // Reset pagination on new fetch
+        setPreviewPage(1);
       } else {
         throw new Error(data.message || "Failed to fetch report preview");
       }
@@ -166,13 +167,10 @@ export default function DynamicReportsPage() {
     return () => clearTimeout(timer);
   }, [fetchReportPreview]);
 
-  // Derived Statistics (Summary)
+  // Derived Statistics (Summary) - Calculated from raw data
   const computedSummary = useMemo((): ReportSummary | null => {
     if (!reportData || !reportData.data || !Array.isArray(reportData.data)) return null;
     
-    // If server already provided summary, use it
-    if (reportData.summary) return reportData.summary;
-
     const data = reportData.data;
     const stats: ReportSummary = {
         totalPoints: 0,
@@ -188,17 +186,15 @@ export default function DynamicReportsPage() {
     const statusCounts: Record<string, number> = {};
 
     data.forEach(item => {
-        const pts = Number(item.points) || 0;
-        stats.totalPoints += pts;
+        const pts = Math.abs(Number(item.points) || 0); // Handle negative points as absolute for sum contribution if needed, but usually we just sum them
+        stats.totalPoints += Number(item.points) || 0;
         
-        // Group by status
         const s = item.status || 'unknown';
         statusCounts[s] = (statusCounts[s] || 0) + 1;
 
-        // Group by type
         const t = item.type === 'positive' ? 'positive' : 'negative';
         const typeObj = stats.byType.find(obj => obj.type === t);
-        if (typeObj) typeObj.points += pts;
+        if (typeObj) typeObj.points += Math.abs(Number(item.points) || 0);
     });
 
     stats.avgPoints = stats.count > 0 ? stats.totalPoints / stats.count : 0;
@@ -218,8 +214,7 @@ export default function DynamicReportsPage() {
       ...(endDate && { endDate }),
       format
     });
-    // Use relative path to hit the proxy defined in next.config.ts
-    window.open(`/api/v1/reports/download?${params.toString()}&token=${token}`, '_blank');
+    window.open(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}&token=${token}`, '_blank');
     toast({ title: "Report Generation", description: `Your ${format.toUpperCase()} report is being prepared.` });
   };
 
@@ -238,7 +233,7 @@ export default function DynamicReportsPage() {
     });
 
     try {
-      const res = await fetch(`/api/v1/reports/download?${params.toString()}`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
@@ -308,19 +303,19 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase text-primary">Total Points</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.totalPoints ?? 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary.totalPoints || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Total Activities</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.count ?? 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary.count || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Avg per Activity</CardDescription>
-                        <CardTitle className="text-2xl">{(computedSummary.avgPoints ?? 0).toFixed(1)}</CardTitle>
+                        <CardTitle className="text-2xl">{(computedSummary.avgPoints || 0).toFixed(1)}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -504,7 +499,6 @@ export default function DynamicReportsPage() {
       </header>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-        {/* Sidebar Filters */}
         <aside className="lg:col-span-1 space-y-6">
           <Card className="shadow-none">
             <CardHeader className="pb-4">
@@ -571,6 +565,7 @@ export default function DynamicReportsPage() {
                                 {facultyResults.map(f => (
                                     <button
                                         key={f._id}
+                                        type="button"
                                         className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-0"
                                         onClick={() => {
                                             setLevelId(f._id);
@@ -645,7 +640,6 @@ export default function DynamicReportsPage() {
           </Card>
         </aside>
 
-        {/* Main Content Area */}
         <main className="lg:col-span-3">
             {renderPreview()}
         </main>
