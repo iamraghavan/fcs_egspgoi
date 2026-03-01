@@ -86,7 +86,8 @@ export default function NegativeRemarksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Remote Config for dynamic window
+  // Fetch appeal window dynamically from Firebase Remote Config
+  // Default to 7 if not set or during loading
   const remoteAppealWindow = useRemoteConfig('appeal_window_days')?.asNumber();
   const APPEAL_WINDOW_DAYS = remoteAppealWindow || 7;
 
@@ -161,12 +162,12 @@ export default function NegativeRemarksPage() {
   
   useEffect(() => {
     if (selectedRemark?.proofUrl) {
-        setShortProofUrl(null); // Reset
+        setShortProofUrl(null);
         shortenUrl(getProofUrl(selectedRemark.proofUrl))
             .then(url => setShortProofUrl(url))
             .catch(() => {
                 if(selectedRemark.proofUrl) setShortProofUrl(getProofUrl(selectedRemark.proofUrl))
-            }); // Fallback
+            });
     }
 }, [selectedRemark]);
 
@@ -207,7 +208,7 @@ export default function NegativeRemarksPage() {
 
         setIsAppealDialogOpen(false);
         setIsEditAppealDialogOpen(false);
-        fetchRemarks(); // Refresh list
+        fetchRemarks();
         router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`);
 
     } catch (error: any) {

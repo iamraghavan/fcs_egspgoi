@@ -32,7 +32,7 @@ export function LoginScreen() {
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
 
-  // Remote Config for Announcement
+  // Listen for announcement key from Firebase Remote Config
   const loginAnnouncement = useRemoteConfig('login_announcement')?.asString();
 
   // Login form state
@@ -263,6 +263,7 @@ export function LoginScreen() {
 
   const renderLoginForm = () => (
     <form onSubmit={handleLogin} className="space-y-6">
+      {/* Display announcement from Remote Config if present */}
       {loginAnnouncement && (
         <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3 items-start animate-pulse">
             <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
