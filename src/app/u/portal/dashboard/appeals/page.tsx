@@ -155,7 +155,6 @@ export default function AppealsPage() {
   }, [facultyId, filter]);
   
   const handleAppealSubmit = async () => {
-    // Check for the Credit document ID (selectedAppeal._id)
     if (!selectedAppeal || !selectedAppeal._id || !appealReason.trim()) {
         showAlert("Incomplete Form", "Cannot submit appeal: ID is missing or reason is empty.");
         return;
@@ -168,8 +167,8 @@ export default function AppealsPage() {
       formData.append("proof", appealProof);
     }
     
-    // Use the Credit document ID in the URL as per backend requirement
-    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal._id}`;
+    // Updated URL to include nested credits segment
+    const url = `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedAppeal._id}`;
     const method = 'PUT';
 
     try {
@@ -190,7 +189,7 @@ export default function AppealsPage() {
         });
 
         setIsEditDialogOpen(false);
-        fetchAppeals(); // Refresh list
+        fetchAppeals();
 
     } catch (error: any) {
         showAlert("Appeal Failed", error.message);
@@ -201,7 +200,8 @@ export default function AppealsPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
+        // Updated URL to include nested credits segment
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -240,9 +240,7 @@ export default function AppealsPage() {
     const itemIndex = statusOrder.indexOf(status);
 
     const isPast = itemIndex < currentIndex && currentStatus !== 'rejected';
-    if(status === 'submitted' && currentStatus !== 'submitted') isPast;
-
-
+    
     const isCurrent = status === currentStatus;
 
     if (isPast || (status === 'submitted' && currentStatus !== 'submitted')) {
@@ -356,97 +354,97 @@ export default function AppealsPage() {
             <div className="flex flex-col h-full">
                 <h3 className="text-xl font-bold mb-4">Appeal Details</h3>
                 
-                <>
-                    <div className="space-y-4">
-                        <Card>
-                            <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Original Remark</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2 text-sm">
-                                <p className="font-semibold">{selectedAppeal.title} (<span className="text-red-600">{selectedAppeal.points}</span> points)</p>
-                                <p className="text-muted-foreground italic">"{selectedAppeal.notes}"</p>
-                                <p className="text-xs text-muted-foreground">Issued on: {new Date(selectedAppeal.createdAt).toLocaleString()}</p>
-                            </CardContent>
-                        </Card>
+                <div className="space-y-4">
+                    <Card>
+                        <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Original Remark</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <p className="font-semibold">{selectedAppeal.title} (<span className="text-red-600">{selectedAppeal.points}</span> points)</p>
+                            <p className="text-muted-foreground italic">"{selectedAppeal.notes}"</p>
+                            <p className="text-xs text-muted-foreground">Issued on: {new Date(selectedAppeal.createdAt).toLocaleString()}</p>
+                        </CardContent>
+                    </Card>
 
-                        <Card>
-                            <CardHeader className="pb-2">
-                            <CardTitle className="text-base">Your Appeal</CardTitle>
-                            </CardHeader>
-                            <CardContent className="space-y-2 text-sm">
-                                <p className="text-muted-foreground italic">"{selectedAppeal.appeal.reason}"</p>
-                                <p className="text-xs text-muted-foreground">Submitted on: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
-                            </CardContent>
-                        </Card>
-                    </div>
-                      <div className="mt-6 border-t pt-6">
-                        <h4 className="font-semibold mb-4">Appeal Timeline</h4>
-                        <ul className="space-y-6">
-                            <li className="flex gap-4">
-                                <div className="flex flex-col items-center">
-                                    <div className="flex-shrink-0">{getTimelineIcon('submitted', selectedAppeal.appeal.status)}</div>
-                                    <div className="w-px h-full bg-border"></div>
-                                </div>
-                                <div>
-                                    <p className="font-medium">Submitted</p>
-                                    <p className="text-sm text-muted-foreground">{new Date(selectedAppeal.appeal.createdAt).toDateString()}</p>
-                                </div>
-                            </li>
-                            <li className="flex gap-4">
-                                  <div className="flex flex-col items-center">
-                                    <div className="flex-shrink-0">{getTimelineIcon('pending', selectedAppeal.appeal.status)}</div>
-                                    <div className="w-px h-full bg-border"></div>
-                                </div>
-                                <div>
-                                    <p className="font-medium">In Review</p>
-                                    <p className="text-sm text-muted-foreground">The admin team is reviewing your appeal.</p>
-                                </div>
-                            </li>
-                            <li className="flex gap-4">
-                                <div className="flex-shrink-0">{getTimelineIcon(selectedAppeal.appeal.status, selectedAppeal.appeal.status)}</div>
-                                <div>
-                                    <p className="font-medium">Final Decision</p>
-                                    {(selectedAppeal.appeal.status === 'accepted' || selectedAppeal.appeal.status === 'rejected') ? (
-                                        <p className="text-sm text-muted-foreground">
-                                            Your appeal has been {selectedAppeal.appeal.status}.
-                                        </p>
-                                    ): (
-                                        <p className="text-sm text-muted-foreground">A decision is pending.</p>
-                                    )}
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                    {selectedAppeal.appeal.status === 'pending' && (
-                        <div className="mt-6 border-t pt-6">
-                            <h4 className="font-semibold mb-4">Actions</h4>
-                            <div className="flex flex-col gap-2">
-                                <Button onClick={() => { setAppealReason(selectedAppeal.appeal.reason); setAppealProof(null); setIsEditDialogOpen(true); }} >
-                                    <Edit className="mr-2 h-4 w-4" /> Edit Appeal
-                                </Button>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="destructive">
-                                             <Trash2 className="mr-2 h-4 w-4" /> Withdraw Appeal
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>This action will permanently withdraw your appeal. You may not be able to appeal this remark again.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal._id)} className="bg-destructive hover:bg-destructive/90">
-                                                Confirm & Withdraw
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
+                    <Card>
+                        <CardHeader className="pb-2">
+                        <CardTitle className="text-base">Your Appeal</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-2 text-sm">
+                            <p className="text-muted-foreground italic">"{selectedAppeal.appeal.reason}"</p>
+                            <p className="text-xs text-muted-foreground">Submitted on: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
+                        </CardContent>
+                    </Card>
+                </div>
+                
+                <div className="mt-6 border-t pt-6">
+                    <h4 className="font-semibold mb-4">Appeal Timeline</h4>
+                    <ul className="space-y-6">
+                        <li className="flex gap-4">
+                            <div className="flex flex-col items-center">
+                                <div className="flex-shrink-0">{getTimelineIcon('submitted', selectedAppeal.appeal.status)}</div>
+                                <div className="w-px h-full bg-border"></div>
                             </div>
+                            <div>
+                                <p className="font-medium">Submitted</p>
+                                <p className="text-sm text-muted-foreground">{new Date(selectedAppeal.appeal.createdAt).toDateString()}</p>
+                            </div>
+                        </li>
+                        <li className="flex gap-4">
+                                <div className="flex flex-col items-center">
+                                <div className="flex-shrink-0">{getTimelineIcon('pending', selectedAppeal.appeal.status)}</div>
+                                <div className="w-px h-full bg-border"></div>
+                            </div>
+                            <div>
+                                <p className="font-medium">In Review</p>
+                                <p className="text-sm text-muted-foreground">The admin team is reviewing your appeal.</p>
+                            </div>
+                        </li>
+                        <li className="flex gap-4">
+                            <div className="flex-shrink-0">{getTimelineIcon(selectedAppeal.appeal.status, selectedAppeal.appeal.status)}</div>
+                            <div>
+                                <p className="font-medium">Final Decision</p>
+                                {(selectedAppeal.appeal.status === 'accepted' || selectedAppeal.appeal.status === 'rejected') ? (
+                                    <p className="text-sm text-muted-foreground">
+                                        Your appeal has been {selectedAppeal.appeal.status}.
+                                    </p>
+                                ): (
+                                    <p className="text-sm text-muted-foreground">A decision is pending.</p>
+                                )}
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+                
+                {selectedAppeal.appeal.status === 'pending' && (
+                    <div className="mt-6 border-t pt-6">
+                        <h4 className="font-semibold mb-4">Actions</h4>
+                        <div className="flex flex-col gap-2">
+                            <Button onClick={() => { setAppealReason(selectedAppeal.appeal.reason); setAppealProof(null); setIsEditDialogOpen(true); }} >
+                                <Edit className="mr-2 h-4 w-4" /> Edit Appeal
+                            </Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive">
+                                            <Trash2 className="mr-2 h-4 w-4" /> Withdraw Appeal
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                        <AlertDialogDescription>This action will permanently withdraw your appeal. You may not be able to appeal this remark again.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal._id)} className="bg-destructive hover:bg-destructive/90">
+                                            Confirm & Withdraw
+                                        </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
                         </div>
-                    )}
-                </>
+                    </div>
+                )}
             </div>
         ) : (
             <div className="bg-background p-4 rounded-lg flex items-center justify-center text-center text-muted-foreground h-full">

@@ -185,9 +185,9 @@ export default function NegativeRemarksPage() {
       formData.append("proof", appealProof);
     }
     
-    // Backend expects the Credit ID in the URL for updating or creating an appeal
+    // Updated URL to include nested credits segment for both PUT and POST
     const url = isEdit
-        ? `${API_BASE_URL}/api/v1/credits/appeals/${selectedRemark._id}`
+        ? `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedRemark._id}`
         : `${API_BASE_URL}/api/v1/credits/credits/${selectedRemark._id}/appeal`;
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -222,7 +222,8 @@ export default function NegativeRemarksPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
+        // Updated URL to include nested credits segment
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
