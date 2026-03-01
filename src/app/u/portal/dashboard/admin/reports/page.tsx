@@ -228,7 +228,7 @@ export default function DynamicReportsPage() {
         );
     }
 
-    if (!reportData) {
+    if (!reportData || !reportData.summary) {
         return (
             <div className="flex flex-col items-center justify-center py-20 text-center border-2 border-dashed rounded-xl bg-muted/20">
                 <div className="p-4 bg-background rounded-full shadow-sm mb-4">
@@ -251,19 +251,19 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase text-primary">Total Points</CardDescription>
-                        <CardTitle className="text-2xl">{summary.totalPoints}</CardTitle>
+                        <CardTitle className="text-2xl">{summary.totalPoints ?? 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Total Activities</CardDescription>
-                        <CardTitle className="text-2xl">{summary.count}</CardTitle>
+                        <CardTitle className="text-2xl">{summary.count ?? 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Avg per Activity</CardDescription>
-                        <CardTitle className="text-2xl">{summary.avgPoints.toFixed(1)}</CardTitle>
+                        <CardTitle className="text-2xl">{(summary.avgPoints ?? 0).toFixed(1)}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -281,7 +281,7 @@ export default function DynamicReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={summary.byStatus}
+                                    data={summary.byStatus || []}
                                     dataKey="count"
                                     nameKey="status"
                                     cx="50%"
@@ -290,7 +290,7 @@ export default function DynamicReportsPage() {
                                     outerRadius={80}
                                     paddingAngle={5}
                                 >
-                                    {summary.byStatus.map((entry, index) => (
+                                    {(summary.byStatus || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={getStatusColor(entry.status)} />
                                     ))}
                                 </Pie>
@@ -310,13 +310,13 @@ export default function DynamicReportsPage() {
                     </CardHeader>
                     <CardContent className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={summary.byType}>
+                            <BarChart data={summary.byType || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                                 <Tooltip cursor={{fill: 'transparent'}} />
                                 <Bar dataKey="points" radius={[4, 4, 0, 0]}>
-                                    {summary.byType.map((entry, index) => (
+                                    {(summary.byType || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.type === 'positive' ? '#10b981' : '#ef4444'} />
                                     ))}
                                 </Bar>
@@ -343,7 +343,7 @@ export default function DynamicReportsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y">
-                                {reportData.data.slice(0, 10).map((row, i) => (
+                                {(reportData.data || []).slice(0, 10).map((row, i) => (
                                     <tr key={i} className="hover:bg-muted/20 transition-colors">
                                         <td className="p-3 font-medium">{row.title}</td>
                                         <td className="p-3">
@@ -360,7 +360,7 @@ export default function DynamicReportsPage() {
                             </tbody>
                         </table>
                     </div>
-                    {reportData.data.length > 10 && (
+                    {(reportData.data || []).length > 10 && (
                         <div className="p-3 text-center border-t text-xs text-muted-foreground">
                             Previewing first 10 of {reportData.data.length} records. Download PDF for full list.
                         </div>
