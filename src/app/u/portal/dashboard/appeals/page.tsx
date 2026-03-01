@@ -377,7 +377,7 @@ export default function AppealsPage() {
                                 <p className="text-muted-foreground italic">"{selectedAppeal.appeal.reason}"</p>
                                 <p className="text-xs text-muted-foreground">Submitted on: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
                             </CardContent>
-
+                        </Card>
                     </div>
                       <div className="mt-6 border-t pt-6">
                         <h4 className="font-semibold mb-4">Appeal Timeline</h4>
