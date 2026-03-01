@@ -3,6 +3,7 @@ import { initializeApp, getApps, getApp, type FirebaseOptions } from "firebase/a
 import { getAnalytics } from "firebase/analytics";
 import { getMessaging } from "firebase/messaging";
 import { getPerformance } from "firebase/performance";
+import { getRemoteConfig, type RemoteConfig } from "firebase/remote-config";
 
 const firebaseConfig: FirebaseOptions = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -16,12 +17,19 @@ const firebaseConfig: FirebaseOptions = {
 
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
+let remoteConfig: RemoteConfig | null = null;
+
 if (typeof window !== "undefined") {
     try {
         getPerformance(app);
         getAnalytics(app);
+        
+        // Initialize Remote Config
+        remoteConfig = getRemoteConfig(app);
+        remoteConfig.settings.minimumFetchIntervalMillis = 3600000; // 1 hour default
+        
     } catch (err) {
-        console.error("Failed to initialize Firebase Performance or Analytics", err);
+        console.error("Failed to initialize Firebase Performance, Analytics, or Remote Config", err);
     }
 }
 
@@ -30,11 +38,11 @@ const messaging = () => {
         try {
             return getMessaging(app);
         } catch (err) {
-            console.error("Failed to initialize Firebase Messaging", err);
+            // Silently fail if not supported (e.g. non-secure context or incompatible browser)
             return null;
         }
     }
     return null;
 }
 
-export { app, messaging };
+export { app, messaging, remoteConfig };
