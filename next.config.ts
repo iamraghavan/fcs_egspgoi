@@ -13,6 +13,14 @@ const nextConfig: NextConfig = {
       },
     ]
   },
+  async rewrites() {
+    return [
+      {
+        source: '/api/v1/:path*',
+        destination: 'https://faculty-credit-system.vercel.app/api/v1/:path*',
+      },
+    ]
+  },
   typescript: {
     ignoreBuildErrors: true,
   },

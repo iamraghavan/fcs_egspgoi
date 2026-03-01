@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -206,7 +207,7 @@ export default function DynamicReportsPage() {
     return stats;
   }, [reportData]);
 
-  const handleDownload = (format: 'pdf' | 'excel') => {
+  const handleDownload = (format: 'pdf' | 'excel' | 'html') => {
     const params = new URLSearchParams({
       level,
       ...(levelId && { id: levelId }),
@@ -217,8 +218,9 @@ export default function DynamicReportsPage() {
       ...(endDate && { endDate }),
       format
     });
-    window.open(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}&token=${token}`, '_blank');
-    toast({ title: "Download Started", description: `Your ${format.toUpperCase()} report is being generated.` });
+    // Use relative path to hit the proxy defined in next.config.ts
+    window.open(`/api/v1/reports/download?${params.toString()}&token=${token}`, '_blank');
+    toast({ title: "Report Generation", description: `Your ${format.toUpperCase()} report is being prepared.` });
   };
 
   const generateShareLink = async () => {
@@ -236,7 +238,7 @@ export default function DynamicReportsPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}`, {
+      const res = await fetch(`/api/v1/reports/download?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();
@@ -495,6 +497,7 @@ export default function DynamicReportsPage() {
                 <SelectContent>
                     <SelectItem value="pdf">Portable PDF</SelectItem>
                     <SelectItem value="excel">Excel Spreadsheet</SelectItem>
+                    <SelectItem value="html">Interactive Web (HTML)</SelectItem>
                 </SelectContent>
             </Select>
         </div>
