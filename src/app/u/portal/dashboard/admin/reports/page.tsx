@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -50,7 +49,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { format, parseISO } from "date-fns"
 
-const API_BASE_URL = ''; // Empty string to use relative paths and trigger proxy
+const API_BASE_URL = ''; // Relative path for proxy
 
 type Faculty = {
   _id: string;
@@ -97,6 +96,7 @@ export default function DynamicReportsPage() {
   const [facultyQuery, setFacultyQuery] = useState("");
   const [facultyResults, setFacultyList] = useState<Faculty[]>([]);
   const [showFacultySuggestions, setShowFacultySuggestions] = useState(false);
+  const [isSearchingFaculty, setIsSearchingFaculty] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   // Data State
@@ -108,26 +108,32 @@ export default function DynamicReportsPage() {
   useEffect(() => {
     if (level !== 'faculty' || facultyQuery.length < 2) {
         setFacultyList([]);
+        setIsSearchingFaculty(false);
         return;
     }
+    
+    setIsSearchingFaculty(true);
     const timer = setTimeout(async () => {
         try {
             const res = await fetch(`${API_BASE_URL}/api/v1/users?search=${encodeURIComponent(facultyQuery)}&limit=5`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
-            if (data.success) setFacultyList(data.items);
+            if (data.success) {
+                setFacultyList(data.items);
+            }
         } catch (e) {
             console.error("Faculty fetch failed", e);
+        } finally {
+            setIsSearchingFaculty(false);
         }
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [facultyQuery, level, token]);
 
   const fetchReportPreview = useCallback(async () => {
     if (!token) return;
     if ((level === 'department' || level === 'faculty') && !levelId) {
-        // Don't auto-fetch if ID is missing for these levels
         setIsLoading(false);
         return;
     }
@@ -186,15 +192,15 @@ export default function DynamicReportsPage() {
     const statusCounts: Record<string, number> = {};
 
     data.forEach(item => {
-        const pts = Math.abs(Number(item.points) || 0); // Handle negative points as absolute for sum contribution if needed, but usually we just sum them
-        stats.totalPoints += Number(item.points) || 0;
+        const pts = Number(item.points) || 0;
+        stats.totalPoints += pts;
         
         const s = item.status || 'unknown';
         statusCounts[s] = (statusCounts[s] || 0) + 1;
 
         const t = item.type === 'positive' ? 'positive' : 'negative';
         const typeObj = stats.byType.find(obj => obj.type === t);
-        if (typeObj) typeObj.points += Math.abs(Number(item.points) || 0);
+        if (typeObj) typeObj.points += Math.abs(pts);
     });
 
     stats.avgPoints = stats.count > 0 ? stats.totalPoints / stats.count : 0;
@@ -303,19 +309,19 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase text-primary">Total Points</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.totalPoints || 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary?.totalPoints || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Total Activities</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.count || 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary?.count || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Avg per Activity</CardDescription>
-                        <CardTitle className="text-2xl">{(computedSummary.avgPoints || 0).toFixed(1)}</CardTitle>
+                        <CardTitle className="text-2xl">{(computedSummary?.avgPoints || 0).toFixed(1)}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -333,7 +339,7 @@ export default function DynamicReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={computedSummary.byStatus || []}
+                                    data={computedSummary?.byStatus || []}
                                     dataKey="count"
                                     nameKey="status"
                                     cx="50%"
@@ -342,7 +348,7 @@ export default function DynamicReportsPage() {
                                     outerRadius={80}
                                     paddingAngle={5}
                                 >
-                                    {(computedSummary.byStatus || []).map((entry, index) => (
+                                    {(computedSummary?.byStatus || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={getStatusColor(entry.status)} />
                                     ))}
                                 </Pie>
@@ -362,13 +368,13 @@ export default function DynamicReportsPage() {
                     </CardHeader>
                     <CardContent className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={computedSummary.byType || []}>
+                            <BarChart data={computedSummary?.byType || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                                 <Tooltip cursor={{fill: 'transparent'}} />
                                 <Bar dataKey="points" radius={[4, 4, 0, 0]}>
-                                    {(computedSummary.byType || []).map((entry, index) => (
+                                    {(computedSummary?.byType || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.type === 'positive' ? '#10b981' : '#ef4444'} />
                                     ))}
                                 </Bar>
@@ -472,6 +478,16 @@ export default function DynamicReportsPage() {
     );
   };
 
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
+        setShowFacultySuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -553,30 +569,41 @@ export default function DynamicReportsPage() {
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input 
-                                placeholder="Name or ID..." 
+                                placeholder="Type to search faculty..." 
                                 className="pl-9 bg-muted/30" 
                                 value={facultyQuery}
                                 onChange={(e) => { setFacultyQuery(e.target.value); setShowFacultySuggestions(true); }}
                                 onFocus={() => setShowFacultySuggestions(true)}
                             />
+                            {isSearchingFaculty && (
+                                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                            )}
                         </div>
-                        {showFacultySuggestions && facultyResults.length > 0 && (
+                        {showFacultySuggestions && facultyQuery.length >= 2 && (
                             <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg overflow-hidden">
-                                {facultyResults.map(f => (
-                                    <button
-                                        key={f._id}
-                                        type="button"
-                                        className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-0"
-                                        onClick={() => {
-                                            setLevelId(f._id);
-                                            setFacultyQuery(f.name);
-                                            setShowFacultySuggestions(false);
-                                        }}
-                                    >
-                                        <p className="text-sm font-semibold">{f.name}</p>
-                                        <p className="text-xs text-muted-foreground">{f.facultyID} &middot; {f.department}</p>
-                                    </button>
-                                ))}
+                                {facultyResults.length > 0 ? (
+                                    facultyResults.map(f => (
+                                        <button
+                                            key={f._id}
+                                            type="button"
+                                            className="w-full text-left p-3 hover:bg-muted transition-colors border-b last:border-0"
+                                            onClick={() => {
+                                                setLevelId(f._id);
+                                                setFacultyQuery(f.name);
+                                                setShowFacultySuggestions(false);
+                                            }}
+                                        >
+                                            <p className="text-sm font-semibold">{f.name}</p>
+                                            <p className="text-xs text-muted-foreground">{f.facultyID} &middot; {f.department}</p>
+                                        </button>
+                                    ))
+                                ) : !isSearchingFaculty ? (
+                                    <div className="p-4 text-center text-xs text-muted-foreground">
+                                        No faculty found matching "{facultyQuery}"
+                                    </div>
+                                ) : null}
                             </div>
                         )}
                     </div>
