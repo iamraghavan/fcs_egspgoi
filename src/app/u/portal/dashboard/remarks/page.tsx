@@ -86,9 +86,10 @@ export default function NegativeRemarksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Fetch appeal window dynamically from Firebase Remote Config
-  // Default to 7 if not set or during loading
+  // Fetch configurations dynamically from Firebase Remote Config
   const remoteAppealWindow = useRemoteConfig('appeal_window_days')?.asNumber();
+  const amnestyActive = useRemoteConfig('amnesty_active')?.asBoolean() || false;
+  
   const APPEAL_WINDOW_DAYS = remoteAppealWindow || 7;
 
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
@@ -260,6 +261,7 @@ export default function NegativeRemarksPage() {
   };
 
   const isWithinAppealWindow = (createdAt: string) => {
+    if (amnestyActive) return true; // All remarks appealable during Amnesty Mode
     const createdDate = new Date(createdAt);
     const diffTime = Math.abs(currentTime.getTime() - createdDate.getTime());
     const diffDays = diffTime / (1000 * 60 * 60 * 24);
@@ -315,10 +317,23 @@ export default function NegativeRemarksPage() {
         <p className="mt-1 text-muted-foreground">Review and manage negative credits.</p>
       </header>
         
+      {amnestyActive && (
+        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3 items-center">
+            <Info className="h-5 w-5 text-primary" />
+            <p className="text-sm font-medium text-primary">Special Window Active: You can currently appeal any remark regardless of its date.</p>
+        </div>
+      )}
+
       <Card>
         <CardHeader>
             <CardTitle>Remarks History</CardTitle>
-            <CardDescription>A log of all negative remarks issued to you. Appeals must be filed within {APPEAL_WINDOW_DAYS} days of issuance.</CardDescription>
+            <CardDescription>
+                A log of all negative remarks issued to you. 
+                {amnestyActive 
+                    ? " Amnesty mode is active: all remarks are currently appealable." 
+                    : ` Appeals must be filed within ${APPEAL_WINDOW_DAYS} days of issuance.`
+                }
+            </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="overflow-x-auto border rounded-lg">

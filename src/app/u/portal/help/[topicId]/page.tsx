@@ -145,7 +145,7 @@ const helpContent = {
                     <li>The date the remark was issued.</li>
                     <li>Any notes or rationale provided by the administrator.</li>
                 </ul>
-                 <p className="pt-4">It is your responsibility to review these remarks promptly. If you disagree with a remark, you have **7 days** to file an appeal.</p>
+                 <p className="pt-4">It is your responsibility to review these remarks promptly. If you disagree with a remark, you have a limited window (typically **7 days**) to file an appeal.</p>
             </CardContent>
         </Card>
       </div>
@@ -160,7 +160,7 @@ const helpContent = {
              <Alert>
               <Info className="h-4 w-4" />
               <AlertTitle>Right to Appeal</AlertTitle>
-              <AlertDescription>If you believe a negative remark was issued in error or is unjust, you have the right to appeal the decision. You must file your appeal within **7 days** of the remark being issued. You may only appeal a specific remark **once**.</AlertDescription>
+              <AlertDescription>If you believe a negative remark was issued in error or is unjust, you have the right to appeal the decision. You must file your appeal within the standard timeframe (typically **7 days**, unless an extension is active). You may only appeal a specific remark **once**.</AlertDescription>
             </Alert>
              <h3 className="text-2xl font-bold pt-4">How to File an Appeal</h3>
              <ol className="relative border-l border-gray-200 dark:border-gray-700 space-y-8">                  
@@ -168,14 +168,14 @@ const helpContent = {
                     <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">1</span>
                     <div className="p-4 bg-card border rounded-lg">
                         <h4 className="font-semibold">Locate the Remark</h4>
-                        <p className="text-muted-foreground">Navigate to the "Negative Remarks" page and find the specific remark you wish to dispute. Ensure the 7-day window has not expired.</p>
+                        <p className="text-muted-foreground">Navigate to the "Negative Remarks" page and find the specific remark you wish to dispute. Ensure the appeal window has not expired (check the badge next to the title).</p>
                     </div>
                 </li>
                 <li className="ml-6">
                     <span className="absolute flex items-center justify-center w-6 h-6 bg-blue-100 rounded-full -left-3 ring-8 ring-white dark:ring-gray-900 dark:bg-blue-900">2</span>
                      <div className="p-4 bg-card border rounded-lg">
                         <h4 className="font-semibold">Initiate the Appeal</h4>
-                        <p className="text-muted-foreground">Click the "Appeal" button next to the remark. This will open the appeal submission form. If the button is not visible, the 7-day window has passed or you have already appealed.</p>
+                        <p className="text-muted-foreground">Click the "Appeal" button next to the remark. This will open the appeal submission form. If the button is not visible, the window has passed or you have already appealed.</p>
                     </div>
                 </li>
                 <li className="ml-6">
@@ -191,7 +191,7 @@ const helpContent = {
                         <Alert variant="destructive">
                             <AlertTriangle className="h-4 w-4" />
                             <AlertTitle className="font-semibold">Upload New Proof (Mandatory)</AlertTitle>
-                            <AlertDescription>You must upload a new proof document to support your appeal. This could be a corrected document, a letter of explanation, or any other relevant evidence. Appeals without proof will not be considered.</AlertDescription>
+                            <AlertDescription>You must upload a supporting document to justify your appeal. This could be a corrected document, a letter of explanation, or any other relevant evidence.</AlertDescription>
                         </Alert>
                     </div>
                 </li>
