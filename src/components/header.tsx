@@ -6,10 +6,9 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
 import { Button } from "./ui/button";
 import Link from 'next/link';
-import { Input } from './ui/input';
-import { Search } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useToast } from '@/hooks/use-toast';
+import { GlobalSearch } from './global-search';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
@@ -97,13 +96,7 @@ export function Header({ user }: { user: User }) {
          </Link>
       </div>
       <div className="flex w-full items-center justify-center">
-         <div className="hidden md:flex relative w-full max-w-sm items-center">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search..."
-              className="w-full bg-background/20 text-sidebar-foreground placeholder:text-muted-foreground/80 pl-10 border-sidebar-border"
-            />
-        </div>
+         <GlobalSearch />
       </div>
       <div className="flex items-center justify-end gap-2">
           {(user.role === 'faculty') && (
@@ -137,5 +130,3 @@ export function Header({ user }: { user: User }) {
     </>
   );
 }
-
-    
