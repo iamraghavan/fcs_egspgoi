@@ -22,7 +22,7 @@ import {
   SelectLabel,
 } from "@/components/ui/select"
 import { colleges } from "@/lib/colleges";
-import { Edit, Eye, ShieldCheck, User, Mail, School, Building2 } from "lucide-react";
+import { Edit, Eye, ShieldCheck, User, Mail, School, Building2, Phone, MessageSquare, Briefcase, UserCircle, Camera } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +40,7 @@ import { gsap } from "gsap";
 import { Label } from "@/components/ui/label";
 import { WhatsAppShareButton } from "@/components/whatsapp-share-button";
 import { Switch } from "@/components/ui/switch";
+import { FileUpload } from "@/components/file-upload";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -53,6 +54,12 @@ type FacultyAccount = {
   currentCredit: number;
   isActive: boolean;
   role: 'faculty' | 'admin' | 'oa';
+  prefix?: string;
+  designation?: string;
+  phone?: string;
+  whatsappNumber?: string;
+  profileImage?: string;
+  facultyID?: string;
 };
 
 type Departments = {
@@ -77,12 +84,17 @@ export default function FacultyAccountsPage() {
   // Edit state
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingFaculty, setEditingFaculty] = useState<FacultyAccount | null>(null);
+  const [editPrefix, setEditPrefix] = useState("");
   const [editName, setEditName] = useState("");
   const [editEmail, setEditEmail] = useState("");
+  const [editPhone, setEditPhone] = useState("");
+  const [editWhatsapp, setEditWhatsapp] = useState("");
+  const [editDesignation, setEditDesignation] = useState("");
   const [editCollege, setEditCollege] = useState("");
   const [editDepartment, setEditDepartment] = useState("");
   const [editIsActive, setEditIsActive] = useState(true);
   const [editRole, setEditRole] = useState<'faculty' | 'admin' | 'oa'>('faculty');
+  const [editProfileImage, setEditProfileImage] = useState<File | null>(null);
   const [editDepartments, setEditDepartments] = useState<Departments>({});
   
   // Table state
@@ -243,12 +255,17 @@ export default function FacultyAccountsPage() {
 
   const handleEditClick = (account: FacultyAccount) => {
     setEditingFaculty(account);
+    setEditPrefix(account.prefix || "");
     setEditName(account.name);
     setEditEmail(account.email);
+    setEditPhone(account.phone || "");
+    setEditWhatsapp(account.whatsappNumber || "");
+    setEditDesignation(account.designation || "");
     setEditCollege(account.college || "");
     setEditDepartment(account.department || "");
     setEditIsActive(account.isActive);
     setEditRole(account.role);
+    setEditProfileImage(null);
     setIsEditDialogOpen(true);
   };
 
@@ -258,21 +275,30 @@ export default function FacultyAccountsPage() {
     setIsLoading(true);
 
     const adminToken = localStorage.getItem("token");
+    const formData = new FormData();
+    
+    formData.append('prefix', editPrefix);
+    formData.append('name', editName);
+    formData.append('email', editEmail);
+    formData.append('phone', editPhone);
+    formData.append('whatsappNumber', editWhatsapp);
+    formData.append('designation', editDesignation);
+    formData.append('college', editCollege);
+    formData.append('department', editDepartment);
+    formData.append('isActive', String(editIsActive));
+    formData.append('role', editRole);
+    
+    if (editProfileImage) {
+        formData.append('profileImage', editProfileImage);
+    }
+
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/users/${editingFaculty._id}`, {
             method: 'PUT',
             headers: {
-                'Authorization': `Bearer ${adminToken}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${adminToken}`
             },
-            body: JSON.stringify({
-                name: editName,
-                email: editEmail,
-                college: editCollege,
-                department: editDepartment,
-                isActive: editIsActive,
-                role: editRole
-            })
+            body: formData
         });
 
         const data = await response.json();
@@ -342,6 +368,14 @@ export default function FacultyAccountsPage() {
     setPage(1);
   };
 
+  const getAvatarUrl = (user: FacultyAccount) => {
+    if (user.profileImage) {
+        if (user.profileImage.startsWith('http')) return user.profileImage;
+        return `${API_BASE_URL}${user.profileImage.startsWith('/') ? '' : '/'}${user.profileImage}`;
+    }
+    return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=random`;
+  };
+
   return (
     <div className="flex-1 p-8">
       <header className="mb-8">
@@ -408,7 +442,7 @@ export default function FacultyAccountsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
+                <TableHead>Faculty</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>College</TableHead>
                 <TableHead className="text-right">Credits</TableHead>
@@ -426,8 +460,17 @@ export default function FacultyAccountsPage() {
               ) : paginatedItems.length > 0 ? (
                 paginatedItems.map((account) => (
                   <TableRow key={account._id}>
-                    <TableCell className="font-medium text-foreground">
-                      {account.name}
+                    <TableCell>
+                        <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8">
+                                <AvatarImage src={getAvatarUrl(account)} />
+                                <AvatarFallback>{account.name.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex flex-col">
+                                <span className="font-medium text-foreground">{account.prefix ? `${account.prefix} ` : ''}{account.name}</span>
+                                <span className="text-xs text-muted-foreground">{account.facultyID}</span>
+                            </div>
+                        </div>
                     </TableCell>
                     <TableCell>{account.email}</TableCell>
                     <TableCell>{account.college || 'N/A'}</TableCell>
@@ -463,27 +506,41 @@ export default function FacultyAccountsPage() {
                                 <div className="space-y-4">
                                     <div className="flex items-center space-x-4">
                                         <Avatar className="h-16 w-16">
-                                            <AvatarImage src={`https://ui-avatars.com/api/?name=${encodeURIComponent(selectedFaculty.name)}&background=random`} />
+                                            <AvatarImage src={getAvatarUrl(selectedFaculty)} />
                                             <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="text-lg font-semibold">{selectedFaculty.name}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedFaculty.department || 'N/A'} - {selectedFaculty.college || 'N/A'}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedFaculty.email}</p>
+                                            <p className="text-lg font-semibold">{selectedFaculty.prefix ? `${selectedFaculty.prefix} ` : ''}{selectedFaculty.name}</p>
+                                            <p className="text-sm text-muted-foreground">{selectedFaculty.designation || 'Faculty'}</p>
+                                            <p className="text-xs text-muted-foreground">{selectedFaculty.department || 'N/A'} - {selectedFaculty.college || 'N/A'}</p>
                                         </div>
                                     </div>
-                                    <div className="space-y-2 text-sm pt-2">
-                                        <div>
-                                            <span className="text-muted-foreground font-medium">Current Credits: </span>
-                                            <span className="font-semibold text-primary">{selectedFaculty.currentCredit ?? 0}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground font-medium">Status: </span>
-                                            <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-muted-foreground font-medium">Role: </span>
-                                            <span className="font-medium capitalize">{selectedFaculty.role}</span>
+                                    <div className="space-y-2 text-sm pt-2 border-t">
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">Faculty ID</span>
+                                                <span>{selectedFaculty.facultyID}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">Current Credits</span>
+                                                <span className="font-semibold text-primary">{selectedFaculty.currentCredit ?? 0}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">Email</span>
+                                                <span>{selectedFaculty.email}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">Status</span>
+                                                <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">Phone</span>
+                                                <span>{selectedFaculty.phone || 'Not provided'}</span>
+                                            </div>
+                                            <div>
+                                                <span className="text-muted-foreground font-medium block">WhatsApp</span>
+                                                <span>{selectedFaculty.whatsappNumber || 'Not provided'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -533,51 +590,110 @@ export default function FacultyAccountsPage() {
 
       {/* Edit Faculty Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-                <DialogTitle>Edit Faculty Account</DialogTitle>
-                <DialogDescription>Update the profile details for this account.</DialogDescription>
+                <DialogTitle>Edit Faculty Profile</DialogTitle>
+                <DialogDescription>Update the professional profile and account settings for this user.</DialogDescription>
             </DialogHeader>
-            <form onSubmit={handleUpdateFaculty} className="space-y-4 pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-name">Full Name</Label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="pl-10" required />
+            <form onSubmit={handleUpdateFaculty} className="space-y-6 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-3 gap-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-prefix">Prefix</Label>
+                                <Select value={editPrefix} onValueChange={setEditPrefix}>
+                                    <SelectTrigger id="edit-prefix">
+                                        <SelectValue placeholder="Prefix" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="Mr.">Mr.</SelectItem>
+                                        <SelectItem value="Ms.">Ms.</SelectItem>
+                                        <SelectItem value="Dr.">Dr.</SelectItem>
+                                        <SelectItem value="Prof.">Prof.</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2 col-span-2">
+                                <Label htmlFor="edit-name">Full Name</Label>
+                                <div className="relative">
+                                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="edit-name" value={editName} onChange={(e) => setEditName(e.target.value)} className="pl-10" required />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-designation">Designation</Label>
+                            <div className="relative">
+                                <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input id="edit-designation" value={editDesignation} onChange={(e) => setEditDesignation(e.target.value)} placeholder="e.g. Assistant Professor" className="pl-10" />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <Label htmlFor="edit-email">Official Email</Label>
+                            <div className="relative">
+                                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <Input id="edit-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="pl-10" required />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-phone">Phone Number</Label>
+                                <div className="relative">
+                                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="edit-phone" value={editPhone} onChange={(e) => setEditPhone(e.target.value)} className="pl-10" />
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-whatsapp">WhatsApp Number</Label>
+                                <div className="relative">
+                                    <MessageSquare className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                    <Input id="edit-whatsapp" value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)} className="pl-10" />
+                                </div>
+                            </div>
                         </div>
                     </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-email">Email Address</Label>
-                        <div className="relative">
-                            <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                            <Input id="edit-email" type="email" value={editEmail} onChange={(e) => setEditEmail(e.target.value)} className="pl-10" required />
+
+                    <div className="space-y-4">
+                        <div className="space-y-2">
+                            <Label>Profile Image</Label>
+                            <div className="flex items-center gap-4 mb-2">
+                                <Avatar className="h-16 w-16 border">
+                                    <AvatarImage src={editProfileImage ? URL.createObjectURL(editProfileImage) : (editingFaculty ? getAvatarUrl(editingFaculty) : '')} />
+                                    <AvatarFallback><Camera className="h-6 w-6 text-muted-foreground" /></AvatarFallback>
+                                </Avatar>
+                                <div className="flex-1">
+                                    <FileUpload 
+                                        onFileSelect={setEditProfileImage} 
+                                        accept="image/*" 
+                                        description="JPG, PNG up to 2MB"
+                                    />
+                                </div>
+                            </div>
                         </div>
-                    </div>
-                </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="edit-role">Role</Label>
-                        <Select value={editRole} onValueChange={(v: any) => setEditRole(v)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select Role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="faculty">Faculty</SelectItem>
-                                <SelectItem value="admin">Administrator</SelectItem>
-                                <SelectItem value="oa">Office Assistant</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="flex items-center space-x-2 pt-8">
-                        <Switch id="edit-status" checked={editIsActive} onCheckedChange={setEditIsActive} />
-                        <Label htmlFor="edit-status">{editIsActive ? "Active Account" : "Inactive Account"}</Label>
-                    </div>
-                </div>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="space-y-2">
+                                <Label htmlFor="edit-role">System Role</Label>
+                                <Select value={editRole} onValueChange={(v: any) => setEditRole(v)}>
+                                    <SelectTrigger id="edit-role">
+                                        <SelectValue placeholder="Select Role" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="faculty">Faculty</SelectItem>
+                                        <SelectItem value="admin">Administrator</SelectItem>
+                                        <SelectItem value="oa">Office Assistant</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="flex items-center space-x-2 pt-8">
+                                <Switch id="edit-status" checked={editIsActive} onCheckedChange={setEditIsActive} />
+                                <Label htmlFor="edit-status">{editIsActive ? "Active" : "Inactive"}</Label>
+                            </div>
+                        </div>
 
-                {editRole === 'faculty' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <Label htmlFor="edit-college">College</Label>
                             <div className="relative">
@@ -616,14 +732,14 @@ export default function FacultyAccountsPage() {
                             </div>
                         </div>
                     </div>
-                )}
+                </div>
 
-                <DialogFooter className="pt-4">
+                <DialogFooter className="pt-4 border-t">
                     <DialogClose asChild>
                         <Button type="button" variant="secondary">Cancel</Button>
                     </DialogClose>
                     <Button type="submit" disabled={isLoading}>
-                        {isLoading ? "Saving Changes..." : "Save Changes"}
+                        {isLoading ? "Saving Profile..." : "Update Profile"}
                     </Button>
                 </DialogFooter>
             </form>
@@ -634,7 +750,7 @@ export default function FacultyAccountsPage() {
         <h3 className="text-2xl font-bold text-foreground mb-6">
           Create New Account
         </h3>
-        <div className="bg-card p-6 rounded-xl shadow-sm max-w-2xl">
+        <div className="bg-card p-6 rounded-xl shadow-sm max-w-2xl border">
           <form className="space-y-6" onSubmit={handleCreateAccount}>
              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
