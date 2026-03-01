@@ -155,7 +155,8 @@ export default function AppealsPage() {
   }, [facultyId, filter]);
   
   const handleAppealSubmit = async () => {
-    if (!selectedAppeal || !selectedAppeal.appeal?._id || !appealReason.trim()) {
+    // Check for the Credit document ID (selectedAppeal._id)
+    if (!selectedAppeal || !selectedAppeal._id || !appealReason.trim()) {
         showAlert("Incomplete Form", "Cannot submit appeal: ID is missing or reason is empty.");
         return;
     }
@@ -167,7 +168,8 @@ export default function AppealsPage() {
       formData.append("proof", appealProof);
     }
     
-    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal.appeal._id}`;
+    // Use the Credit document ID in the URL as per backend requirement
+    const url = `${API_BASE_URL}/api/v1/credits/appeals/${selectedAppeal._id}`;
     const method = 'PUT';
 
     try {
@@ -197,9 +199,9 @@ export default function AppealsPage() {
     }
   };
 
-  const handleWithdrawAppeal = async (appealId: string) => {
+  const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${appealId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -375,7 +377,6 @@ export default function AppealsPage() {
                                 <p className="text-muted-foreground italic">"{selectedAppeal.appeal.reason}"</p>
                                 <p className="text-xs text-muted-foreground">Submitted on: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
                             </CardContent>
-                        </Card>
 
                     </div>
                       <div className="mt-6 border-t pt-6">
@@ -436,7 +437,7 @@ export default function AppealsPage() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal.appeal._id)} className="bg-destructive hover:bg-destructive/90">
+                                            <AlertDialogAction onClick={() => handleWithdrawAppeal(selectedAppeal._id)} className="bg-destructive hover:bg-destructive/90">
                                                 Confirm & Withdraw
                                             </AlertDialogAction>
                                         </AlertDialogFooter>

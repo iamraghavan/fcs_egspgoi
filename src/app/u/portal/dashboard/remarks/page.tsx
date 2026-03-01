@@ -185,8 +185,9 @@ export default function NegativeRemarksPage() {
       formData.append("proof", appealProof);
     }
     
+    // Backend expects the Credit ID in the URL for updating or creating an appeal
     const url = isEdit
-        ? `${API_BASE_URL}/api/v1/credits/appeals/${selectedRemark.appeal?._id}`
+        ? `${API_BASE_URL}/api/v1/credits/appeals/${selectedRemark._id}`
         : `${API_BASE_URL}/api/v1/credits/credits/${selectedRemark._id}/appeal`;
     const method = isEdit ? 'PUT' : 'POST';
 
@@ -219,9 +220,9 @@ export default function NegativeRemarksPage() {
     }
   };
 
-  const handleWithdrawAppeal = async (appealId: string) => {
+  const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${appealId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -399,7 +400,7 @@ export default function NegativeRemarksPage() {
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleWithdrawAppeal(remark.appeal!._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
+                                                    <AlertDialogAction onClick={() => handleWithdrawAppeal(remark._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                           </AlertDialog>
