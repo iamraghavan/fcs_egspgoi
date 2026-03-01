@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
 import {
@@ -36,11 +36,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { useAlert } from "@/context/alert-context";
 import { FileUpload } from "@/components/file-upload";
-import { Edit, Trash2 } from "lucide-react";
+import { Edit, Trash2, Search, Filter } from "lucide-react";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -50,14 +51,15 @@ type NegativeCredit = {
   title: string;
   createdAt: string;
   points: number;
-  notes: string;
+  notes?: string;
   proofUrl?: string;
+  academicYear?: string;
   faculty: {
     _id: string;
     name: string;
-  };
+  } | string;
   appeal?: {
-    _id: string;
+    _id?: string;
     by: string;
     reason: string;
     createdAt: string;
@@ -70,6 +72,28 @@ type Appeal = NegativeCredit & {
   appeal: NonNullable<NegativeCredit['appeal']>;
 };
 
+const getCurrentAcademicYear = () => {
+    const today = new Date();
+    const currentMonth = today.getMonth();
+    const currentYear = today.getFullYear();
+    if (currentMonth >= 5) {
+      return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
+    }
+    return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+};
+
+const generateYearOptions = () => {
+    const currentYearString = getCurrentAcademicYear();
+    const [startCurrentYear] = currentYearString.split('-').map(Number);
+    const years = [];
+    for (let i = 0; i < 5; i++) {
+        const startYear = startCurrentYear - i;
+        const endYear = (startYear + 1).toString().slice(-2);
+        years.push(`${startYear}-${endYear}`);
+    }
+    return years;
+};
+
 export default function AppealsPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
@@ -78,7 +102,11 @@ export default function AppealsPage() {
   const [appeals, setAppeals] = useState<Appeal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAppeal, setSelectedAppeal] = useState<Appeal | null>(null);
-  const [filter, setFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  
+  // Filtering state
+  const [statusFilter, setStatusFilter] = useState<'all' | 'pending' | 'accepted' | 'rejected'>('all');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [yearFilter, setYearFilter] = useState("all");
   
   // State for editing appeals
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -88,6 +116,7 @@ export default function AppealsPage() {
 
   const facultyId = searchParams.get('uid');
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+  const yearOptions = generateYearOptions();
 
   const fetchAppeals = async () => {
       setIsLoading(true);
@@ -103,10 +132,7 @@ export default function AppealsPage() {
             sort: '-appeal.createdAt',
         });
         
-        let url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}/negative`;
-        if (filter !== 'all') {
-            params.append('appealStatus', filter);
-        }
+        const url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}/negative`;
 
         const response = await fetch(`${url}?${params.toString()}`, {
           headers: { "Authorization": `Bearer ${token}` }
@@ -125,8 +151,9 @@ export default function AppealsPage() {
         const resData = await response.json();
 
         if (resData.success) {
+            // Relaxed filter: just check if credit.appeal exists (backend might not send _id inside the appeal object)
             const fetchedAppeals = resData.items.filter((credit: NegativeCredit): credit is Appeal => 
-              !!credit.appeal && !!credit.appeal._id
+              !!credit.appeal && credit.status === 'appealed'
             );
             
             setAppeals(fetchedAppeals);
@@ -152,7 +179,20 @@ export default function AppealsPage() {
     if (facultyId) {
         fetchAppeals();
     }
-  }, [facultyId, filter]);
+  }, [facultyId]);
+
+  const filteredAppeals = useMemo(() => {
+    return appeals.filter(item => {
+      const matchesStatus = statusFilter === 'all' || item.appeal.status === statusFilter;
+      const matchesYear = yearFilter === 'all' || item.academicYear === yearFilter;
+      const term = searchTerm.toLowerCase();
+      const matchesSearch = item.title.toLowerCase().includes(term) || 
+                           item.appeal.reason.toLowerCase().includes(term) ||
+                           (item.notes && item.notes.toLowerCase().includes(term));
+      
+      return matchesStatus && matchesYear && matchesSearch;
+    });
+  }, [appeals, statusFilter, yearFilter, searchTerm]);
   
   const handleAppealSubmit = async () => {
     if (!selectedAppeal || !selectedAppeal._id || !appealReason.trim()) {
@@ -167,13 +207,11 @@ export default function AppealsPage() {
       formData.append("proof", appealProof);
     }
     
-    // Updated URL to include nested credits segment
     const url = `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedAppeal._id}`;
-    const method = 'PUT';
 
     try {
         const response = await fetch(url, {
-            method: method,
+            method: 'PUT',
             headers: { "Authorization": `Bearer ${token}` },
             body: formData,
         });
@@ -200,7 +238,6 @@ export default function AppealsPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        // Updated URL to include nested credits segment
         const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
@@ -236,11 +273,10 @@ export default function AppealsPage() {
   
   const getTimelineIcon = (status: 'submitted' | Appeal['appeal']['status'], currentStatus: Appeal['appeal']['status']) => {
     const statusOrder = ['submitted', 'pending', 'accepted', 'rejected'];
-    const currentIndex = statusOrder.indexOf(currentStatus);
+    const currentIndex = statusOrder.indexOf(currentStatus || 'pending');
     const itemIndex = statusOrder.indexOf(status);
 
     const isPast = itemIndex < currentIndex && currentStatus !== 'rejected';
-    
     const isCurrent = status === currentStatus;
 
     if (isPast || (status === 'submitted' && currentStatus !== 'submitted')) {
@@ -298,19 +334,51 @@ export default function AppealsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-2 border-b pb-2">
-            <Button variant={filter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('all')}>All</Button>
-            <Button variant={filter === 'pending' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('pending')}>Pending</Button>
-            <Button variant={filter === 'accepted' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('accepted')}>Accepted</Button>
-            <Button variant={filter === 'rejected' ? 'secondary' : 'ghost'} size="sm" onClick={() => setFilter('rejected')}>Rejected</Button>
+        <div className="flex flex-col sm:flex-row items-center gap-4 border-b pb-4">
+            <div className="relative flex-grow w-full sm:w-auto">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                    placeholder="Search appeals..." 
+                    className="pl-10" 
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto overflow-x-auto whitespace-nowrap pb-2 sm:pb-0">
+                <Select value={yearFilter} onValueChange={setYearFilter}>
+                    <SelectTrigger className="w-[140px]">
+                        <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">All Years</SelectItem>
+                        {yearOptions.map(year => (
+                            <SelectItem key={year} value={year}>{year}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+                <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
+                    {['all', 'pending', 'accepted', 'rejected'].map((s) => (
+                        <Button 
+                            key={s}
+                            variant={statusFilter === s ? 'secondary' : 'ghost'} 
+                            size="sm" 
+                            className="h-8 text-xs capitalize"
+                            onClick={() => setStatusFilter(s as any)}
+                        >
+                            {s}
+                        </Button>
+                    ))}
+                </div>
+            </div>
         </div>
 
-        <div className="bg-card rounded-lg border overflow-hidden">
+        <div className="bg-card rounded-lg border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Remark Title</TableHead>
+                  <TableHead>Year</TableHead>
                   <TableHead>Date Submitted</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead><span className="sr-only">View</span></TableHead>
@@ -318,19 +386,20 @@ export default function AppealsPage() {
               </TableHeader>
               <TableBody>
                 {isLoading ? (
-                    <TableRow><TableCell colSpan={4} className="text-center h-24">Loading appeals...</TableCell></TableRow>
-                ) : appeals.length > 0 ? (
-                    appeals.map((appeal) => (
+                    <TableRow><TableCell colSpan={5} className="text-center h-24">Loading appeals...</TableCell></TableRow>
+                ) : filteredAppeals.length > 0 ? (
+                    filteredAppeals.map((appeal) => (
                     <TableRow
                         key={appeal._id}
-                        className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/5" : ""}`}
+                        className={`cursor-pointer transition-colors ${selectedAppeal?._id === appeal._id ? "bg-primary/5" : "hover:bg-muted/50"}`}
                         onClick={() => setSelectedAppeal(appeal)}
                     >
                         <TableCell className="font-medium">{appeal.title}</TableCell>
-                        <TableCell className="text-muted-foreground">{new Date(appeal.appeal.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-sm">{appeal.academicYear || 'N/A'}</TableCell>
+                        <TableCell className="text-muted-foreground text-sm">{new Date(appeal.appeal.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell>
                             <Badge variant={getStatusVariant(appeal.appeal.status)} className={getStatusColor(appeal.appeal.status)}>
-                                {appeal.appeal.status}
+                                {appeal.appeal.status || 'pending'}
                             </Badge>
                         </TableCell>
                         <TableCell className="text-right">
@@ -339,89 +408,98 @@ export default function AppealsPage() {
                     </TableRow>
                     ))
                 ) : (
-                    <TableRow><TableCell colSpan={4} className="text-center h-24">No appeals found for this filter.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center h-24 text-muted-foreground">No appeals found matching your criteria.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
         </div>
       </div>
+      
       <aside className={cn(
-        "bg-card rounded-lg border flex-col p-6 gap-6 h-fit sticky top-6 transition-all duration-300",
+        "bg-card rounded-lg border flex-col p-6 gap-6 h-fit sticky top-6 transition-all duration-300 shadow-sm",
         selectedAppeal ? "w-full md:w-1/3 flex" : "w-0 hidden"
       )}>
         {selectedAppeal ? (
             <div className="flex flex-col h-full">
-                <h3 className="text-xl font-bold mb-4">Appeal Details</h3>
+                <div className="flex justify-between items-start mb-4">
+                    <h3 className="text-xl font-bold">Appeal Details</h3>
+                    <Button variant="ghost" size="icon" className="h-8 w-8 -mr-2" onClick={() => setSelectedAppeal(null)}>
+                        <span className="material-symbols-outlined">close</span>
+                    </Button>
+                </div>
                 
                 <div className="space-y-4">
-                    <Card>
-                        <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Original Remark</CardTitle>
+                    <Card className="shadow-none bg-muted/30">
+                        <CardHeader className="pb-2 p-4">
+                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Original Remark</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            <p className="font-semibold">{selectedAppeal.title} (<span className="text-red-600">{selectedAppeal.points}</span> points)</p>
-                            <p className="text-muted-foreground italic">"{selectedAppeal.notes}"</p>
-                            <p className="text-xs text-muted-foreground">Issued on: {new Date(selectedAppeal.createdAt).toLocaleString()}</p>
+                        <CardContent className="space-y-2 text-sm p-4 pt-0">
+                            <p className="font-semibold text-base">{selectedAppeal.title} (<span className="text-red-600">{selectedAppeal.points}</span> points)</p>
+                            <p className="text-muted-foreground italic line-clamp-3">"{selectedAppeal.notes || 'No original notes'}"</p>
+                            <div className="flex justify-between items-center text-xs text-muted-foreground mt-2">
+                                <span>Issued: {new Date(selectedAppeal.createdAt).toLocaleDateString()}</span>
+                                <span>Year: {selectedAppeal.academicYear}</span>
+                            </div>
                         </CardContent>
                     </Card>
 
-                    <Card>
-                        <CardHeader className="pb-2">
-                        <CardTitle className="text-base">Your Appeal</CardTitle>
+                    <Card className="shadow-none border-primary/20">
+                        <CardHeader className="pb-2 p-4">
+                            <CardTitle className="text-sm font-semibold uppercase tracking-wider text-primary">Your Rationale</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-2 text-sm">
-                            <p className="text-muted-foreground italic">"{selectedAppeal.appeal.reason}"</p>
-                            <p className="text-xs text-muted-foreground">Submitted on: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
+                        <CardContent className="space-y-2 text-sm p-4 pt-0">
+                            <p className="text-foreground leading-relaxed whitespace-pre-wrap">"{selectedAppeal.appeal.reason}"</p>
+                            <p className="text-xs text-muted-foreground pt-2">Submitted: {new Date(selectedAppeal.appeal.createdAt).toLocaleString()}</p>
                         </CardContent>
                     </Card>
                 </div>
                 
                 <div className="mt-6 border-t pt-6">
-                    <h4 className="font-semibold mb-4">Appeal Timeline</h4>
+                    <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Appeal Timeline</h4>
                     <ul className="space-y-6">
                         <li className="flex gap-4">
                             <div className="flex flex-col items-center">
-                                <div className="flex-shrink-0">{getTimelineIcon('submitted', selectedAppeal.appeal.status)}</div>
-                                <div className="w-px h-full bg-border"></div>
+                                <div className="flex-shrink-0">{getTimelineIcon('submitted', selectedAppeal.appeal.status || 'pending')}</div>
+                                <div className="w-px h-full bg-border mt-1"></div>
                             </div>
                             <div>
-                                <p className="font-medium">Submitted</p>
-                                <p className="text-sm text-muted-foreground">{new Date(selectedAppeal.appeal.createdAt).toDateString()}</p>
+                                <p className="font-medium text-sm">Submitted</p>
+                                <p className="text-xs text-muted-foreground">{new Date(selectedAppeal.appeal.createdAt).toDateString()}</p>
                             </div>
                         </li>
                         <li className="flex gap-4">
                                 <div className="flex flex-col items-center">
-                                <div className="flex-shrink-0">{getTimelineIcon('pending', selectedAppeal.appeal.status)}</div>
-                                <div className="w-px h-full bg-border"></div>
+                                <div className="flex-shrink-0">{getTimelineIcon('pending', selectedAppeal.appeal.status || 'pending')}</div>
+                                <div className="w-px h-full bg-border mt-1"></div>
                             </div>
                             <div>
-                                <p className="font-medium">In Review</p>
-                                <p className="text-sm text-muted-foreground">The admin team is reviewing your appeal.</p>
+                                <p className="font-medium text-sm">In Review</p>
+                                <p className="text-xs text-muted-foreground">The admin team is reviewing your justification.</p>
                             </div>
                         </li>
                         <li className="flex gap-4">
-                            <div className="flex-shrink-0">{getTimelineIcon(selectedAppeal.appeal.status, selectedAppeal.appeal.status)}</div>
+                            <div className="flex-shrink-0">{getTimelineIcon(selectedAppeal.appeal.status || 'pending', selectedAppeal.appeal.status || 'pending')}</div>
                             <div>
-                                <p className="font-medium">Final Decision</p>
+                                <p className="font-medium text-sm">Final Decision</p>
                                 {(selectedAppeal.appeal.status === 'accepted' || selectedAppeal.appeal.status === 'rejected') ? (
-                                    <p className="text-sm text-muted-foreground">
-                                        Your appeal has been {selectedAppeal.appeal.status}.
+                                    <p className="text-xs text-muted-foreground">
+                                        Decision reached on: {new Date(selectedAppeal.updatedAt || selectedAppeal.appeal.createdAt).toLocaleDateString()}
                                     </p>
                                 ): (
-                                    <p className="text-sm text-muted-foreground">A decision is pending.</p>
+                                    <p className="text-xs text-muted-foreground">Awaiting administrative action.</p>
                                 )}
                             </div>
                         </li>
                     </ul>
                 </div>
                 
-                {selectedAppeal.appeal.status === 'pending' && (
+                {(!selectedAppeal.appeal.status || selectedAppeal.appeal.status === 'pending') && (
                     <div className="mt-6 border-t pt-6">
-                        <h4 className="font-semibold mb-4">Actions</h4>
+                        <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Actions</h4>
                         <div className="flex flex-col gap-2">
                             <Button onClick={() => { setAppealReason(selectedAppeal.appeal.reason); setAppealProof(null); setIsEditDialogOpen(true); }} >
-                                <Edit className="mr-2 h-4 w-4" /> Edit Appeal
+                                <Edit className="mr-2 h-4 w-4" /> Edit Justification
                             </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
@@ -456,7 +534,7 @@ export default function AppealsPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
-            <DialogTitle>Edit Appeal for "{selectedAppeal?.title}"</DialogTitle>
+            <DialogTitle>Edit Justification for "{selectedAppeal?.title}"</DialogTitle>
             <DialogDescription>
               Update your reason for appealing. Attaching new proof is optional.
             </DialogDescription>
@@ -474,9 +552,9 @@ export default function AppealsPage() {
                 />
             </div>
             <div className="space-y-2">
-                <label htmlFor="proof" className="text-sm font-medium">Proof Document (Optional)</label>
+                <label htmlFor="proof" className="text-sm font-medium">Supporting Evidence (Optional)</label>
                 <FileUpload onFileSelect={setAppealProof} />
-                <p className="text-xs text-muted-foreground">If you upload a new file, it will replace the old one.</p>
+                <p className="text-xs text-muted-foreground">New uploads will replace previous attachments.</p>
             </div>
           </div>
           <DialogFooter>
