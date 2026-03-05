@@ -52,7 +52,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type IssuedRemark = {
     _id: string;
@@ -354,7 +354,7 @@ export default function IssuedHistoryPage() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">
-            Issued Remarks History
+            Issued History
           </h1>
           <p className="mt-1 text-muted-foreground">
             A log of all negative remarks that you have issued.
@@ -460,7 +460,7 @@ export default function IssuedHistoryPage() {
                             <div className="text-xs text-muted-foreground">{remark.facultySnapshot.department}</div>
                         </TableCell>
                         <TableCell>{remark.title}</TableCell>
-                        <TableCell>{getStatusBadge(remark)}</TableCell>
+                        <TableCell>{getStatusBadge(remark.status)}</TableCell>
                         <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
                         <TableCell className="text-center">

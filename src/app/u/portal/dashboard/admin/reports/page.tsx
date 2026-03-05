@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -133,14 +134,7 @@ export default function DynamicReportsPage() {
 
   const fetchReportPreview = useCallback(async () => {
     if (!token) return;
-    if ((level === 'department' || level === 'faculty') && !levelId) {
-        // If switching levels, we might need a default fetch if it was already showing data
-        if (level === 'college') { /* continue */ } else {
-            setIsLoading(false);
-            return;
-        }
-    }
-
+    
     setIsLoading(true);
     const params = new URLSearchParams({
       level,
@@ -248,7 +242,7 @@ export default function DynamicReportsPage() {
       const data = await res.json();
       if (data.success && data.shareLink) {
         // Force the link to use the vercel domain as requested
-        const finalLink = data.shareLink.replace('https://fcs.egspgroup.in', 'https://faculty-credit-system.vercel.app');
+        const finalLink = data.shareLink.replace('https://fcs.egspgroup.in', API_BASE_URL);
         await navigator.clipboard.writeText(finalLink);
         toast({ title: "Link Copied!", description: "Shareable report link copied to clipboard." });
       } else {
@@ -314,19 +308,19 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase text-primary">Total Points</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.totalPoints || 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary?.totalPoints || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Total Activities</CardDescription>
-                        <CardTitle className="text-2xl">{computedSummary.count || 0}</CardTitle>
+                        <CardTitle className="text-2xl">{computedSummary?.count || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card>
                     <CardHeader className="pb-2">
                         <CardDescription className="text-xs font-semibold uppercase">Avg per Activity</CardDescription>
-                        <CardTitle className="text-2xl">{(computedSummary.avgPoints || 0).toFixed(1)}</CardTitle>
+                        <CardTitle className="text-2xl">{(computedSummary?.avgPoints || 0).toFixed(1)}</CardTitle>
                     </CardHeader>
                 </Card>
             </div>
@@ -344,7 +338,7 @@ export default function DynamicReportsPage() {
                         <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                                 <Pie
-                                    data={computedSummary.byStatus || []}
+                                    data={computedSummary?.byStatus || []}
                                     dataKey="count"
                                     nameKey="status"
                                     cx="50%"
@@ -353,7 +347,7 @@ export default function DynamicReportsPage() {
                                     outerRadius={80}
                                     paddingAngle={5}
                                 >
-                                    {(computedSummary.byStatus || []).map((entry, index) => (
+                                    {(computedSummary?.byStatus || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={getStatusColor(entry.status)} />
                                     ))}
                                 </Pie>
@@ -373,13 +367,13 @@ export default function DynamicReportsPage() {
                     </CardHeader>
                     <CardContent className="h-64">
                         <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={computedSummary.byType || []}>
+                            <BarChart data={computedSummary?.byType || []}>
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
                                 <XAxis dataKey="type" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
                                 <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false}/>
                                 <Tooltip cursor={{fill: 'transparent'}} />
                                 <Bar dataKey="points" radius={[4, 4, 0, 0]}>
-                                    {(computedSummary.byType || []).map((entry, index) => (
+                                    {(computedSummary?.byType || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.type === 'positive' ? '#10b981' : '#ef4444'} />
                                     ))}
                                 </Bar>
