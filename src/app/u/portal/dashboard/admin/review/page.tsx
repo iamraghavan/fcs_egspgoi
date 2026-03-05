@@ -1,5 +1,4 @@
 
-
 "use client"
 
 import {
@@ -21,7 +20,7 @@ import { useSearchParams } from "next/navigation"
 import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
 import { colleges } from "@/lib/colleges"
-import { ChevronDown, ChevronUp, FileDown, Filter, Search, X } from "lucide-react"
+import { ChevronDown, ChevronUp, FileDown, Filter, Search, X, Loader2 } from "lucide-react"
 import { DateRange } from "react-day-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
@@ -32,7 +31,7 @@ import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type Submission = {
   _id: string;
@@ -147,9 +146,9 @@ export default function ReviewSubmissionsPage() {
 
             const data = await response.json();
             if (data.success) {
-                const items = Array.isArray(data.items) ? data.items : [];
+                const items = Array.isArray(data.items) ? data.items : (Array.isArray(data.data) ? data.data : []);
                 setSubmissions(items);
-                setTotal(data.meta.total);
+                setTotal(data.meta?.total || items.length);
                 setAggregates(data.aggregates);
                 
                 if (items.length > 0 && !selectedSubmission) {
@@ -353,7 +352,6 @@ export default function ReviewSubmissionsPage() {
                     <TableRow>
                     <TableHead>Faculty</TableHead>
                     <TableHead>Title</TableHead>
-                    <TableHead>Issued By</TableHead>
                     <TableHead>Points</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Date</TableHead>
@@ -365,7 +363,6 @@ export default function ReviewSubmissionsPage() {
                             <TableRow key={`loader-${i}`}>
                                 <TableCell><Skeleton className="h-5 w-24"/></TableCell>
                                 <TableCell><Skeleton className="h-5 w-40"/></TableCell>
-                                <TableCell><Skeleton className="h-5 w-24"/></TableCell>
                                 <TableCell><Skeleton className="h-5 w-10"/></TableCell>
                                 <TableCell><Skeleton className="h-6 w-20 rounded-full"/></TableCell>
                                 <TableCell><Skeleton className="h-5 w-20"/></TableCell>
@@ -378,7 +375,6 @@ export default function ReviewSubmissionsPage() {
                             <TableRow key={submission._id} className={`cursor-pointer ${selectedSubmission?._id === submission._id ? "bg-primary/10" : ""}`} onClick={() => setSelectedSubmission(submission)}>
                                 <TableCell className="font-medium">{facultyDetails?.name}</TableCell>
                                 <TableCell>{submission.title}</TableCell>
-                                <TableCell>{submission.issuedByObj?.name}</TableCell>
                                 <TableCell>{submission.points}</TableCell>
                                 <TableCell><Badge variant={submission.status === 'approved' ? 'default' : submission.status === 'pending' ? 'secondary' : 'destructive'} className={submission.status === 'approved' ? 'bg-green-100 text-green-800' : submission.status === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'}>{submission.status}</Badge></TableCell>
                                 <TableCell>{new Date(submission.createdAt).toLocaleDateString()}</TableCell>
@@ -386,7 +382,7 @@ export default function ReviewSubmissionsPage() {
                         )
                         })
                     ) : (
-                        <TableRow><TableCell colSpan={6} className="text-center h-24">No submissions found.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center h-24">No submissions found.</TableCell></TableRow>
                     )}
                 </TableBody>
                 </Table>
@@ -473,5 +469,3 @@ export default function ReviewSubmissionsPage() {
     </div>
   )
 }
-
-    
