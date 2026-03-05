@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Eye, Search, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Eye, Search, Edit, Trash2, CheckCircle2, Clock, XCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
@@ -56,7 +56,7 @@ import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type User = {
   _id: string;
@@ -111,7 +111,7 @@ const getCurrentAcademicYear = () => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    if (currentMonth >= 5) { // June or later
+    if (currentMonth >= 5) {
       return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
     }
     return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
@@ -187,7 +187,7 @@ export default function ManagePositiveCreditsPage() {
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
-    setSelectedFaculty(null); // Clear selection when user types
+    setSelectedFaculty(null);
     if (!showSuggestions) {
       setShowSuggestions(true);
     }
@@ -279,12 +279,12 @@ export default function ManagePositiveCreditsPage() {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
-          const data = await response.json();
-          if (data.success) {
-              setCredits(data.items || []);
-              setTotal(data.meta?.total || 0);
+          const resData = await response.json();
+          if (resData.success) {
+              setCredits(resData.data || resData.items || []);
+              setTotal(resData.total || resData.meta?.total || 0);
           } else {
-              throw new Error(data.message || "Failed to fetch credits");
+              throw new Error(resData.message || "Failed to fetch credits");
           }
       } catch (error: any) {
           showAlert("Error fetching credits", error.message);
@@ -300,19 +300,19 @@ export default function ManagePositiveCreditsPage() {
     if (adminToken) {
       fetchDropdownData();
     }
-  }, [uid, adminToken]);
+  }, [adminToken]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
         if (adminToken) {
             fetchCredits(page);
         }
-    }, 500); // Debounce API call
+    }, 500);
     return () => clearTimeout(timer);
   }, [page, adminToken, searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
-    setPage(1); // Reset to first page whenever filters change
+    setPage(1);
   }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
@@ -338,14 +338,7 @@ export default function ManagePositiveCreditsPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    if (url.startsWith('http')) {
-        return url;
-    }
-    // Handle cases where the base URL might be duplicated
-    if (url.includes(API_BASE_URL)) {
-        const urlParts = url.split(API_BASE_URL);
-        return `${API_BASE_URL}${urlParts[urlParts.length - 1]}`;
-    }
+    if (url.startsWith('http')) return url;
     return `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
@@ -362,7 +355,7 @@ export default function ManagePositiveCreditsPage() {
       setShortProofUrl(null);
       shortenUrl(getProofUrl(selectedCreditDetails.proofUrl))
         .then(setShortProofUrl)
-        .catch(() => setShortProofUrl(getProofUrl(selectedCreditDetails.proofUrl))); // Fallback to full URL on error
+        .catch(() => setShortProofUrl(getProofUrl(selectedCreditDetails!.proofUrl)));
     }
   }, [selectedCreditDetails]);
 
@@ -499,6 +492,18 @@ export default function ManagePositiveCreditsPage() {
     
     return [{ value: 'all', label: 'All Templates' }, ...sortedTitles];
 }, [creditTitles]);
+
+const getStatusBadge = (status: PositiveCredit['status']) => {
+    switch (status) {
+        case 'approved':
+            return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
+        case 'rejected':
+            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200"><XCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
+        case 'pending':
+        default:
+            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+    }
+};
 
 
   return (
@@ -699,9 +704,9 @@ export default function ManagePositiveCreditsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Faculty</TableHead>
-                  <TableHead>Faculty ID</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Credit Title</TableHead>
+                  <TableHead>Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Points</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
@@ -713,11 +718,16 @@ export default function ManagePositiveCreditsPage() {
                 ) : credits.length > 0 ? (
                   credits.map((credit) => (
                   <TableRow key={credit._id}>
-                    <TableCell className="font-medium text-foreground">{credit.facultySnapshot.name}</TableCell>
-                    <TableCell>{credit.facultySnapshot.facultyID}</TableCell>
-                    <TableCell>{credit.facultySnapshot.department}</TableCell>
-                    <TableCell>{credit.title}</TableCell>
-                    <TableCell>{new Date(credit.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell>
+                        <div className="flex flex-col">
+                            <span className="font-medium text-foreground">{credit.facultySnapshot?.name || 'N/A'}</span>
+                            <span className="text-[10px] text-muted-foreground uppercase font-mono">{credit.facultySnapshot?.facultyID || 'N/A'}</span>
+                        </div>
+                    </TableCell>
+                    <TableCell className="text-xs">{credit.facultySnapshot?.department || 'N/A'}</TableCell>
+                    <TableCell className="max-w-[200px] truncate" title={credit.title}>{credit.title}</TableCell>
+                    <TableCell>{getStatusBadge(credit.status)}</TableCell>
+                    <TableCell className="text-xs">{new Date(credit.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell className="text-right font-semibold text-green-600">+{credit.points}</TableCell>
                     <TableCell className="text-center">
                         <div className="flex justify-center items-center">
@@ -736,12 +746,12 @@ export default function ManagePositiveCreditsPage() {
                                     <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
                                         <Card>
                                             <CardHeader>
-                                                <CardTitle className="text-lg">{selectedCreditDetails.facultySnapshot.name}</CardTitle>
-                                                <CardDescription>{selectedCreditDetails.facultySnapshot.facultyID}</CardDescription>
+                                                <CardTitle className="text-lg">{selectedCreditDetails.facultySnapshot?.name}</CardTitle>
+                                                <CardDescription>{selectedCreditDetails.facultySnapshot?.facultyID}</CardDescription>
                                             </CardHeader>
                                             <CardContent>
-                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">Department:</strong> {selectedCreditDetails.facultySnapshot.department}</p>
-                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">College:</strong> {selectedCreditDetails.facultySnapshot.college}</p>
+                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">Department:</strong> {selectedCreditDetails.facultySnapshot?.department}</p>
+                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">College:</strong> {selectedCreditDetails.facultySnapshot?.college}</p>
                                             </CardContent>
                                         </Card>
                                 
@@ -752,6 +762,7 @@ export default function ManagePositiveCreditsPage() {
                                             <CardContent className="space-y-3">
                                                  <p><strong className="font-medium text-muted-foreground block">Credit Title:</strong> {selectedCreditDetails.title}</p>
                                                 <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-green-600">+{selectedCreditDetails.points}</span></p>
+                                                <p><strong className="font-medium text-muted-foreground block">Status:</strong> {selectedCreditDetails.status}</p>
                                                 <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedCreditDetails.createdAt).toLocaleString()}</p>
                                                 <div>
                                                     <strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong>
