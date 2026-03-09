@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect } from "react";
@@ -50,9 +49,10 @@ import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
+import { cn } from "@/lib/utils";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type GoodWork = {
   _id: string;
@@ -82,7 +82,6 @@ const getCurrentAcademicYear = () => {
 const generateYearOptions = () => {
     const currentYearString = getCurrentAcademicYear();
     const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
     const years = [];
     for (let i = 0; i < 5; i++) {
         const startYear = startCurrentYear - i;
@@ -370,10 +369,21 @@ export default function GoodWorksPage() {
                     ))}
                 </SelectContent>
             </Select>
-          <Button variant={statusFilter === 'all' ? 'secondary' : 'ghost'} onClick={() => { setStatusFilter('all'); setPage(1); }}>All</Button>
-          <Button variant={statusFilter === 'pending' ? 'secondary' : 'ghost'} onClick={() => { setStatusFilter('pending'); setPage(1); }}>Pending</Button>
-          <Button variant={statusFilter === 'approved' ? 'secondary' : 'ghost'} onClick={() => { setStatusFilter('approved'); setPage(1); }}>Approved</Button>
-          <Button variant={statusFilter === 'rejected' ? 'secondary' : 'ghost'} onClick={() => { setStatusFilter('rejected'); setPage(1); }}>Rejected</Button>
+          <div className="btn-filter-wrap">
+            {['all', 'pending', 'approved', 'rejected'].map((s) => (
+                <Button 
+                    key={s}
+                    variant="ghost" 
+                    className={cn(
+                        "btn-filter",
+                        statusFilter === s ? "btn-filter-active" : "btn-filter-inactive"
+                    )}
+                    onClick={() => { setStatusFilter(s); setPage(1); }}
+                >
+                    {s}
+                </Button>
+            ))}
+          </div>
         </div>
       </div>
       <div className="overflow-hidden rounded-lg bg-card shadow-sm border">

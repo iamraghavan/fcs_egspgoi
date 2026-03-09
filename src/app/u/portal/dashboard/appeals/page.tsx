@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -44,7 +43,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Edit, Trash2, Search, Filter } from "lucide-react";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type NegativeCredit = {
   _id: string;
@@ -356,13 +355,16 @@ export default function AppealsPage() {
                         ))}
                     </SelectContent>
                 </Select>
-                <div className="flex items-center gap-1 bg-muted p-1 rounded-md">
+                <div className="btn-filter-wrap">
                     {['all', 'pending', 'accepted', 'rejected'].map((s) => (
                         <Button 
                             key={s}
-                            variant={statusFilter === s ? 'secondary' : 'ghost'} 
+                            variant="ghost"
                             size="sm" 
-                            className="h-8 text-xs capitalize"
+                            className={cn(
+                                "btn-filter",
+                                statusFilter === s ? "btn-filter-active" : "btn-filter-inactive"
+                            )}
                             onClick={() => setStatusFilter(s as any)}
                         >
                             {s}

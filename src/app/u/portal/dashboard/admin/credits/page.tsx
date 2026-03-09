@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -44,9 +43,10 @@ import {
 } from "@/components/ui/dialog"
 import { ArrowUpDown, Edit, Trash2 } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
+import { cn } from "@/lib/utils";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type CreditTitle = {
   _id: string;
@@ -311,10 +311,21 @@ export default function ManageCreditTitlesPage() {
         <div className="space-y-6 rounded-lg bg-card p-6 shadow-sm lg:col-span-2">
           <div className="flex justify-between items-center">
             <h2 className="text-xl font-semibold text-foreground">Existing Credit Titles</h2>
-            <div className="flex items-center gap-2">
-                <Button variant={typeFilter === 'all' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('all')}>All</Button>
-                <Button variant={typeFilter === 'positive' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('positive')}>Positive</Button>
-                <Button variant={typeFilter === 'negative' ? 'secondary' : 'ghost'} size="sm" onClick={() => setTypeFilter('negative')}>Negative</Button>
+            <div className="btn-filter-wrap">
+                {['all', 'positive', 'negative'].map((t) => (
+                    <Button 
+                        key={t}
+                        variant="ghost" 
+                        size="sm" 
+                        className={cn(
+                            "btn-filter",
+                            typeFilter === t ? "btn-filter-active" : "btn-filter-inactive"
+                        )}
+                        onClick={() => setTypeFilter(t as any)}
+                    >
+                        {t}
+                    </Button>
+                ))}
             </div>
           </div>
           <div className="overflow-x-auto border rounded-lg">
