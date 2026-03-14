@@ -40,7 +40,7 @@ export default function MaintenancePage() {
                             Enhancing Your <span className="text-primary">Faculty Portal</span>
                         </h1>
                         <p className="text-lg text-slate-600 max-w-xl mx-auto font-medium">
-                            We are currently implementing critical updates to resolve Faculty portal issues and improve remark accuracy.
+                            We are resolving faculty portal issues and addressing remark discrepancies while improving application features, security, and response speed.
                         </p>
                     </div>
 
