@@ -31,13 +31,13 @@ export default function MaintenancePage() {
                 </CardHeader>
                 <CardContent className="px-8 sm:px-12 text-center">
                     <h1 className="text-3xl md:text-5xl font-bold text-gray-800">
-                        We're improving your Experience
+                        Improving your Portal Experience
                     </h1>
-                    <p className="mt-4 text-base md:text-lg text-gray-600">
-                        We'll be back up and running again shortly, around {maintenanceEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
+                    <p className="mt-4 text-base md:text-lg text-gray-600 font-semibold">
+                        Resolving Faculty issues and Faculty faces remarks issues.
                     </p>
-                    <p className="mt-1 text-sm text-gray-500">
-                         Our mechanics are busy tuning up the engine. Please wait patiently, we're making things even better for you!
+                    <p className="mt-2 text-sm text-gray-500 max-w-2xl mx-auto">
+                         Our team is working to improve the Application Features, security, and speed. We'll be back up and running again shortly, around {maintenanceEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}.
                     </p>
                     <div className="mt-8">
                         <Image
