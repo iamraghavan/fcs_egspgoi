@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Sidebar } from "@/components/ui/sidebar";
@@ -24,7 +23,7 @@ const WhatsAppVerificationModal = dynamic(() =>
 );
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type User = {
   id: string;
@@ -280,7 +279,6 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
     }
 
     if (permission === 'granted') {
-        console.log("Notification permission already granted. Refreshing token.");
         subscribeUser();
     } else if (permission === 'default') {
         const PROMPT_DISMISSED_KEY = 'notificationPromptDismissedAt';
@@ -310,7 +308,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
                     }
                 }
             });
-        }, 7000); // 7 seconds after dashboard loads
+        }, 7000); 
 
         return () => clearTimeout(timer);
     }
@@ -321,27 +319,27 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }
   
   return (
-    <>
     <div className="grid min-h-screen w-full grid-rows-[auto_1fr_auto] md:grid-cols-[auto_1fr]">
       <Header user={user} />
       <SidebarNav role={user.role} />
-      <main className="overflow-y-auto p-4 md:p-6 lg:p-8">
-          {children}
+      <main className="overflow-y-auto w-full max-w-full">
+          <div className="p-4 md:p-6 lg:p-8 w-full">
+            {children}
+          </div>
       </main>
       <Footer onCookiePreferencesClick={() => setIsCookiePrefsOpen(true)} />
+      {isCookiePrefsOpen && <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />}
+      {isVerificationModalOpen && <WhatsAppVerificationModal
+          isOpen={isVerificationModalOpen}
+          user={userForVerification}
+          onSuccess={() => {
+              setIsVerificationModalOpen(false);
+              setUserForVerification(null);
+              if (user) {
+                  setUser({ ...user, whatsappVerified: true });
+              }
+          }}
+      />}
     </div>
-    {isCookiePrefsOpen && <CookiePreferencesDialog open={isCookiePrefsOpen} onOpenChange={setIsCookiePrefsOpen} />}
-    {isVerificationModalOpen && <WhatsAppVerificationModal
-        isOpen={isVerificationModalOpen}
-        user={userForVerification}
-        onSuccess={() => {
-            setIsVerificationModalOpen(false);
-            setUserForVerification(null);
-            if (user) {
-                setUser({ ...user, whatsappVerified: true });
-            }
-        }}
-    />}
-    </>
   );
 }
