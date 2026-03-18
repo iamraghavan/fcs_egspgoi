@@ -10,14 +10,54 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['Inter', 'sans-serif'],
-        body: ['Inter', 'sans-serif'],
-        headline: ['Inter', 'sans-serif'], // Adjusted to match new designs
-        code: ['monospace'],
+        sans: ['IBM Plex Sans', 'Inter', 'sans-serif'],
+        mono: ['IBM Plex Mono', 'monospace'],
+        display: ['IBM Plex Sans', 'sans-serif'],
+        body: ['IBM Plex Sans', 'sans-serif'],
+      },
+      spacing: {
+        'cds-01': 'var(--cds-spacing-01)',
+        'cds-02': 'var(--cds-spacing-02)',
+        'cds-03': 'var(--cds-spacing-03)',
+        'cds-04': 'var(--cds-spacing-04)',
+        'cds-05': 'var(--cds-spacing-05)',
+        'cds-06': 'var(--cds-spacing-06)',
+        'cds-07': 'var(--cds-spacing-07)',
+        'cds-08': 'var(--cds-spacing-08)',
+        'cds-09': 'var(--cds-spacing-09)',
+        'cds-10': 'var(--cds-spacing-10)',
       },
       colors: {
         background: 'hsl(var(--background))',
         foreground: 'hsl(var(--foreground))',
+        cds: {
+          interactive: {
+            '01': 'var(--cds-interactive-01)',
+            '02': 'var(--cds-interactive-02)',
+            '03': 'var(--cds-interactive-03)',
+            '04': 'var(--cds-interactive-04)',
+          },
+          ui: {
+            '01': 'var(--cds-ui-01)',
+            '02': 'var(--cds-ui-02)',
+            '03': 'var(--cds-ui-03)',
+            '04': 'var(--cds-ui-04)',
+            '05': 'var(--cds-ui-05)',
+          },
+          text: {
+            '01': 'var(--cds-text-01)',
+            '02': 'var(--cds-text-02)',
+            '03': 'var(--cds-text-03)',
+            '04': 'var(--cds-text-04)',
+            '05': 'var(--cds-text-05)',
+          },
+          support: {
+            '01': 'var(--cds-support-01)',
+            '02': 'var(--cds-support-02)',
+            '03': 'var(--cds-support-03)',
+            '04': 'var(--cds-support-04)',
+          }
+        },
         card: {
           DEFAULT: 'hsl(var(--card))',
           foreground: 'hsl(var(--card-foreground))',
@@ -68,33 +108,9 @@ export default {
         },
       },
       borderRadius: {
-        lg: '0.5rem',
+        lg: 'var(--radius)',
         md: 'calc(var(--radius) - 2px)',
         sm: 'calc(var(--radius) - 4px)',
-        xl: '0.5rem',
-        full: '9999px',
-      },
-      keyframes: {
-        'accordion-down': {
-          from: {
-            height: '0',
-          },
-          to: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-        },
-        'accordion-up': {
-          from: {
-            height: 'var(--radix-accordion-content-height)',
-          },
-          to: {
-            height: '0',
-          },
-        },
-      },
-      animation: {
-        'accordion-down': 'accordion-down 0.2s ease-out',
-        'accordion-up': 'accordion-up 0.2s ease-out',
       },
     },
   },

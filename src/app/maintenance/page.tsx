@@ -1,4 +1,3 @@
-
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Twitter, Instagram, Facebook, Mail, Globe, Hammer } from 'lucide-react';
@@ -12,7 +11,7 @@ export default function MaintenancePage() {
   maintenanceEndDate.setDate(maintenanceEndDate.getDate() + 7);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 p-4 sm:p-6 relative overflow-hidden font-display">
+    <div className="font-maintenance flex flex-col items-center justify-center min-h-screen bg-[#FDF9F0] p-4 sm:p-6 relative overflow-hidden">
         {/* Background depth effects */}
         <div className="absolute top-[-10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] -right-[10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
@@ -25,7 +24,6 @@ export default function MaintenancePage() {
             </div>
 
             <Card className="w-full bg-white/90 backdrop-blur-md border-slate-200/60 shadow-2xl shadow-slate-200/50 overflow-hidden rounded-3xl">
-                {/* Decorative Progress Strip */}
                 <div className="h-2 w-full bg-primary/20">
                     <div className="h-full w-[65%] bg-primary animate-pulse transition-all"></div>
                 </div>
@@ -37,26 +35,11 @@ export default function MaintenancePage() {
                             System Upgrade in Progress
                         </div>
                         <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                            Enhancing Your <span className="text-primary">Faculty Portal</span>
+                            We're improving your <span className="text-primary">Experience</span>
                         </h1>
                         <p className="text-lg text-slate-600 max-w-xl mx-auto font-medium">
-                            We are resolving faculty portal issues and addressing remark discrepancies while improving application features, security, and response speed.
+                            We are currently resolving faculty portal issues and fixing remarks discrepancies while improving the application features, security, and speed.
                         </p>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4">
-                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                            <div className="text-primary font-bold text-lg uppercase">Upgraded</div>
-                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">System Security</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                            <div className="text-primary font-bold text-lg">2x Fast</div>
-                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Response Speed</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                            <div className="text-primary font-bold text-lg">Fixed</div>
-                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-tighter">Remark Logic</div>
-                        </div>
                     </div>
 
                     <div className="space-y-3 max-w-md mx-auto">
@@ -66,7 +49,7 @@ export default function MaintenancePage() {
                         </div>
                         <Progress value={65} className="h-3" />
                         <p className="text-xs text-slate-400 font-medium italic">
-                            Estimated Completion: {maintenanceEndDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                            We'll be back up and running again shortly, around March 28.
                         </p>
                     </div>
 
@@ -89,12 +72,6 @@ export default function MaintenancePage() {
                             <Link href="https://egspec.org" className="flex items-center gap-2 text-slate-500 hover:text-primary transition-colors text-sm font-semibold" target="_blank">
                                 <Globe className="w-4 h-4" /> egspec.org
                             </Link>
-                        </div>
-                        
-                        <div className="flex justify-center gap-4">
-                           <Link href="#" className="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-primary hover:text-white transition-all shadow-sm"><Twitter className="w-5 h-5" /></Link>
-                           <Link href="#" className="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-primary hover:text-white transition-all shadow-sm"><Facebook className="w-5 h-5" /></Link>
-                           <Link href="#" className="p-2 rounded-full bg-slate-100 text-slate-500 hover:bg-primary hover:text-white transition-all shadow-sm"><Instagram className="w-5 h-5" /></Link>
                         </div>
                     </div>
                 </CardContent>

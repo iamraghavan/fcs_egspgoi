@@ -2,85 +2,99 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  font-family: 'Inter', sans-serif;
+/* IBM Carbon Design System Tokens */
+:root {
+  /* Color Tokens - Blue 60 Theme (Productive) */
+  --cds-interactive-01: #0f62fe;
+  --cds-interactive-02: #393939;
+  --cds-interactive-03: #0f62fe;
+  --cds-interactive-04: #0f62fe;
+  
+  --cds-ui-background: #ffffff;
+  --cds-ui-01: #f4f4f4;
+  --cds-ui-02: #ffffff;
+  --cds-ui-03: #e0e0e0;
+  --cds-ui-04: #8d8d8d;
+  --cds-ui-05: #161616;
+
+  --cds-text-01: #161616;
+  --cds-text-02: #525252;
+  --cds-text-03: #a8a8a8;
+  --cds-text-04: #ffffff;
+  --cds-text-05: #6f6f6f;
+
+  --cds-support-01: #da1e28;
+  --cds-support-02: #198038;
+  --cds-support-03: #f1c21b;
+  --cds-support-04: #0043ce;
+
+  /* Carbon Spacing Scale */
+  --cds-spacing-01: 0.125rem;
+  --cds-spacing-02: 0.25rem;
+  --cds-spacing-03: 0.5rem;
+  --cds-spacing-04: 0.75rem;
+  --cds-spacing-05: 1rem;
+  --cds-spacing-06: 1.5rem;
+  --cds-spacing-07: 2rem;
+  --cds-spacing-08: 2.5rem;
+  --cds-spacing-09: 3rem;
+  --cds-spacing-10: 4rem;
+  --cds-spacing-11: 5rem;
+  --cds-spacing-12: 6rem;
+  --cds-spacing-13: 10rem;
+
+  /* Motion Tokens */
+  --cds-duration-fast-01: 70ms;
+  --cds-duration-fast-02: 110ms;
+  --cds-duration-moderate-01: 150ms;
+  --cds-duration-moderate-02: 240ms;
+  --cds-duration-slow-01: 400ms;
+  --cds-duration-slow-02: 700ms;
+  --cds-ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
+
+  /* Mapping ShadCN UI variables to Carbon Vibe where appropriate */
+  --background: 0 0% 100%;
+  --foreground: 224 71.4% 4.1%;
+  --card: 0 0% 100%;
+  --card-foreground: 224 71.4% 4.1%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 224 71.4% 4.1%;
+  --primary: 221.2 83.2% 53.3%; /* Closer to Carbon Blue */
+  --primary-foreground: 210 40% 98%;
+  --secondary: 210 40% 96.1%;
+  --secondary-foreground: 222.2 47.4% 11.2%;
+  --muted: 210 40% 96.1%;
+  --muted-foreground: 215.4 16.3% 46.9%;
+  --accent: 210 40% 96.1%;
+  --accent-foreground: 222.2 47.4% 11.2%;
+  --destructive: 0 84.2% 60.2%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 214.3 31.8% 91.4%;
+  --input: 214.3 31.8% 91.4%;
+  --ring: 221.2 83.2% 53.3%;
+  --radius: 0rem; /* Carbon is square by default for buttons */
 }
 
-@layer base {
-  :root {
-    --background: 220 13% 97%; /* Light Gray similar to AWS console body */
-    --foreground: 224 21% 10%; /* Dark text */
-    --card: 0 0% 100%; /* White for cards/widgets */
-    --card-foreground: 224 21% 10%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 224 21% 10%;
-    --primary: 211 41% 35%; /* A muted blue */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 220 9% 91%;
-    --secondary-foreground: 224 21% 10%;
-    --muted: 220 9% 91%;
-    --muted-foreground: 222 9% 47%;
-    --accent: 220 13% 96%;
-    --accent-foreground: 211 41% 35%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 9% 85%; /* Light gray for borders */
-    --input: 220 9% 85%;
-    --ring: 211 41% 35%;
-    --radius: 0.5rem;
-    --chart-1: 211 41% 35%;
-    --chart-2: 211 41% 55%;
-    --chart-3: 211 41% 75%;
-    --chart-4: 211 41% 85%;
-    --chart-5: 211 41% 95%;
-
-    /* Sidebar specific dark theme */
-    --sidebar-background: 222 29% 10%; /* Dark sidebar background */
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 223 74% 62%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 29% 15%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 15% 28%;
-    --sidebar-ring: 223 74% 62%;
-  }
-
-  .dark {
-    --background: 222 29% 8%; /* Very dark background for dark mode */
-    --foreground: 210 40% 98%;
-    --card: 222 29% 12%; /* Slightly lighter cards */
-    --card-foreground: 210 40% 98%;
-    --popover: 222 29% 8%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 212 77% 61%; /* Brighter blue for dark mode primary */
-    --primary-foreground: 0 0% 100%;
-    --secondary: 222 20% 20%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 222 20% 20%;
-    --muted-foreground: 220 14% 65%;
-    --accent: 222 29% 13%;
-    --accent-foreground: 212 77% 61%;
-    --destructive: 0 62.8% 45.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 222 15% 28%;
-    --input: 222 15% 28%;
-    --ring: 212 77% 61%;
-    --chart-1: 212 77% 61%;
-    --chart-2: 212 77% 51%;
-    --chart-3: 212 77% 41%;
-    --chart-4: 212 77% 31%;
-    --chart-5: 212 77% 21%;
-
-    /* Sidebar specific dark theme remains same in dark mode */
-    --sidebar-background: 222 29% 8%; 
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 212 77% 61%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 29% 13%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 222 15% 28%;
-    --sidebar-ring: 212 77% 61%;
-  }
+.dark {
+  --background: 222.2 84% 4.9%;
+  --foreground: 210 40% 98%;
+  --card: 222.2 84% 4.9%;
+  --card-foreground: 210 40% 98%;
+  --popover: 222.2 84% 4.9%;
+  --popover-foreground: 210 40% 98%;
+  --primary: 217.2 91.2% 59.8%;
+  --primary-foreground: 222.2 47.4% 11.2%;
+  --secondary: 217.2 32.6% 17.5%;
+  --secondary-foreground: 210 40% 98%;
+  --muted: 217.2 32.6% 17.5%;
+  --muted-foreground: 215 20.2% 65.1%;
+  --accent: 217.2 32.6% 17.5%;
+  --accent-foreground: 210 40% 98%;
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
+  --border: 217.2 32.6% 17.5%;
+  --input: 217.2 32.6% 17.5%;
+  --ring: 224.3 76.3% 48%;
 }
 
 @layer base {
@@ -89,103 +103,26 @@ body {
   }
   body {
     @apply bg-background text-foreground;
+    font-family: 'IBM Plex Sans', sans-serif;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-.material-symbols-outlined {
-  font-variation-settings:
-    'FILL' 0,
-    'wght' 400,
-    'GRAD' 0,
-    'opsz' 24
-}
-
-@layer utilities {
-  .animation-delay-2000 {
-    animation-delay: 2000ms;
-  }
-  .animation-delay-4000 {
-    animation-delay: 4000ms;
-  }
-}
-
-@keyframes blob {
-  0% {
-    transform: translate(0px, 0px) scale(1);
-  }
-  33% {
-    transform: translate(30px, -50px) scale(1.1);
-  }
-  66% {
-    transform: translate(-20px, 20px) scale(0.9);
-  }
-  100% {
-    transform: translate(0px, 0px) scale(1);
-  }
-}
-
-.animate-blob {
-  animation: blob 7s infinite;
-}
-
+/* Carbon Component Utilities */
 @layer components {
   .ui-button {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-  }
-  .ui-button svg {
-    @apply pointer-events-none size-4 shrink-0;
-  }
-
-  .ui-input {
-    @apply flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
-  }
-
-  .ui-dropdown-item {
-    @apply relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
-  }
-  .ui-dropdown-item svg {
-    @apply pointer-events-none size-4 shrink-0;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
+    border-radius: var(--cds-spacing-01);
   }
   
-  .ui-select-trigger {
-    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50;
+  .cds-grid {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    gap: var(--cds-spacing-05);
   }
-  .ui-select-trigger > span {
-    @apply line-clamp-1 text-left;
-  }
+}
 
-  .ui-select-item {
-    @apply relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
-  }
-
-  .ui-menubar-trigger {
-    @apply flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground;
-  }
-
-  .ui-menubar-item {
-    @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
-  }
-
-  .ui-tabs-trigger {
-    @apply inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm;
-  }
-
-  .ui-dialog-content {
-    @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 sm:rounded-lg;
-  }
-
-  /* Filter Button Utilities to avoid long class strings */
-  .btn-filter-wrap {
-    @apply flex items-center gap-1 bg-muted p-1 rounded-md;
-  }
-  .btn-filter {
-    @apply h-8 px-3 text-xs font-medium rounded-sm transition-all capitalize;
-  }
-  .btn-filter-active {
-    @apply bg-background text-foreground shadow-sm hover:opacity-100;
-  }
-  .btn-filter-inactive {
-    @apply text-muted-foreground hover:bg-background/50 hover:text-foreground bg-transparent;
-  }
+/* Maintain custom page fonts if scoped */
+.font-maintenance {
+  font-family: 'Inter', sans-serif !important;
 }
