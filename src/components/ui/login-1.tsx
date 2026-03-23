@@ -260,7 +260,7 @@ export function LoginScreen() {
   const renderLoginForm = () => (
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="space-y-2">
-        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
         <p className="text-sm text-muted-foreground">Continue to the Faculty Performance Portal.</p>
       </div>
 
@@ -276,40 +276,40 @@ export function LoginScreen() {
 
       <form onSubmit={handleLogin} className="space-y-6">
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label htmlFor="email">Email address</Label>
-                <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+            <div className="space-y-1">
+                <Label htmlFor="email" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">Email address</Label>
+                <div className="relative group">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                     <Input
                         type="email"
                         id="email"
                         name="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="pl-10 h-12 w-full bg-muted/30 border-sidebar-border focus:ring-primary focus:border-primary"
-                        placeholder="e.g. name@egspec.org"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03"
+                        placeholder="name@egspec.org"
                         required
                         autoComplete="email"
                     />
                 </div>
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="password">Password</Label>
+                    <Label htmlFor="password" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">Password</Label>
                     <Link href="/u/portal/auth/forgot-password" tabIndex={-1} className="text-xs text-primary hover:underline">
                         Forgot?
                     </Link>
                 </div>
-                <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
+                <div className="relative group">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                     <Input
                         type={showPassword ? "text" : "password"}
                         id="password"
                         name="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pl-10 pr-10 h-12 w-full bg-muted/30 border-sidebar-border focus:ring-primary focus:border-primary"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03"
                         placeholder="••••••••"
                         required
                         autoComplete="current-password"
@@ -319,7 +319,7 @@ export function LoginScreen() {
                         variant="ghost"
                         size="icon"
                         onClick={togglePasswordVisibility}
-                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground h-full"
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-cds-text-05 hover:text-cds-text-01 h-full"
                     >
                         {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
@@ -359,7 +359,7 @@ export function LoginScreen() {
         <Button
             type="submit"
             disabled={isLoading || (showTurnstile && !turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME)}
-            className="w-full h-12 text-base font-semibold group"
+            className="w-full h-12 rounded-none bg-cds-interactive-01 text-white hover:bg-cds-interactive-01/90 transition-colors text-base font-semibold group"
         >
             {isLoading ? 'Signing In...' : (
                 <span className="flex items-center justify-center gap-2">
@@ -374,7 +374,7 @@ export function LoginScreen() {
   const renderMfaForm = () => (
       <div className="w-full space-y-8 animate-in fade-in duration-500">
           <div className="space-y-2">
-            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Security check</h2>
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Security check</h2>
             <p className="text-sm text-muted-foreground">Multi-Factor Authentication is active on your account.</p>
           </div>
 
@@ -384,17 +384,17 @@ export function LoginScreen() {
 
           <form onSubmit={handleMfaVerification} className="space-y-6">
               <div className="space-y-2">
-                  <Label htmlFor="mfa-code">
+                  <Label htmlFor="mfa-code" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">
                       {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
                   </Label>
-                  <div className="relative">
-                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
+                  <div className="relative group">
+                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                       <Input
                           type="text"
                           id="mfa-code"
                           value={mfaCode}
                           onChange={(e) => setMfaCode(e.target.value)}
-                          className="pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-primary focus:border-primary"
+                          className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01"
                           placeholder="000000"
                           maxLength={6}
                           required
@@ -402,10 +402,10 @@ export function LoginScreen() {
                       />
                   </div>
               </div>
-              <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full h-12 text-base font-semibold">
+              <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full h-12 rounded-none bg-cds-interactive-01 text-white hover:bg-cds-interactive-01/90 text-base font-semibold">
                   {isLoading ? 'Verifying...' : 'Verify Identity'}
               </Button>
-              <Button variant="ghost" className="w-full" onClick={() => setStep('credentials')}>
+              <Button variant="ghost" className="w-full rounded-none" onClick={() => setStep('credentials')}>
                   Cancel and try again
               </Button>
           </form>
@@ -413,7 +413,7 @@ export function LoginScreen() {
   );
 
   return (
-    <div className="min-h-screen w-full flex bg-background">
+    <div className="min-h-screen w-full flex bg-background font-sans">
        <div className="hidden lg:flex lg:flex-1 relative overflow-hidden bg-sidebar">
           <Image
             src={EngineeringCollegeImage}
@@ -447,7 +447,7 @@ export function LoginScreen() {
 
           <div className="pt-8 text-center text-[10px] sm:text-xs text-muted-foreground">
               <p>&copy; {new Date().getFullYear()} E.G.S. Pillay Group of Institutions.</p>
-              <p className="mt-1">Authorized personnel only. Sessions are monitored for security.</p>
+              <p className="mt-1 font-mono">Authorized personnel only. Sessions are monitored for security.</p>
           </div>
         </div>
       </div>
