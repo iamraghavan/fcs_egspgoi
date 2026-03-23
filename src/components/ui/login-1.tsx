@@ -432,11 +432,6 @@ export function LoginScreen() {
           <div className="relative w-full">
             {step === 'mfa' ? renderMfaForm() : renderLoginForm()}
           </div>
-
-          <div className="pt-8 text-center text-[10px] sm:text-xs text-cds-text-05">
-              <p>&copy; {new Date().getFullYear()} E.G.S. Pillay Group of Institutions.</p>
-              <p className="mt-1 font-mono tracking-widest opacity-70">Authorized personnel only • Secure Session Active</p>
-          </div>
         </div>
       </div>
     </div>
