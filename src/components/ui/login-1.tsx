@@ -258,26 +258,26 @@ export function LoginScreen() {
   const showTurnstile = !!email && !!password && step === 'credentials';
 
   const renderLoginForm = () => (
-    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+    <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500 font-sans">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
-        <p className="text-sm text-muted-foreground">Continue to the Faculty Performance Portal.</p>
+        <h2 className="text-3xl font-bold tracking-tight text-cds-text-01">Sign in</h2>
+        <p className="text-sm text-cds-text-02">Continue to the Faculty Performance Portal.</p>
       </div>
 
       {loginAnnouncement && (
-        <div className="flex items-start gap-3 p-4 bg-primary/5 border-l-4 border-primary rounded-r-sm">
-            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+        <div className="flex items-start gap-3 p-4 bg-cds-support-04/10 border-l-4 border-cds-support-04 rounded-r-sm">
+            <Info className="h-5 w-5 text-cds-support-04 shrink-0 mt-0.5" />
             <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-primary">System Announcement</p>
-                <p className="text-sm text-foreground leading-relaxed">{loginAnnouncement}</p>
+                <p className="text-xs font-bold uppercase tracking-wider text-cds-support-04">System Announcement</p>
+                <p className="text-sm text-cds-text-01 leading-relaxed">{loginAnnouncement}</p>
             </div>
         </div>
       )}
 
       <form onSubmit={handleLogin} className="space-y-6">
         <div className="space-y-4">
-            <div className="space-y-1">
-                <Label htmlFor="email" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">Email address</Label>
+            <div className="space-y-1.5">
+                <Label htmlFor="email" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">Email address</Label>
                 <div className="relative group">
                     <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                     <Input
@@ -286,7 +286,7 @@ export function LoginScreen() {
                         name="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
                         placeholder="name@egspec.org"
                         required
                         autoComplete="email"
@@ -294,11 +294,11 @@ export function LoginScreen() {
                 </div>
             </div>
 
-            <div className="space-y-1">
+            <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">Password</Label>
-                    <Link href="/u/portal/auth/forgot-password" tabIndex={-1} className="text-xs text-primary hover:underline">
-                        Forgot?
+                    <Label htmlFor="password" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">Password</Label>
+                    <Link href="/u/portal/auth/forgot-password" tabIndex={-1} className="text-xs text-cds-interactive-01 hover:underline font-medium">
+                        Forgot password?
                     </Link>
                 </div>
                 <div className="relative group">
@@ -309,7 +309,7 @@ export function LoginScreen() {
                         name="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
                         placeholder="••••••••"
                         required
                         autoComplete="current-password"
@@ -325,7 +325,7 @@ export function LoginScreen() {
                     </Button>
                 </div>
                 {isCapsOn && (
-                    <div className="flex items-center text-orange-600 text-xs font-medium" role="alert">
+                    <div className="flex items-center text-cds-support-03 text-xs font-bold uppercase tracking-tight" role="alert">
                         <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
                         Caps Lock is active
                     </div>
@@ -334,7 +334,7 @@ export function LoginScreen() {
         </div>
 
         {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
-            <div className="py-2 flex justify-center w-full overflow-hidden">
+            <div className="py-2 flex justify-center w-full overflow-hidden border-y border-cds-ui-03 bg-cds-ui-01/50">
                 <Turnstile
                     sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
                     onVerify={(token) => setTurnstileToken(token)}
@@ -349,9 +349,9 @@ export function LoginScreen() {
                 id="remember-me" 
                 checked={rememberMe} 
                 onCheckedChange={(checked) => setRememberMe(checked as boolean)}
-                className="h-4 w-4 rounded-none border-primary data-[state=checked]:bg-primary"
+                className="h-4 w-4 rounded-none border-cds-interactive-01 data-[state=checked]:bg-cds-interactive-01"
             />
-            <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground leading-none cursor-pointer">
+            <Label htmlFor="remember-me" className="text-sm font-normal text-cds-text-02 leading-none cursor-pointer">
                 Remember this email
             </Label>
         </div>
@@ -359,7 +359,7 @@ export function LoginScreen() {
         <Button
             type="submit"
             disabled={isLoading || (showTurnstile && !turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME)}
-            className="w-full h-12 rounded-none bg-cds-interactive-01 text-white hover:bg-cds-interactive-01/90 transition-colors text-base font-semibold group"
+            className="w-full h-12 rounded-none bg-cds-interactive-01 text-cds-text-04 hover:bg-cds-interactive-01/90 transition-all text-base font-semibold group"
         >
             {isLoading ? 'Signing In...' : (
                 <span className="flex items-center justify-center gap-2">
@@ -372,19 +372,19 @@ export function LoginScreen() {
   );
 
   const renderMfaForm = () => (
-      <div className="w-full space-y-8 animate-in fade-in duration-500">
+      <div className="w-full space-y-8 animate-in fade-in duration-500 font-sans">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Security check</h2>
-            <p className="text-sm text-muted-foreground">Multi-Factor Authentication is active on your account.</p>
+            <h2 className="text-3xl font-bold tracking-tight text-cds-text-01">Security check</h2>
+            <p className="text-sm text-cds-text-02">Multi-Factor Authentication is active on your account.</p>
           </div>
 
-          <div className="p-4 bg-muted/50 rounded-sm text-sm text-muted-foreground leading-relaxed border border-sidebar-border">
+          <div className="p-4 bg-cds-ui-01 rounded-none text-sm text-cds-text-02 leading-relaxed border border-cds-ui-03">
               {tempAuthData?.message}
           </div>
 
           <form onSubmit={handleMfaVerification} className="space-y-6">
               <div className="space-y-2">
-                  <Label htmlFor="mfa-code" className="text-[12px] font-normal text-cds-text-02 uppercase tracking-wider">
+                  <Label htmlFor="mfa-code" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">
                       {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
                   </Label>
                   <div className="relative group">
@@ -394,7 +394,7 @@ export function LoginScreen() {
                           id="mfa-code"
                           value={mfaCode}
                           onChange={(e) => setMfaCode(e.target.value)}
-                          className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01"
+                          className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 text-cds-text-01"
                           placeholder="000000"
                           maxLength={6}
                           required
@@ -402,10 +402,10 @@ export function LoginScreen() {
                       />
                   </div>
               </div>
-              <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full h-12 rounded-none bg-cds-interactive-01 text-white hover:bg-cds-interactive-01/90 text-base font-semibold">
+              <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full h-12 rounded-none bg-cds-interactive-01 text-cds-text-04 hover:bg-cds-interactive-01/90 text-base font-semibold">
                   {isLoading ? 'Verifying...' : 'Verify Identity'}
               </Button>
-              <Button variant="ghost" className="w-full rounded-none" onClick={() => setStep('credentials')}>
+              <Button variant="ghost" className="w-full rounded-none text-cds-interactive-01" onClick={() => setStep('credentials')}>
                   Cancel and try again
               </Button>
           </form>
@@ -413,8 +413,8 @@ export function LoginScreen() {
   );
 
   return (
-    <div className="min-h-screen w-full flex bg-background font-sans">
-       <div className="hidden lg:flex lg:flex-1 relative overflow-hidden bg-sidebar">
+    <div className="min-h-screen w-full flex bg-cds-ui-background font-sans">
+       <div className="hidden lg:flex lg:flex-1 relative overflow-hidden bg-cds-ui-05">
           <Image
             src={EngineeringCollegeImage}
             alt="Campus"
@@ -423,9 +423,9 @@ export function LoginScreen() {
             className="brightness-75"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 via-transparent to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-cds-interactive-01/40 via-transparent to-transparent"></div>
           <div className="absolute bottom-12 left-12 max-w-lg space-y-4">
-              <div className="bg-white/90 p-4 rounded-sm inline-block shadow-lg">
+              <div className="bg-white/95 p-4 rounded-none inline-block shadow-2xl border-b-4 border-cds-interactive-01">
                   <Image src={EgspgoiLogo} alt="Logo" width={140} height={140} />
               </div>
               <div className="space-y-2">
@@ -435,7 +435,7 @@ export function LoginScreen() {
           </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 overflow-y-auto">
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-10 md:p-16 overflow-y-auto">
         <div className="w-full max-w-sm sm:max-w-md space-y-8 sm:space-y-12 py-8" ref={formRef}>
           <div className="flex justify-center lg:hidden">
              <Image src={EgspgoiLogo} alt="Logo" width={80} height={80} className="mb-4" />
@@ -445,9 +445,9 @@ export function LoginScreen() {
             {step === 'mfa' ? renderMfaForm() : renderLoginForm()}
           </div>
 
-          <div className="pt-8 text-center text-[10px] sm:text-xs text-muted-foreground">
+          <div className="pt-8 text-center text-[10px] sm:text-xs text-cds-text-05">
               <p>&copy; {new Date().getFullYear()} E.G.S. Pillay Group of Institutions.</p>
-              <p className="mt-1 font-mono">Authorized personnel only. Sessions are monitored for security.</p>
+              <p className="mt-1 font-mono uppercase tracking-widest opacity-70">Authorized personnel only • Secure Session Active</p>
           </div>
         </div>
       </div>
