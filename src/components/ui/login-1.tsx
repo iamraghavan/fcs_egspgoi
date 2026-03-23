@@ -279,14 +279,13 @@ export function LoginScreen() {
             <div className="space-y-1.5">
                 <Label htmlFor="email" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">Email address</Label>
                 <div className="relative group">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                     <Input
                         type="email"
                         id="email"
                         name="email"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-4 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
                         placeholder="name@egspec.org"
                         required
                         autoComplete="email"
@@ -302,14 +301,13 @@ export function LoginScreen() {
                     </Link>
                 </div>
                 <div className="relative group">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                     <Input
                         type={showPassword ? "text" : "password"}
                         id="password"
                         name="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-4 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
                         placeholder="••••••••"
                         required
                         autoComplete="current-password"
@@ -388,13 +386,12 @@ export function LoginScreen() {
                       {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
                   </Label>
                   <div className="relative group">
-                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-cds-text-05 pointer-events-none group-focus-within:text-cds-interactive-01 transition-colors" aria-hidden="true" />
                       <Input
                           type="text"
                           id="mfa-code"
                           value={mfaCode}
                           onChange={(e) => setMfaCode(e.target.value)}
-                          className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 text-cds-text-01"
+                          className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-4 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 text-cds-text-01"
                           placeholder="000000"
                           maxLength={6}
                           required
