@@ -23,6 +23,7 @@ import { TrendingUp, TrendingDown, Star, Activity, Award, AlertCircle } from "lu
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
+import { cn } from "@/lib/utils";
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
