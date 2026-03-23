@@ -111,7 +111,7 @@ export default function FacultyDashboard() {
             <p className="text-sm text-cds-text-05">Institutional metrics for Academic Year {academicYear}</p>
         </div>
         <Select value={academicYear} onValueChange={setAcademicYear}>
-          <SelectTrigger className="w-[180px] bg-cds-ui-01 border-none rounded-none shadow-none">
+          <SelectTrigger className="w-full sm:w-[180px] bg-cds-ui-01 border-none rounded-none shadow-none">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -223,11 +223,11 @@ export default function FacultyDashboard() {
             <Table>
               <TableHeader className="bg-cds-ui-01">
                 <TableRow>
-                  <TableHead className="text-xs uppercase font-bold text-cds-text-05">Title</TableHead>
-                  <TableHead className="text-xs uppercase font-bold text-cds-text-05">Type</TableHead>
-                  <TableHead className="text-xs uppercase font-bold text-cds-text-05">Status</TableHead>
-                  <TableHead className="text-right text-xs uppercase font-bold text-cds-text-05">Points</TableHead>
-                  <TableHead className="text-right text-xs uppercase font-bold text-cds-text-05">Date</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Title</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Type</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Status</TableHead>
+                  <TableHead className="text-right text-xs font-bold text-cds-text-05">Points</TableHead>
+                  <TableHead className="text-right text-xs font-bold text-cds-text-05">Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
