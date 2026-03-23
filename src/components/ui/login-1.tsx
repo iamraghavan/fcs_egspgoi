@@ -260,7 +260,7 @@ export function LoginScreen() {
   const renderLoginForm = () => (
     <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
       <div className="space-y-2">
-        <h2 className="text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
         <p className="text-sm text-muted-foreground">Continue to the Faculty Performance Portal.</p>
       </div>
 
@@ -279,7 +279,7 @@ export function LoginScreen() {
             <div className="space-y-2">
                 <Label htmlFor="email">Email address</Label>
                 <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
                     <Input
                         type="email"
                         id="email"
@@ -302,7 +302,7 @@ export function LoginScreen() {
                     </Link>
                 </div>
                 <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" aria-hidden="true" />
                     <Input
                         type={showPassword ? "text" : "password"}
                         id="password"
@@ -334,15 +334,13 @@ export function LoginScreen() {
         </div>
 
         {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
-            <div className="py-2 flex justify-center w-full">
-                <div className="w-full flex justify-center overflow-hidden">
-                    <Turnstile
-                        sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
-                        onVerify={(token) => setTurnstileToken(token)}
-                        onExpire={() => setTurnstileToken(null)}
-                        theme="light"
-                    />
-                </div>
+            <div className="py-2 flex justify-center w-full overflow-hidden">
+                <Turnstile
+                    sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    theme="light"
+                />
             </div>
         )}
 
@@ -354,7 +352,7 @@ export function LoginScreen() {
                 className="h-4 w-4 rounded-none border-primary data-[state=checked]:bg-primary"
             />
             <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground leading-none cursor-pointer">
-                Remember this email for next time
+                Remember this email
             </Label>
         </div>
 
@@ -376,7 +374,7 @@ export function LoginScreen() {
   const renderMfaForm = () => (
       <div className="w-full space-y-8 animate-in fade-in duration-500">
           <div className="space-y-2">
-            <h2 className="text-3xl font-bold tracking-tight text-foreground">Security check</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">Security check</h2>
             <p className="text-sm text-muted-foreground">Multi-Factor Authentication is active on your account.</p>
           </div>
 
@@ -390,13 +388,13 @@ export function LoginScreen() {
                       {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
                   </Label>
                   <div className="relative">
-                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground pointer-events-none" aria-hidden="true" />
                       <Input
                           type="text"
                           id="mfa-code"
                           value={mfaCode}
                           onChange={(e) => setMfaCode(e.target.value)}
-                          className="pl-10 h-14 w-full text-center text-2xl font-bold tracking-[0.5em] focus:ring-primary focus:border-primary"
+                          className="pl-10 h-14 w-full text-center text-xl sm:text-2xl font-bold tracking-[0.3em] sm:tracking-[0.5em] focus:ring-primary focus:border-primary"
                           placeholder="000000"
                           maxLength={6}
                           required
@@ -437,10 +435,10 @@ export function LoginScreen() {
           </div>
       </div>
 
-      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 md:p-12 overflow-y-auto">
-        <div className="w-full max-w-[400px] space-y-8 sm:space-y-12 py-8" ref={formRef}>
+      <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-8 md:p-12 overflow-y-auto">
+        <div className="w-full max-w-sm sm:max-w-md space-y-8 sm:space-y-12 py-8" ref={formRef}>
           <div className="flex justify-center lg:hidden">
-             <Image src={EgspgoiLogo} alt="Logo" width={100} height={100} className="mb-4" />
+             <Image src={EgspgoiLogo} alt="Logo" width={80} height={80} className="mb-4" />
           </div>
 
           <div className="relative w-full">
