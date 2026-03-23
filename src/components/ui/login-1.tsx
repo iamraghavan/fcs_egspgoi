@@ -307,7 +307,7 @@ export function LoginScreen() {
                         name="password"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 pl-4 pr-10 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-4 h-12 w-full focus:ring-0 focus:border-b-2 focus:border-cds-interactive-01 transition-all placeholder:text-cds-text-03 text-cds-text-01"
                         placeholder="••••••••"
                         required
                         autoComplete="current-password"
@@ -417,19 +417,10 @@ export function LoginScreen() {
             alt="Campus"
             layout="fill"
             objectFit="cover"
-            className="brightness-75"
+            className="brightness-[0.4]"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-tr from-cds-interactive-01/40 via-transparent to-transparent"></div>
-          <div className="absolute bottom-12 left-12 max-w-lg space-y-4">
-              <div className="bg-white/95 p-4 rounded-none inline-block shadow-2xl border-b-4 border-cds-interactive-01">
-                  <Image src={EgspgoiLogo} alt="Logo" width={140} height={140} />
-              </div>
-              <div className="space-y-2">
-                  <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">Performance & Credit Management</h1>
-                  <p className="text-lg text-white/90 font-medium drop-shadow-sm">Transparent, measurable, and impactful career growth for our esteemed faculty.</p>
-              </div>
-          </div>
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-10 md:p-16 overflow-y-auto">
