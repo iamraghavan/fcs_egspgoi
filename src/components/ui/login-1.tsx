@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle, Info } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ShieldCheck, AlertTriangle, Info, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useAlert } from '@/context/alert-context';
@@ -16,8 +16,9 @@ import { gsap } from 'gsap';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { useRemoteConfig } from '@/hooks/use-remote-config';
+import { cn } from '@/lib/utils';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {
@@ -32,25 +33,20 @@ export function LoginScreen() {
   const searchParams = useSearchParams();
   const { showAlert } = useAlert();
 
-  // Listen for announcement key from Firebase Remote Config
   const loginAnnouncement = useRemoteConfig('login_announcement')?.asString();
 
-  // Login form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
   
-  // UI state
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [isCapsOn, setIsCapsOn] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
   
-  // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
 
-  // MFA flow state
   const [step, setStep] = useState<'credentials' | 'mfa'>('credentials');
   const [tempAuthData, setTempAuthData] = useState<TempAuthData | null>(null);
   const [mfaCode, setMfaCode] = useState("");
@@ -88,8 +84,8 @@ export function LoginScreen() {
 
      if (formRef.current) {
       gsap.fromTo(formRef.current, 
-        { opacity: 0, y: 30 }, 
-        { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.2 }
+        { opacity: 0, y: 20 }, 
+        { opacity: 1, y: 0, duration: 0.6, ease: 'power2.out', stagger: 0.1 }
       );
     }
   }, [searchParams]);
@@ -100,7 +96,7 @@ export function LoginScreen() {
     const sessionId = userData.sessionId || loginResponse.sessionId;
 
     if (!token) {
-      showAlert("Login Error", "Incomplete login data received from server. The authentication token is missing.");
+      showAlert("Login Error", "Authentication token is missing from the server response.");
       return;
     }
 
@@ -133,7 +129,7 @@ export function LoginScreen() {
     const userRole = userData.role || decodedToken?.role;
     
     if (!userId || !userRole) {
-       showAlert("Login Error", "Could not determine user role or ID from the server response.");
+       showAlert("Login Error", "Session profile could not be identified.");
        localStorage.removeItem("token");
        return;
     }
@@ -179,7 +175,7 @@ export function LoginScreen() {
     }
 
     if (!turnstileToken) {
-        showAlert("Verification Failed", "Please complete the security check.");
+        showAlert("Security Check Required", "Please complete the verification below.");
         setIsLoading(false);
         return;
     }
@@ -196,7 +192,7 @@ export function LoginScreen() {
       const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(responseData.message || "An unknown error occurred during login.");
+        throw new Error(responseData.message || "Invalid credentials provided.");
       }
       
       if (responseData.success && responseData.mfaRequired) {
@@ -204,17 +200,17 @@ export function LoginScreen() {
           userId: responseData.userId,
           email: email,
           mfaType: responseData.mfaType,
-          message: responseData.message || `A verification code has been sent to your ${responseData.mfaType === 'app' ? 'authenticator app' : 'email'}.`,
+          message: responseData.message || `Secure code sent to your ${responseData.mfaType === 'app' ? 'authenticator' : 'email'}.`,
         });
         setStep('mfa');
       } else if (responseData.success && !responseData.mfaRequired) {
         processSuccessfulLogin(responseData);
       } else {
-        throw new Error(responseData.message || "Login failed");
+        throw new Error(responseData.message || "Access denied.");
       }
 
     } catch (error: any) {
-        showAlert("Login Failed", error.message);
+        showAlert("Sign-in Failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -226,7 +222,7 @@ export function LoginScreen() {
 
       try {
           if (!tempAuthData || !tempAuthData.email || !tempAuthData.mfaType) {
-              throw new Error("MFA information is missing. Please try logging in again.");
+              throw new Error("MFA session expired. Please log in again.");
           }
 
           const body = {
@@ -262,172 +258,199 @@ export function LoginScreen() {
   const showTurnstile = !!email && !!password && step === 'credentials';
 
   const renderLoginForm = () => (
-    <form onSubmit={handleLogin} className="space-y-6">
-      {/* Display announcement from Remote Config if present */}
-      {loginAnnouncement && (
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3 items-start animate-pulse">
-            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-            <p className="text-sm font-medium text-primary leading-tight">{loginAnnouncement}</p>
-        </div>
-      )}
-      <div>
-        <Label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-          Your email
-        </Label>
-          <div className="relative">
-          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-          <Input
-            type="email"
-            id="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="pl-10"
-            placeholder="Enter your email"
-            required
-            aria-required="true"
-            autoComplete="email"
-          />
-        </div>
+    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+      <div className="space-y-2">
+        <h2 className="text-3xl font-bold tracking-tight text-foreground">Sign in</h2>
+        <p className="text-sm text-muted-foreground">Continue to the Faculty Performance Portal.</p>
       </div>
 
-      <div>
-        <Label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-          Password
-        </Label>
-        <div className="relative">
-          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-          <Input
-            type={showPassword ? "text" : "password"}
-            id="password"
-            name="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="pl-10 pr-10"
-            placeholder="Enter your password"
-            required
-            aria-required="true"
-            autoComplete="current-password"
-          />
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            onClick={togglePasswordVisibility}
-            className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground h-full"
-            aria-label={showPassword ? "Hide password" : "Show password"}
-          >
-            {showPassword ? <EyeOff className="w-5 h-5" aria-hidden="true" /> : <Eye className="w-5 h-5" aria-hidden="true" />}
-          </Button>
+      {loginAnnouncement && (
+        <div className="flex items-start gap-3 p-4 bg-primary/5 border-l-4 border-primary rounded-r-sm">
+            <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-primary">System Announcement</p>
+                <p className="text-sm text-foreground leading-relaxed">{loginAnnouncement}</p>
+            </div>
         </div>
-        {isCapsOn && (
-            <div className="flex items-center text-yellow-600 text-xs mt-2" role="alert">
-                <AlertTriangle className="h-4 w-4 mr-2" />
-                Caps Lock is on
+      )}
+
+      <form onSubmit={handleLogin} className="space-y-6">
+        <div className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="email">Email address</Label>
+                <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                        type="email"
+                        id="email"
+                        name="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-10 h-12 bg-muted/30 border-sidebar-border focus:ring-primary focus:border-primary"
+                        placeholder="e.g. name@egspec.org"
+                        required
+                        autoComplete="email"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                    <Label htmlFor="password">Password</Label>
+                    <Link href="/u/portal/auth/forgot-password" tabIndex={-1} className="text-xs text-primary hover:underline">
+                        Forgot?
+                    </Link>
+                </div>
+                <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                        type={showPassword ? "text" : "password"}
+                        id="password"
+                        name="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-10 pr-10 h-12 bg-muted/30 border-sidebar-border focus:ring-primary focus:border-primary"
+                        placeholder="••••••••"
+                        required
+                        autoComplete="current-password"
+                    />
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={togglePasswordVisibility}
+                        className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground hover:text-foreground h-full"
+                    >
+                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
+                {isCapsOn && (
+                    <div className="flex items-center text-orange-600 text-xs font-medium" role="alert">
+                        <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
+                        Caps Lock is active
+                    </div>
+                )}
+            </div>
+        </div>
+
+        {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
+            <div className="py-2 flex justify-center">
+                <Turnstile
+                    sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
+                    onVerify={(token) => setTurnstileToken(token)}
+                    onExpire={() => setTurnstileToken(null)}
+                    theme="light"
+                />
             </div>
         )}
-      </div>
 
-      {isClient && showTurnstile && email !== process.env.NEXT_PUBLIC_OA_USERNAME && (
-        <div className="flex justify-center">
-            <Turnstile
-                sitekey={process.env.NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY!}
-                onVerify={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                theme="light"
+        <div className="flex items-center space-x-2">
+            <Checkbox 
+                id="remember-me" 
+                checked={rememberMe} 
+                onCheckedChange={(checked) => setRememberMe(checked as boolean)}
+                className="h-4 w-4 rounded-none border-primary data-[state=checked]:bg-primary"
             />
+            <Label htmlFor="remember-me" className="text-sm font-normal text-muted-foreground leading-none">
+                Remember this email for next time
+            </Label>
         </div>
-      )}
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center">
-          <Checkbox id="remember-me" checked={rememberMe} onCheckedChange={(checked) => setRememberMe(checked as boolean)} />
-          <Label htmlFor="remember-me" className="ml-2 block text-sm text-foreground">Remember me</Label>
-        </div>
-        <Link href="/u/portal/auth/forgot-password" className="text-sm text-primary hover:text-primary/80 font-medium">
-          Forgot password?
-        </Link>
-      </div>
-
-      <Button
-        type="submit"
-        disabled={isLoading || (showTurnstile && !turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME)}
-        className="w-full"
-      >
-        {isLoading ? 'Signing In...' : 'Sign In'}
-      </Button>
-    </form>
+        <Button
+            type="submit"
+            disabled={isLoading || (showTurnstile && !turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME)}
+            className="w-full h-12 text-base font-semibold group"
+        >
+            {isLoading ? 'Signing In...' : (
+                <span className="flex items-center justify-center gap-2">
+                    Sign in <ArrowRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
+                </span>
+            )}
+        </Button>
+      </form>
+    </div>
   );
 
   const renderMfaForm = () => (
-      <form onSubmit={handleMfaVerification} className="space-y-6">
-          <p className="text-center text-sm text-muted-foreground">{tempAuthData?.message}</p>
-          <div>
-              <Label htmlFor="mfa-code">
-                  {tempAuthData?.mfaType === 'email' ? '6-Digit Code from Email' : '6-Digit Code from Authenticator App'}
-              </Label>
-              <div className="relative mt-2">
-                  <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
-                  <Input
-                      type="text"
-                      id="mfa-code"
-                      value={mfaCode}
-                      onChange={(e) => setMfaCode(e.target.value)}
-                      className="pl-10 text-center tracking-[0.5em]"
-                      placeholder="_ _ _ _ _ _"
-                      maxLength={6}
-                      required
-                      aria-required="true"
-                      autoComplete="one-time-code"
-                  />
-              </div>
+      <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tight text-foreground">Security check</h2>
+            <p className="text-sm text-muted-foreground">Multi-Factor Authentication is active on your account.</p>
           </div>
-          <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full">
-              {isLoading ? 'Verifying...' : 'Verify'}
-          </Button>
-          <Button variant="link" className="w-full" onClick={() => setStep('credentials')}>
-              Back to Login
-          </Button>
-      </form>
+
+          <div className="p-4 bg-muted/50 rounded-sm text-sm text-muted-foreground leading-relaxed border border-sidebar-border">
+              {tempAuthData?.message}
+          </div>
+
+          <form onSubmit={handleMfaVerification} className="space-y-6">
+              <div className="space-y-2">
+                  <Label htmlFor="mfa-code">
+                      {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
+                  </Label>
+                  <div className="relative">
+                      <ShieldCheck className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" aria-hidden="true" />
+                      <Input
+                          type="text"
+                          id="mfa-code"
+                          value={mfaCode}
+                          onChange={(e) => setMfaCode(e.target.value)}
+                          className="pl-10 h-14 text-center text-2xl font-bold tracking-[0.5em] focus:ring-primary focus:border-primary"
+                          placeholder="000000"
+                          maxLength={6}
+                          required
+                          autoComplete="one-time-code"
+                      />
+                  </div>
+              </div>
+              <Button type="submit" disabled={isLoading || mfaCode.length < 6} className="w-full h-12 text-base font-semibold">
+                  {isLoading ? 'Verifying...' : 'Verify Identity'}
+              </Button>
+              <Button variant="ghost" className="w-full" onClick={() => setStep('credentials')}>
+                  Cancel and try again
+              </Button>
+          </form>
+      </div>
   );
 
   return (
-    <>
-    <div className="w-full min-h-screen flex flex-col md:flex-row">
-       <div className="hidden md:flex flex-1 relative">
+    <div className="min-h-screen w-full flex bg-background">
+       <div className="hidden lg:flex lg:flex-1 relative overflow-hidden bg-sidebar">
           <Image
             src={EngineeringCollegeImage}
-            alt="EGS Pillay Engineering College campus building"
+            alt="Campus"
             layout="fill"
             objectFit="cover"
-            quality={90}
+            className="brightness-75"
             priority
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary/40 via-transparent to-transparent"></div>
+          <div className="absolute bottom-12 left-12 max-w-lg space-y-4">
+              <div className="bg-white/90 p-4 rounded-sm inline-block shadow-lg">
+                  <Image src={EgspgoiLogo} alt="Logo" width={140} height={140} />
+              </div>
+              <div className="space-y-2">
+                  <h1 className="text-4xl font-bold text-white tracking-tight drop-shadow-md">Performance & Credit Management</h1>
+                  <p className="text-lg text-white/90 font-medium drop-shadow-sm">Transparent, measurable, and impactful career growth for our esteemed faculty.</p>
+              </div>
+          </div>
       </div>
 
-      <div className="flex-1 bg-background flex items-center justify-center p-6 md:p-12">
-        <div className="w-full max-w-md" ref={formRef}>
-          <div className="text-center mb-8">
-             <Image
-                  src={EgspgoiLogo}
-                  alt="EGS Pillay Group of Institutions Logo"
-                  width={100}
-                  height={100}
-                  className="mx-auto mb-4"
-              />
-            <h2 className="text-3xl font-bold text-foreground mb-2">
-              {step === 'mfa' ? 'Two-Factor Authentication' : 'Welcome Back'}
-            </h2>
-            <p className="text-muted-foreground">
-              {step === 'mfa' ? 'Enter the code to complete your login.' : 'Welcome back to CreditWise — Continue your journey'}
-            </p>
+      <div className="flex-1 flex flex-col items-center justify-center p-6 md:p-12">
+        <div className="w-full max-w-md space-y-12" ref={formRef}>
+          <div className="flex justify-center lg:hidden">
+             <Image src={EgspgoiLogo} alt="Logo" width={120} height={120} className="mb-4" />
           </div>
 
-          {step === 'mfa' ? renderMfaForm() : renderLoginForm()}
+          <div className="relative">
+            {step === 'mfa' ? renderMfaForm() : renderLoginForm()}
+          </div>
+
+          <div className="pt-12 text-center text-xs text-muted-foreground">
+              <p>&copy; {new Date().getFullYear()} E.G.S. Pillay Group of Institutions.</p>
+              <p className="mt-1">Authorized personnel only. Sessions are monitored for security.</p>
+          </div>
         </div>
       </div>
     </div>
-    </>
   );
 }
