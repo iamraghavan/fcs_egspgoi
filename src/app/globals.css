@@ -115,6 +115,31 @@
     @apply flex h-10 w-full border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-b-2 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all;
   }
 
+  .ui-select-trigger {
+    @apply flex h-10 w-full items-center justify-between border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer;
+    border-radius: 0;
+  }
+
+  .ui-select-item {
+    @apply relative flex w-full cursor-default select-none items-center py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+  }
+
+  .ui-dialog-content {
+    @apply fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-none;
+  }
+
+  .ui-dropdown-item {
+    @apply relative flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0;
+  }
+
+  .ui-menubar-trigger {
+    @apply flex cursor-default select-none items-center rounded-sm px-3 py-1.5 text-sm font-medium outline-none focus:bg-accent focus:text-accent-foreground data-[state=open]:bg-accent data-[state=open]:text-accent-foreground;
+  }
+
+  .ui-menubar-item {
+    @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+  }
+
   .cds-grid {
     @apply grid gap-4 w-full;
     grid-template-columns: repeat(4, 1fr);
