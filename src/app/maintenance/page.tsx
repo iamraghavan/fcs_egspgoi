@@ -1,3 +1,4 @@
+
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
 import { Twitter, Instagram, Facebook, Mail, Globe, Hammer } from 'lucide-react';
@@ -30,7 +31,7 @@ export default function MaintenancePage() {
                 
                 <CardContent className="p-8 sm:p-12 text-center space-y-8">
                     <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-wider mb-2">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-bold tracking-wider mb-2">
                             <Hammer className="w-3 h-3" />
                             System Upgrade in Progress
                         </div>
@@ -77,7 +78,7 @@ export default function MaintenancePage() {
                 </CardContent>
             </Card>
             
-            <p className="mt-8 text-center text-slate-400 text-xs font-semibold uppercase tracking-widest opacity-80">
+            <p className="mt-8 text-center text-slate-400 text-xs font-semibold tracking-widest opacity-80">
                 © {new Date().getFullYear()} CreditWise System • E.G.S. Pillay Group of Institutions
             </p>
         </main>

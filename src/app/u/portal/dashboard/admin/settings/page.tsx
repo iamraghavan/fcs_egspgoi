@@ -18,6 +18,7 @@ import { SessionManager } from "@/components/session-manager"
 import { PushNotificationManager } from "@/components/push-notification-manager"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
+import { Badge } from "@/components/ui/badge"
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
@@ -258,7 +259,7 @@ export default function AdminSettingsPage() {
                         <h2 className="text-xl font-bold mt-4 text-foreground">{user?.name}</h2>
                         <p className="text-sm text-muted-foreground mb-2 tabular-nums">{user?.email}</p>
                         
-                        <Badge className="bg-primary/10 text-primary border-none uppercase text-[10px] tracking-widest font-bold px-3 py-1">
+                        <Badge className="bg-primary/10 text-primary border-none text-[10px] tracking-widest font-bold px-3 py-1">
                             Administrator
                         </Badge>
                     </CardContent>
@@ -272,7 +273,7 @@ export default function AdminSettingsPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-2">
-                        <p className="text-[10px] text-muted-foreground uppercase leading-relaxed">Account Protection Level: High</p>
+                        <p className="text-[10px] text-muted-foreground leading-relaxed">Account Protection Level: High</p>
                         <Button variant="outline" className="w-full justify-start text-xs h-8">Audit Logs</Button>
                     </CardContent>
                 </Card>
@@ -421,7 +422,7 @@ export default function AdminSettingsPage() {
                                 <CardContent>
                                     <PushNotificationManager />
                                 </CardContent>
-                            </Card>
+                            </div>
                         </div>
                     </TabsContent>
                 </Tabs>

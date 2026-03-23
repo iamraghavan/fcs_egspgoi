@@ -268,7 +268,7 @@ export function LoginScreen() {
         <div className="flex items-start gap-3 p-4 bg-cds-support-04/10 border-l-4 border-cds-support-04 rounded-r-sm">
             <Info className="h-5 w-5 text-cds-support-04 shrink-0 mt-0.5" />
             <div className="space-y-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-cds-support-04">System Announcement</p>
+                <p className="text-xs font-bold tracking-wider text-cds-support-04">System Announcement</p>
                 <p className="text-sm text-cds-text-01 leading-relaxed">{loginAnnouncement}</p>
             </div>
         </div>
@@ -277,7 +277,7 @@ export function LoginScreen() {
       <form onSubmit={handleLogin} className="space-y-6">
         <div className="space-y-4">
             <div className="space-y-1.5">
-                <Label htmlFor="email" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">Email address</Label>
+                <Label htmlFor="email" className="text-[12px] font-medium text-cds-text-02 tracking-wider">Email address</Label>
                 <div className="relative group">
                     <Input
                         type="email"
@@ -295,7 +295,7 @@ export function LoginScreen() {
 
             <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">Password</Label>
+                    <Label htmlFor="password" className="text-[12px] font-medium text-cds-text-02 tracking-wider">Password</Label>
                     <Link href="/u/portal/auth/forgot-password" tabIndex={-1} className="text-xs text-cds-interactive-01 hover:underline font-medium">
                         Forgot password?
                     </Link>
@@ -323,7 +323,7 @@ export function LoginScreen() {
                     </Button>
                 </div>
                 {isCapsOn && (
-                    <div className="flex items-center text-cds-support-03 text-xs font-bold uppercase tracking-tight" role="alert">
+                    <div className="flex items-center text-cds-support-03 text-xs font-bold tracking-tight" role="alert">
                         <AlertTriangle className="h-3.5 w-3.5 mr-1.5" />
                         Caps Lock is active
                     </div>
@@ -382,7 +382,7 @@ export function LoginScreen() {
 
           <form onSubmit={handleMfaVerification} className="space-y-6">
               <div className="space-y-2">
-                  <Label htmlFor="mfa-code" className="text-[12px] font-medium text-cds-text-02 uppercase tracking-wider">
+                  <Label htmlFor="mfa-code" className="text-[12px] font-medium text-cds-text-02 tracking-wider">
                       {tempAuthData?.mfaType === 'email' ? '6-Digit Email Code' : 'Authenticator Code'}
                   </Label>
                   <div className="relative group">
@@ -444,7 +444,7 @@ export function LoginScreen() {
 
           <div className="pt-8 text-center text-[10px] sm:text-xs text-cds-text-05">
               <p>&copy; {new Date().getFullYear()} E.G.S. Pillay Group of Institutions.</p>
-              <p className="mt-1 font-mono uppercase tracking-widest opacity-70">Authorized personnel only • Secure Session Active</p>
+              <p className="mt-1 font-mono tracking-widest opacity-70">Authorized personnel only • Secure Session Active</p>
           </div>
         </div>
       </div>
