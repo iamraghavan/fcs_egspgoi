@@ -2,7 +2,23 @@
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, Line, LineChart, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
+import { 
+  Bar, 
+  BarChart, 
+  ResponsiveContainer, 
+  XAxis, 
+  YAxis, 
+  Tooltip, 
+  Line, 
+  LineChart, 
+  PieChart, 
+  Pie, 
+  Cell, 
+  Legend, 
+  CartesianGrid,
+  Area,
+  AreaChart
+} from "recharts";
 import {
   Card,
   CardContent,
@@ -15,11 +31,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAlert } from "@/context/alert-context";
 import { gsap } from "gsap";
-import { Users, FolderKanban, ShieldAlert, BarChartHorizontal, Megaphone, Send } from 'lucide-react';
+import { Users, FolderKanban, ShieldAlert, BarChartHorizontal, Megaphone, Send, Activity, TrendingUp, Clock } from 'lucide-react';
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { cn } from "@/lib/utils";
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
@@ -92,7 +109,7 @@ export default function AdminDashboard() {
         const [usersRes, creditsRes, recentActivitiesRes, trendsRes] = await Promise.all([
              fetch(`${API_BASE_URL}/api/v1/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
              fetch(`${API_BASE_URL}/api/v1/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
-             fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=5&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } }),
+             fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=8&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } }),
              fetch(`${API_BASE_URL}/api/v1/analytics/credit-trends`, { headers: { Authorization: `Bearer ${token}` } })
         ]);
 
@@ -107,13 +124,19 @@ export default function AdminDashboard() {
         }
 
         const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
-        const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => ({ name, value: Number(value), color: `hsl(var(--chart-${index + 1}))`})) : [];
+        const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => {
+            let color = 'var(--cds-interactive-01)';
+            if (name === 'pending') color = 'var(--cds-support-03)';
+            if (name === 'rejected') color = 'var(--cds-support-01)';
+            if (name === 'approved') color = 'var(--cds-support-02)';
+            return { name, value: Number(value), color };
+        }) : [];
         
-        const formattedRecentActivities = (recentActivitiesData.success && Array.isArray(recentActivitiesData.items)) ? recentActivitiesData.items.map((item: any) => ({
+        const formattedRecentActivities = (recentActivitiesData.success && (Array.isArray(recentActivitiesData.items) || Array.isArray(recentActivitiesData.data))) ? (recentActivitiesData.items || recentActivitiesData.data).map((item: any) => ({
              id: item._id,
-             description: `New submission: "${item.title}"`,
-             user: item.faculty?.name || 'N/A',
-             date: new Date(item.createdAt).toISOString().split('T')[0]
+             description: `Submission: "${item.title}"`,
+             user: item.facultySnapshot?.name || item.faculty?.name || 'N/A',
+             date: new Date(item.createdAt).toLocaleDateString()
         })) : [];
 
         setAnalytics({
@@ -141,17 +164,17 @@ export default function AdminDashboard() {
     if (!loading && containerRef.current) {
         gsap.fromTo(
             ".dashboard-card",
-            { opacity: 0, y: 20 },
-            { opacity: 1, y: 0, stagger: 0.1, duration: 0.5, ease: "power3.out" }
+            { opacity: 0, y: 15 },
+            { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" }
         );
     }
   }, [loading]);
 
   const overviewCards = [
-    { title: "Total Users", value: analytics?.totalUsers ?? 0, icon: Users },
-    { title: "Total Credits Submitted", value: analytics?.totalCredits ?? 0, icon: BarChartHorizontal },
-    { title: "Pending Submissions", value: analytics?.pendingSubmissions ?? 0, icon: FolderKanban },
-    { title: "Active Appeals", value: analytics?.activeAppeals ?? 0, icon: ShieldAlert },
+    { title: "Total Users", value: analytics?.totalUsers ?? 0, icon: Users, accent: "primary" },
+    { title: "Submitted Work", value: analytics?.totalCredits ?? 0, icon: BarChartHorizontal, accent: "blue" },
+    { title: "Pending Review", value: analytics?.pendingSubmissions ?? 0, icon: Clock, accent: "yellow" },
+    { title: "Active Appeals", value: analytics?.activeAppeals ?? 0, icon: ShieldAlert, accent: "red" },
   ];
 
   const trendData = useMemo(() => {
@@ -203,188 +226,231 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-8" ref={containerRef}>
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sidebar-border pb-6">
         <div>
-          <h2 className="text-3xl font-bold text-foreground">Admin Dashboard</h2>
-          <p className="text-muted-foreground">An overview of the faculty credit system for the academic year {academicYear}.</p>
+          <h2 className="text-3xl font-bold tracking-tight text-cds-text-01">System Administrator</h2>
+          <p className="text-sm text-cds-text-05 mt-1">Institutional overview for Academic Year {academicYear}</p>
         </div>
         <Select value={academicYear} onValueChange={setAcademicYear}>
-          <SelectTrigger className="w-full sm:w-[220px]">
+          <SelectTrigger className="w-full sm:w-[220px] bg-cds-ui-01 border-none rounded-none">
             <SelectValue placeholder="Select Academic Year" />
           </SelectTrigger>
           <SelectContent>
             {yearOptions.map(year => (
-                <SelectItem key={year} value={year}>Academic Year {year}</SelectItem>
+                <SelectItem key={year} value={year}>AY {year}</SelectItem>
             ))}
           </SelectContent>
         </Select>
-      </div>
+      </header>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* Overview Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {overviewCards.map((card, index) => (
-            <Card key={card.title} className="dashboard-card">
+            <Card key={card.title} className="dashboard-card border-none bg-cds-ui-01 hover:bg-cds-ui-03 transition-colors rounded-none">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-                <card.icon className="h-4 w-4 text-muted-foreground" />
+                <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">{card.title}</CardTitle>
+                <card.icon className={cn(
+                    "h-4 w-4",
+                    card.accent === 'primary' && "text-primary",
+                    card.accent === 'blue' && "text-blue-600",
+                    card.accent === 'yellow' && "text-amber-500",
+                    card.accent === 'red' && "text-red-600",
+                )} />
               </CardHeader>
               <CardContent>
-                {loading ? <Skeleton className="h-8 w-20" /> : <div className="text-2xl font-bold">{card.value}</div>}
+                {loading ? <Skeleton className="h-8 w-20 bg-cds-ui-03" /> : <div className="text-3xl font-bold tracking-tighter text-cds-text-01 tabular-nums">{card.value}</div>}
               </CardContent>
             </Card>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <Card className="lg:col-span-2 dashboard-card">
-              <CardHeader className="flex flex-row items-center justify-between">
-                  <div>
-                      <CardTitle className="flex items-center gap-2">
-                          <Megaphone className="h-5 w-5 text-primary" />
-                          Broadcast Announcement
-                      </CardTitle>
-                      <CardDescription>Send a push notification to all faculty members instantly.</CardDescription>
-                  </div>
-              </CardHeader>
-              <CardContent>
-                  <form onSubmit={handleBroadcast} className="space-y-4">
-                      <div>
-                          <Input 
-                            placeholder="Announcement Title (e.g., Appeal Window Extended!)" 
-                            value={announcementTitle}
-                            onChange={(e) => setAnnouncementTitle(e.target.value)}
-                            required
-                          />
+      <div className="grid grid-cols-1 lg:grid-cols-16 gap-6">
+          {/* Main Action Area */}
+          <div className="lg:col-span-10 space-y-6">
+              <Card className="dashboard-card border rounded-none shadow-none">
+                  <CardHeader className="bg-cds-ui-01/50 border-b border-sidebar-border">
+                      <div className="flex items-center gap-3">
+                          <div className="p-2 bg-primary/10 rounded-none">
+                            <Megaphone className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                              <CardTitle className="text-base font-semibold">Broadcast Announcement</CardTitle>
+                              <CardDescription className="text-xs">Publish institutional updates to all faculty members via push notifications.</CardDescription>
+                          </div>
                       </div>
-                      <div>
-                          <Textarea 
-                            placeholder="Type your message here..." 
-                            rows={3} 
-                            value={announcementBody}
-                            onChange={(e) => setAnnouncementBody(e.target.value)}
-                            required
-                          />
-                      </div>
-                      <div className="flex justify-end">
-                          <Button type="submit" disabled={isBroadcasting || loading}>
-                              {isBroadcasting ? "Sending..." : (
-                                  <><Send className="mr-2 h-4 w-4" /> Send Announcement</>
-                              )}
-                          </Button>
-                      </div>
-                  </form>
-              </CardContent>
-          </Card>
-          
-          <Card className="lg:col-span-1 dashboard-card">
-              <CardHeader>
-                  <CardTitle>Credits by Status</CardTitle>
-                  <CardDescription>Breakdown of all credits.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                 {loading ? <Skeleton className="h-[200px] w-full" /> : 
-                  <ResponsiveContainer width="100%" height={200}>
-                      <PieChart>
-                          <Pie
-                            data={analytics?.creditStatus}
-                            cx="50%"
-                            cy="50%"
-                            labelLine={false}
-                            outerRadius={60}
-                            fill="#8884d8"
-                            dataKey="value"
-                            nameKey="name"
-                          >
-                            {analytics?.creditStatus.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <Tooltip />
-                          <Legend />
-                      </PieChart>
-                  </ResponsiveContainer>}
-              </CardContent>
-          </Card>
-      </div>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <Card className="lg:col-span-3 dashboard-card">
-              <CardHeader>
-                  <CardTitle>User Growth</CardTitle>
-                  <CardDescription>New user registrations over time.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? <Skeleton className="h-[250px] w-full" /> : 
-                  <ResponsiveContainer width="100%" height={250}>
-                      <LineChart data={analytics?.userGrowth}>
-                          <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                          <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                          <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="users" name="New Users" stroke="hsl(var(--primary))" strokeWidth={2} />
-                      </LineChart>
-                  </ResponsiveContainer>}
-              </CardContent>
-          </Card>
-          <Card className="lg:col-span-2 dashboard-card">
-              <CardHeader>
-                  <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>A log of recent important events.</CardDescription>
-              </CardHeader>
-              <CardContent>
-                {loading ? <Skeleton className="h-[250px] w-full" /> : 
-                  <div className="space-y-4 max-h-[250px] overflow-y-auto pr-2">
-                    {analytics?.recentActivities?.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-4">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary">
-                          <FolderKanban className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium leading-snug">{activity.description}</p>
-                          <p className="text-xs text-muted-foreground">{activity.user} &middot; {activity.date}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>}
-              </CardContent>
-          </Card>
-      </div>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                      <form onSubmit={handleBroadcast} className="space-y-4">
+                          <div className="grid grid-cols-1 gap-4">
+                              <Input 
+                                placeholder="Subject title (e.g., Extended Appeal Deadline)" 
+                                value={announcementTitle}
+                                onChange={(e) => setAnnouncementTitle(e.target.value)}
+                                required
+                                className="bg-cds-ui-01 border-none focus:ring-1 focus:ring-primary rounded-none h-11"
+                              />
+                              <Textarea 
+                                placeholder="Type the notification content here..." 
+                                rows={3} 
+                                value={announcementBody}
+                                onChange={(e) => setAnnouncementBody(e.target.value)}
+                                required
+                                className="bg-cds-ui-01 border-none focus:ring-1 focus:ring-primary rounded-none resize-none"
+                              />
+                          </div>
+                          <div className="flex justify-end">
+                              <Button type="submit" disabled={isBroadcasting || loading} className="rounded-none px-8 font-semibold">
+                                  {isBroadcasting ? "Broadcasting..." : (
+                                      <><Send className="mr-2 h-4 w-4" /> Send Broadcast</>
+                                  )}
+                              </Button>
+                          </div>
+                      </form>
+                  </CardContent>
+              </Card>
 
-       <div className="grid grid-cols-1 gap-6">
-          <Card className="dashboard-card">
-                <CardHeader className="flex flex-row items-center justify-between">
+              <Card className="dashboard-card border rounded-none shadow-none">
+                <CardHeader className="flex flex-row items-center justify-between pb-6">
                     <div>
-                        <CardTitle>Credit Request Trends</CardTitle>
-                        <CardDescription>Trends for pending, approved, and rejected credits.</CardDescription>
+                        <CardTitle className="text-base font-semibold flex items-center gap-2">
+                            <TrendingUp className="h-4 w-4 text-primary" />
+                            Credit Processing Trends
+                        </CardTitle>
+                        <CardDescription className="text-xs">Activity volume across approved and rejected submissions.</CardDescription>
                     </div>
                      <Select value={trendsTimescale} onValueChange={(v) => setTrendsTimescale(v as any)}>
-                        <SelectTrigger className="w-[120px]">
+                        <SelectTrigger className="w-[120px] h-8 text-xs bg-cds-ui-01 border-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="daily">Daily</SelectItem>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
+                            <SelectItem value="daily">Daily View</SelectItem>
+                            <SelectItem value="weekly">Weekly View</SelectItem>
+                            <SelectItem value="monthly">Monthly View</SelectItem>
                         </SelectContent>
                     </Select>
                 </CardHeader>
                 <CardContent>
-                    {loading ? <Skeleton className="h-[280px] w-full" /> :
-                    <ResponsiveContainer width="100%" height={280}>
-                        <LineChart data={trendData}>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                            <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                            <Tooltip />
-                            <Legend />
-                            <Line type="monotone" dataKey="pending" stroke="#f59e0b" name="Pending" />
-                            <Line type="monotone" dataKey="approved" stroke="#10b981" name="Approved" />
-                            <Line type="monotone" dataKey="rejected" stroke="#ef4444" name="Rejected" />
-                        </LineChart>
-                    </ResponsiveContainer>}
+                    {loading ? <Skeleton className="h-[300px] w-full bg-cds-ui-01" /> :
+                    <div className="h-[300px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={trendData}>
+                                <defs>
+                                    <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="var(--cds-support-02)" stopOpacity={0.1}/>
+                                        <stop offset="95%" stopColor="var(--cds-support-02)" stopOpacity={0}/>
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sidebar-border)" />
+                                <XAxis dataKey="name" stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                                <YAxis stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false} />
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: 'var(--cds-ui-05)', border: 'none', color: '#fff', borderRadius: '0' }}
+                                    itemStyle={{ fontSize: '12px' }}
+                                />
+                                <Legend verticalAlign="top" align="right" iconType="circle" wrapperStyle={{ fontSize: '11px', paddingBottom: '20px' }} />
+                                <Area type="monotone" dataKey="approved" stroke="var(--cds-support-02)" fillOpacity={1} fill="url(#colorApproved)" name="Approved" strokeWidth={2} />
+                                <Area type="monotone" dataKey="rejected" stroke="var(--cds-support-01)" fill="transparent" name="Rejected" strokeWidth={2} strokeDasharray="5 5" />
+                                <Area type="monotone" dataKey="pending" stroke="var(--cds-support-03)" fill="transparent" name="Pending" strokeWidth={2} />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>}
                 </CardContent>
             </Card>
+          </div>
+
+          {/* Sidebar Insights */}
+          <div className="lg:col-span-6 space-y-6">
+              <Card className="dashboard-card border rounded-none shadow-none">
+                  <CardHeader>
+                      <CardTitle className="text-base font-semibold">Credit Status Distribution</CardTitle>
+                      <CardDescription className="text-xs">Overall health of submitted performance records.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col items-center">
+                    {loading ? <Skeleton className="h-[220px] w-full bg-cds-ui-01" /> : 
+                      <div className="h-[220px] w-full">
+                        <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                                <Pie
+                                    data={analytics?.creditStatus}
+                                    cx="50%"
+                                    cy="50%"
+                                    innerRadius={60}
+                                    outerRadius={80}
+                                    paddingAngle={4}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    stroke="none"
+                                >
+                                    {analytics?.creditStatus.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Pie>
+                                <Tooltip 
+                                    contentStyle={{ backgroundColor: 'var(--cds-ui-05)', border: 'none', color: '#fff', borderRadius: '0' }}
+                                />
+                                <Legend iconType="rect" verticalAlign="bottom" wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+                            </PieChart>
+                        </ResponsiveContainer>
+                      </div>}
+                  </CardContent>
+              </Card>
+
+              <Card className="dashboard-card border rounded-none shadow-none">
+                  <CardHeader className="flex flex-row items-center justify-between">
+                      <div>
+                          <CardTitle className="text-base font-semibold">System Activity Log</CardTitle>
+                          <CardDescription className="text-xs">Recent mission-critical system events.</CardDescription>
+                      </div>
+                      <Activity className="h-4 w-4 text-cds-text-05" />
+                  </CardHeader>
+                  <CardContent className="pt-2">
+                    {loading ? <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-12 w-full bg-cds-ui-01" />)}</div> : 
+                      <div className="space-y-1 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
+                        {analytics?.recentActivities?.map((activity) => (
+                          <div key={activity.id} className="flex items-start gap-4 p-3 hover:bg-cds-ui-01 transition-colors border-b border-sidebar-border last:border-0 group">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-background border border-sidebar-border group-hover:border-primary/30 transition-colors">
+                              <FolderKanban className="h-3.5 w-3.5 text-cds-text-05 group-hover:text-primary transition-colors" />
+                            </div>
+                            <div className="space-y-0.5">
+                              <p className="text-[13px] font-medium leading-tight text-cds-text-01 line-clamp-2">{activity.description}</p>
+                              <div className="flex items-center gap-2 text-[10px] text-cds-text-05 font-medium tracking-wide uppercase">
+                                <span>{activity.user}</span>
+                                <span className="h-1 w-1 rounded-full bg-cds-ui-04" />
+                                <span>{activity.date}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                        {(!analytics?.recentActivities || analytics.recentActivities.length === 0) && (
+                            <div className="py-10 text-center text-xs text-cds-text-05 italic">No recent activity recorded.</div>
+                        )}
+                      </div>}
+                  </CardContent>
+              </Card>
+          </div>
       </div>
 
+      {/* User Growth Utility Area */}
+      <Card className="dashboard-card border rounded-none shadow-none bg-cds-ui-01/30">
+          <CardHeader>
+              <CardTitle className="text-base font-semibold">Registration Growth</CardTitle>
+              <CardDescription className="text-xs">Faculty enrollment trends over the current fiscal cycle.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loading ? <Skeleton className="h-[200px] w-full bg-cds-ui-01" /> : 
+              <div className="h-[200px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={analytics?.userGrowth}>
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sidebar-border)" />
+                        <XAxis dataKey="month" stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false} dy={10} />
+                        <YAxis stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false} />
+                        <Tooltip contentStyle={{ backgroundColor: 'var(--cds-ui-05)', border: 'none', color: '#fff', borderRadius: '0' }} />
+                        <Line type="stepAfter" dataKey="users" name="Enrollments" stroke="var(--cds-interactive-01)" strokeWidth={3} dot={{ r: 4, fill: 'var(--cds-interactive-01)', strokeWidth: 0 }} activeDot={{ r: 6, strokeWidth: 0 }} />
+                    </LineChart>
+                </ResponsiveContainer>
+              </div>}
+          </CardContent>
+      </Card>
     </div>
   )
 }
