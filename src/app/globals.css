@@ -39,18 +39,6 @@
   --cds-spacing-08: 2.5rem;
   --cds-spacing-09: 3rem;
   --cds-spacing-10: 4rem;
-  --cds-spacing-11: 5rem;
-  --cds-spacing-12: 6rem;
-  --cds-spacing-13: 10rem;
-
-  /* Motion Tokens */
-  --cds-duration-fast-01: 70ms;
-  --cds-duration-fast-02: 110ms;
-  --cds-duration-moderate-01: 150ms;
-  --cds-duration-moderate-02: 240ms;
-  --cds-duration-slow-01: 400ms;
-  --cds-duration-slow-02: 700ms;
-  --cds-ease-standard: cubic-bezier(0.2, 0, 0.38, 0.9);
 
   /* Mapping ShadCN UI variables to Carbon Vibe */
   --background: 0 0% 100%;
@@ -72,7 +60,17 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   --ring: 221.2 83.2% 53.3%;
-  --radius: 0.25rem; /* Standard Carbon Radius for Productive UI */
+  --radius: 0rem; /* Carbon Productive UI uses sharp corners */
+
+  /* Sidebar Tokens */
+  --sidebar-background: 0 0% 98%;
+  --sidebar-foreground: 240 5.3% 26.1%;
+  --sidebar-primary: 221.2 83.2% 53.3%;
+  --sidebar-primary-foreground: 0 0% 98%;
+  --sidebar-accent: 240 4.8% 95.9%;
+  --sidebar-accent-foreground: 240 5.9% 10%;
+  --sidebar-border: 240 5.9% 90%;
+  --sidebar-ring: 221.2 83.2% 53.3%;
 }
 
 .dark {
@@ -102,26 +100,27 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
     font-family: 'IBM Plex Sans', sans-serif;
-    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
 }
 
-/* Carbon Component Utilities */
 @layer components {
   .ui-button {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50;
-    border-radius: 0.125rem;
-  }
-  
-  .cds-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: var(--cds-spacing-05);
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
+    border-radius: 0;
   }
 
-  @media (min-width: 672px) {
+  .ui-input {
+    @apply flex h-10 w-full border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-b-2 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all;
+  }
+
+  .cds-grid {
+    @apply grid gap-4 w-full;
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  @media (min-width: 768px) {
     .cds-grid {
       grid-template-columns: repeat(8, 1fr);
     }
@@ -133,37 +132,20 @@
     }
   }
 
-  /* Compact Filter buttons to prevent Firebase Performance Error */
-  .btn-filter {
-    @apply px-3 py-1 text-xs font-medium rounded-md transition-colors;
+  .dashboard-card {
+    @apply bg-card border border-border shadow-none transition-all hover:border-primary/20;
+    border-radius: 0;
   }
+
   .btn-filter-active {
-    @apply bg-primary text-primary-foreground shadow-sm;
+    @apply bg-primary text-primary-foreground;
   }
+
   .btn-filter-inactive {
     @apply bg-secondary text-secondary-foreground hover:bg-secondary/80;
   }
-
-  /* Dashboard Card Wrapper */
-  .dashboard-card {
-    @apply rounded-lg border bg-card text-card-foreground shadow-sm transition-shadow hover:shadow-md;
-  }
 }
 
-.ui-input {
-  @apply flex h-10 w-full border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium file:text-foreground placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm;
-  border-bottom-width: 1px;
-}
-
-.ui-select-trigger {
-  @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1;
-}
-
-.ui-dialog-content {
-  @apply fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg;
-}
-
-/* Maintain custom page fonts if scoped */
 .font-maintenance {
   font-family: 'Inter', sans-serif !important;
 }

@@ -1,4 +1,3 @@
-
 "use client"
 
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
@@ -7,8 +6,8 @@ import { UserNav } from "@/components/user-nav";
 import { Button } from "./ui/button";
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
-import { useToast } from '@/hooks/use-toast';
 import { GlobalSearch } from './global-search';
+import { Bell, HelpCircle, Settings, Menu } from 'lucide-react';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
@@ -21,112 +20,79 @@ type User = {
 }
 
 export function Header({ user }: { user: User }) {
-    const pathname = usePathname();
-    const router = useRouter();
     const searchParams = useSearchParams();
-    const { toast } = useToast();
     const [hasUnread, setHasUnread] = useState(false);
     
     const uid = searchParams.get('uid') || '';
-    const notificationsHref = user.role === 'admin' 
-        ? `/u/portal/dashboard/admin/notifications?uid=${uid}`
-        : `/u/portal/dashboard/notifications?uid=${uid}`;
+    const settingsHref = user.role === 'admin' 
+        ? `/u/portal/dashboard/admin/settings?uid=${uid}`
+        : `/u/portal/dashboard/settings?uid=${uid}`;
 
-    const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('userRole');
-        localStorage.removeItem('sessionExpiresAt');
-        router.push('/u/portal/auth?faculty_login&reason=logged_out');
-    };
-    
     useEffect(() => {
         const checkNotifications = async () => {
             const token = localStorage.getItem("token");
             const facultyId = searchParams.get('uid');
-
-            if (!token || !facultyId || user.role === 'admin' || user.role === 'oa') {
-                setHasUnread(false);
-                return;
-            }
+            if (!token || !facultyId || user.role === 'admin' || user.role === 'oa') return;
 
             try {
-                const url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}`;
-                const response = await fetch(url, { headers: { "Authorization": `Bearer ${token}` } });
-                
-                if (response.status === 401) {
-                    logout();
-                    return;
-                }
-
-                if (!response.ok) {
-                    console.error(`Failed to check notifications. Status: ${response.status}`);
-                    return;
-                }
-
-                const data = await response.json();
-                
-                if (data.success && data.items.length > 0) {
+                const res = await fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}`, {
+                    headers: { "Authorization": `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
                     const storedReadIds = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
                     const readIdsSet = new Set(storedReadIds);
-                    const hasNew = data.items.some((item: any) => !readIdsSet.has(item._id));
-                    setHasUnread(hasNew);
-                } else {
-                    setHasUnread(false);
+                    setHasUnread(data.items?.some((item: any) => !readIdsSet.has(item._id)));
                 }
-            } catch (error: any) {
-                console.error("Failed to check notifications:", error.message);
-                setHasUnread(false);
-            }
+            } catch (e) {}
         };
-
         checkNotifications();
-        const interval = setInterval(checkNotifications, 60000);
-        return () => clearInterval(interval);
-
-    }, [pathname, searchParams, user.role, toast]);
-
+    }, [searchParams, user.role]);
 
   return (
-    <>
-    <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center justify-between gap-4 border-b bg-sidebar text-sidebar-foreground px-4 md:px-6 col-span-2">
-      <div className="flex items-center gap-2">
-        <SidebarTrigger className="md:hidden text-sidebar-foreground hover:bg-sidebar-accent" />
-         <Link href="#" className="font-bold text-lg hidden md:block">
-             CreditWise
-         </Link>
+    <header className="sticky top-0 z-30 flex h-16 w-full shrink-0 items-center justify-between border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 md:px-6">
+      <div className="flex items-center gap-4">
+        <SidebarTrigger className="md:hidden">
+            <Button variant="ghost" size="icon" className="h-9 w-9">
+                <Menu className="h-5 w-5" />
+            </Button>
+        </SidebarTrigger>
+        <div className="hidden md:flex items-center gap-2">
+            <span className="text-primary font-bold tracking-tight text-xl">CreditWise</span>
+            <span className="h-4 w-[1px] bg-border mx-2" />
+            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Institutional Portal</span>
+        </div>
       </div>
-      <div className="flex w-full items-center justify-center">
+
+      <div className="flex-1 max-w-xl px-4">
          <GlobalSearch />
       </div>
-      <div className="flex items-center justify-end gap-2">
-          {(user.role === 'faculty') && (
-            <Link href={notificationsHref}>
-                <Button variant="ghost" size="icon" className="rounded-full relative text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
-                    <span className="material-symbols-outlined">notifications</span>
-                    {hasUnread && (
-                      <span className="absolute -top-1 -right-1 flex h-2 w-2">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                      </span>
-                    )}
-                    <span className="sr-only">Toggle notifications</span>
+
+      <div className="flex items-center gap-1 sm:gap-2">
+          {user.role === 'faculty' && (
+            <Link href={`/u/portal/dashboard/notifications?uid=${uid}`}>
+                <Button variant="ghost" size="icon" className="relative rounded-none hover:bg-cds-ui-01 h-10 w-10">
+                    <Bell className="h-5 w-5 text-cds-text-02" />
+                    {hasUnread && <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-pulse" />}
                 </Button>
             </Link>
           )}
-          <Link href="/u/portal/help">
-            <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
-                <span className="material-symbols-outlined">help</span>
+          <Link href="/u/portal/help" className="hidden sm:block">
+            <Button variant="ghost" size="icon" className="rounded-none hover:bg-cds-ui-01 h-10 w-10">
+                <HelpCircle className="h-5 w-5 text-cds-text-02" />
             </Button>
           </Link>
-          <Link href={user.role === 'admin' ? `/u/portal/dashboard/admin/settings?uid=${uid}` : `/u/portal/dashboard/settings?uid=${uid}`}>
-            <Button variant="ghost" size="icon" className="rounded-full text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-sidebar-accent/80">
-                <span className="material-symbols-outlined">settings</span>
+          <Link href={settingsHref} className="hidden sm:block">
+            <Button variant="ghost" size="icon" className="rounded-none hover:bg-cds-ui-01 h-10 w-10">
+                <Settings className="h-5 w-5 text-cds-text-02" />
             </Button>
           </Link>
-
-        <UserNav user={user} logout={logout} />
+          <div className="h-8 w-[1px] bg-border mx-1 hidden sm:block" />
+          <UserNav user={user} logout={() => {
+              localStorage.clear();
+              window.location.href = '/u/portal/auth?faculty_login';
+          }} />
       </div>
     </header>
-    </>
   );
 }
