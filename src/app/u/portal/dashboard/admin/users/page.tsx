@@ -116,15 +116,15 @@ export default function FacultyAccountsPage() {
 
   const fetchAllUsers = async () => {
     setIsLoadingUsers(true);
-    const adminToken = localStorage.getItem("token");
-    if (!adminToken) {
+    const token = localStorage.getItem("token");
+    if (!token) {
       showAlert("Authentication Error", "Admin token not found.");
       setIsLoadingUsers(false);
       return;
     }
     try {
       const response = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
-        headers: { "Authorization": `Bearer ${adminToken}` },
+        headers: { "Authorization": `Bearer ${token}` },
       });
       const responseData = await response.json();
       if (!response.ok || !responseData.success) {
@@ -377,7 +377,7 @@ export default function FacultyAccountsPage() {
   };
 
   return (
-    <div className="flex-1 p-8">
+    <div className="flex-1">
       <header className="mb-8">
         <h2 className="text-3xl font-bold text-foreground">
           Faculty Accounts
@@ -438,7 +438,7 @@ export default function FacultyAccountsPage() {
               </SelectContent>
             </Select>
         </div>
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
@@ -474,10 +474,10 @@ export default function FacultyAccountsPage() {
                     </TableCell>
                     <TableCell>{account.email}</TableCell>
                     <TableCell>{account.college || 'N/A'}</TableCell>
-                    <TableCell className="text-right">{account.currentCredit ?? 0}</TableCell>
+                    <TableCell className="text-right font-semibold">{account.currentCredit ?? 0}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`px-2 py-1 text-xs font-medium rounded-full ${
+                        className={`px-2 py-1 text-[10px] font-bold tracking-wider rounded-full ${
                           account.isActive
                             ? "bg-green-100 text-green-800"
                             : "bg-red-100 text-red-800"

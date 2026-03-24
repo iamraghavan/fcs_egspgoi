@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -55,6 +56,7 @@ const navMap = {
     { name: "System Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
   ],
   oa: (uid: string) => [
+    { name: "Faculty Accounts", href: `/u/portal/dashboard/admin/users?uid=${uid}`, icon: Users },
     { name: "Issue Positive", href: `/u/portal/dashboard/oa/positive?uid=${uid}`, icon: Award },
     { name: "Issue Remark", href: `/u/portal/dashboard/oa?uid=${uid}`, icon: MessageSquareWarning },
     { name: "Transaction History", href: `/u/portal/dashboard/oa/history?uid=${uid}`, icon: History },
