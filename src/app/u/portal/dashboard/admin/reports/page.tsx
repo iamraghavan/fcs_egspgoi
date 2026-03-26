@@ -45,6 +45,7 @@ import {
   History,
   ChevronLeft,
   ChevronRight,
+  X,
 } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
@@ -241,7 +242,6 @@ export default function DynamicReportsPage() {
       });
       const data = await res.json();
       if (data.success && data.shareLink) {
-        // Force the link to use the vercel domain as requested
         const finalLink = data.shareLink.replace('https://fcs.egspgroup.in', API_BASE_URL);
         await navigator.clipboard.writeText(finalLink);
         toast({ title: "Link Copied!", description: "Shareable report link copied to clipboard." });
@@ -569,11 +569,19 @@ export default function DynamicReportsPage() {
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                             <Input 
                                 placeholder="Type to search faculty..." 
-                                className="pl-9 bg-muted/30" 
+                                className="pl-9 bg-muted/30 h-10" 
                                 value={facultyQuery}
                                 onChange={(e) => { setFacultyQuery(e.target.value); setShowFacultySuggestions(true); }}
                                 onFocus={() => setShowFacultySuggestions(true)}
                             />
+                            {facultyQuery && (
+                                <button 
+                                    onClick={() => { setFacultyQuery(""); setLevelId(""); setFacultyList([]); }}
+                                    className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-full"
+                                >
+                                    <X className="h-3 w-3 text-muted-foreground" />
+                                </button>
+                            )}
                             {isSearchingFaculty && (
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
@@ -581,7 +589,7 @@ export default function DynamicReportsPage() {
                             )}
                         </div>
                         {showFacultySuggestions && facultyQuery.length >= 2 && (
-                            <div className="absolute z-50 w-full mt-1 bg-popover border rounded-md shadow-lg overflow-hidden">
+                            <div className="absolute z-[100] w-full mt-1 bg-popover border rounded-md shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                 {facultyResults.length > 0 ? (
                                     facultyResults.map(f => (
                                         <button
@@ -653,8 +661,8 @@ export default function DynamicReportsPage() {
                 <div className="space-y-2">
                     <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Date Range</label>
                     <div className="grid grid-cols-1 gap-2">
-                        <Input type="date" className="bg-muted/30 text-xs" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
-                        <Input type="date" className="bg-muted/30 text-xs" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                        <Input type="date" className="bg-muted/30 text-xs h-9" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                        <Input type="date" className="bg-muted/30 text-xs h-9" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
                     </div>
                 </div>
             </CardContent>
