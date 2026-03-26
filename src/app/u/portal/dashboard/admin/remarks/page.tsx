@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -526,7 +525,7 @@ export default function ManageRemarksPage() {
         .sort((a, b) => a.title.localeCompare(b.title))
         .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
     
-    return [{ value: 'all', label: 'All Templates' }, ...sortedTitles];
+    return sortedTitles;
 }, [creditTitles]);
 
 
@@ -588,7 +587,7 @@ export default function ManageRemarksPage() {
                                     <SelectValue placeholder="Select a template..." />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    {creditTitles.map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })).map(option => (
+                                    {creditTitleOptions.map(option => (
                                         <SelectItem key={option.value} value={option.value}>
                                             {option.label}
                                         </SelectItem>
@@ -681,6 +680,7 @@ export default function ManageRemarksPage() {
                         <SelectValue placeholder="Filter by template..." />
                    </SelectTrigger>
                    <SelectContent>
+                        <SelectItem value="all">All Templates</SelectItem>
                         {creditTitleOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                                 {option.label}
@@ -860,7 +860,7 @@ export default function ManageRemarksPage() {
                                                 <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
                                                     <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
                                                     <SelectContent>
-                                                        {creditTitleOptions.filter(o => o.value !== 'all').map(option => (
+                                                        {creditTitleOptions.map(option => (
                                                             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                                                         ))}
                                                     </SelectContent>
