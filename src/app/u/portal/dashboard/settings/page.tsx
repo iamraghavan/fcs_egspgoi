@@ -298,11 +298,11 @@ export default function SettingsPage() {
 
             <main className="lg:col-span-3">
                 <Tabs defaultValue="profile" className="w-full">
-                    <TabsList className="bg-muted/50 p-1 w-full justify-start overflow-x-auto h-auto">
-                        <TabsTrigger value="profile" className="data-[state=active]:bg-background">Profile</TabsTrigger>
-                        <TabsTrigger value="password" className="data-[state=active]:bg-background">Password</TabsTrigger>
-                        <TabsTrigger value="preferences" className="data-[state=active]:bg-background">Preferences</TabsTrigger>
-                        <TabsTrigger value="security" className="data-[state=active]:bg-background">Security & Sessions</TabsTrigger>
+                    <TabsList className="bg-muted/50 p-1 w-full grid grid-cols-2 sm:grid-cols-4 md:flex md:w-max md:justify-start h-auto gap-1">
+                        <TabsTrigger value="profile" className="data-[state=active]:bg-background py-2 text-sm font-medium">Profile</TabsTrigger>
+                        <TabsTrigger value="password" className="data-[state=active]:bg-background py-2 text-sm font-medium">Password</TabsTrigger>
+                        <TabsTrigger value="preferences" className="data-[state=active]:bg-background py-2 text-sm font-medium">Preferences</TabsTrigger>
+                        <TabsTrigger value="security" className="data-[state=active]:bg-background py-2 text-sm font-medium">Security</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="profile" className="mt-6 animate-in fade-in duration-300">
