@@ -128,14 +128,14 @@ export default function DynamicReportsPage() {
     fetchAllUsers();
   }, [token]);
 
-  // Local filtering for suggestions
+  // Local filtering for suggestions - Fixed with null checks
   const filteredFacultySuggestions = useMemo(() => {
     if (!facultyQuery || facultyQuery.length < 2) return [];
     const term = facultyQuery.toLowerCase();
     return allUsers.filter(f => 
-        f.name.toLowerCase().includes(term) || 
-        f.facultyID.toLowerCase().includes(term) ||
-        f.department.toLowerCase().includes(term)
+        (f.name?.toLowerCase() || '').includes(term) || 
+        (f.facultyID?.toLowerCase() || '').includes(term) ||
+        (f.department?.toLowerCase() || '').includes(term)
     ).slice(0, 8); // Limit results for better performance and UI
   }, [allUsers, facultyQuery]);
 
