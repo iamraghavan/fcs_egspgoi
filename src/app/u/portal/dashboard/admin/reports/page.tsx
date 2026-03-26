@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -54,6 +53,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { format, parseISO } from "date-fns"
+import { cn } from "@/lib/utils"
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
@@ -147,7 +147,7 @@ export default function DynamicReportsPage() {
     fetchAllUsers();
   }, [token]);
 
-  // Local filtering for suggestions
+  // Local filtering for suggestions with safety checks
   const filteredFacultySuggestions = useMemo(() => {
     if (!facultyQuery || facultyQuery.length < 2) return [];
     const term = facultyQuery.toLowerCase();
@@ -183,7 +183,11 @@ export default function DynamicReportsPage() {
         setReportData(data);
         setPreviewPage(1);
       } else {
-        throw new Error(data.message || "Failed to fetch report preview");
+        if (response.status === 404) {
+            setReportData({ success: true, count: 0, data: [] });
+        } else {
+            throw new Error(data.message || "Failed to fetch report preview");
+        }
       }
     } catch (error: any) {
       showAlert("Report Error", error.message);
