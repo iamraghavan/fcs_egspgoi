@@ -455,13 +455,13 @@ export default function IssuedHistoryPage() {
 
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-cds-support-01 hover:text-cds-support-01 hover:bg-cds-support-01/10" disabled={!isModifiable}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={!isModifiable}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
-                                        <div className="flex items-center gap-3 text-cds-support-01 mb-2">
+                                        <div className="flex items-center gap-3 text-destructive mb-2">
                                             <AlertCircle className="h-6 w-6" />
                                             <AlertDialogTitle>Delete Negative Remark?</AlertDialogTitle>
                                         </div>
@@ -471,7 +471,7 @@ export default function IssuedHistoryPage() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-cds-support-01 hover:bg-cds-support-01/90 text-white rounded-none">
+                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-none">
                                             Confirm & Delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
