@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -22,7 +23,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = '';
 
 type User = {
   _id: string;
@@ -46,7 +47,7 @@ const getCurrentAcademicYear = () => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    if (currentMonth >= 5) { // June or later
+    if (currentMonth >= 5) {
       return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
     }
     return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
@@ -92,7 +93,7 @@ export default function OADashboardPage() {
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
-    setSelectedFaculty(null); // Clear selection when user types
+    setSelectedFaculty(null);
     if (!showSuggestions) {
       setShowSuggestions(true);
     }
@@ -100,7 +101,7 @@ export default function OADashboardPage() {
   
   const handleFacultySelect = (faculty: User) => {
     setSelectedFaculty(faculty);
-    setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
+    setFacultySearch(`${faculty.name} (${faculty.department || 'n/a'})`);
     setShowSuggestions(false);
   };
   
@@ -129,7 +130,7 @@ export default function OADashboardPage() {
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
-      showAlert("Authentication Error", "Admin token not found.");
+      showAlert("Authentication error", "Admin token not found.");
       return;
     }
     try {
@@ -145,15 +146,11 @@ export default function OADashboardPage() {
       const facultyData = await facultyResponse.json();
       if (facultyData.success) {
         setFacultyList(facultyData.items);
-      } else {
-        throw new Error(facultyData.message || "Failed to fetch faculty");
       }
 
       const creditTitlesData = await creditTitlesResponse.json();
       if (creditTitlesData.success) {
         setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'negative'));
-      } else {
-        throw new Error(creditTitlesData.message || "Failed to fetch credit titles");
       }
     } catch (error: any) {
       showAlert("Error fetching initial data", error.message);
@@ -173,22 +170,19 @@ export default function OADashboardPage() {
     if (selectedTitle) {
       setTitle(selectedTitle.title);
       setPoints(selectedTitle.points);
-    } else {
-      setTitle("");
-      setPoints("");
     }
   }, [creditTitleId, creditTitles]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFaculty || !points || !title || !creditTitleId) {
-      showAlert("Incomplete Form", "Please ensure a faculty member and a valid remark template are selected.");
+      showAlert("Incomplete form", "Please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
 
     if (!adminToken) {
-      showAlert("Authentication Error", "Admin token not found.");
+      showAlert("Authentication error", "Admin token not found.");
       setIsLoading(false);
       return;
     }
@@ -198,12 +192,12 @@ export default function OADashboardPage() {
     formData.append("points", points.toString());
     formData.append("academicYear", getCurrentAcademicYear());
     formData.append("title", title);
-    if (creditTitleId) formData.append("creditTitleId", creditTitleId);
+    formData.append("creditTitleId", creditTitleId);
     if (notes) formData.append("notes", notes);
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,
@@ -215,11 +209,10 @@ export default function OADashboardPage() {
       }
 
       toast({
-        title: "Remark Issued",
+        title: "Remark issued",
         description: "The negative remark has been successfully recorded.",
       });
 
-      // Reset form
       setSelectedFaculty(null);
       setFacultySearch("");
       setCreditTitleId("");
@@ -228,7 +221,7 @@ export default function OADashboardPage() {
       setNotes("");
       setProof(null);
 
-      // Fire-and-forget the email notification
+      // notify server
       fetch(`${API_BASE_URL}/api/v1/notifications/remark`, {
         method: 'POST',
         headers: {
@@ -242,23 +235,10 @@ export default function OADashboardPage() {
           notes: notes,
           academicYear: getCurrentAcademicYear()
         }),
-      }).then(async (emailResponse) => {
-          if (!emailResponse.ok) {
-            const errorData = await emailResponse.json();
-            showAlert(
-              "Email Notification Failed",
-              errorData.message || "The remark was saved, but the email notification could not be sent."
-            );
-          }
-      }).catch((emailError: any) => {
-          showAlert(
-            "Email Sending Error",
-            emailError.message || "An error occurred while trying to send the email."
-          );
-      });
+      }).catch(console.error);
 
     } catch (error: any) {
-      showAlert("Submission Failed", error.message);
+      showAlert("Submission failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -311,7 +291,7 @@ export default function OADashboardPage() {
                         autoComplete="off"
                       />
                       {showSuggestions && suggestedFaculty.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                        <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
                           {suggestedFaculty.map(faculty => (
                             <div
                               key={faculty._id}
@@ -319,8 +299,7 @@ export default function OADashboardPage() {
                               onClick={() => handleFacultySelect(faculty)}
                             >
                               <p className="font-semibold">{faculty.name}</p>
-                              <p className="text-sm text-muted-foreground">{faculty.department || 'N/A'} - {faculty.college || 'N/A'}</p>
-                              <p className="text-xs text-muted-foreground">{faculty.email || ''}</p>
+                              <p className="text-sm text-muted-foreground">{faculty.department || 'n/a'} - {faculty.college || 'n/a'}</p>
                             </div>
                           ))}
                         </div>
@@ -332,7 +311,7 @@ export default function OADashboardPage() {
                             <SelectTrigger id="creditTitle">
                                 <SelectValue placeholder="Select a template..." />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[150]">
                                 {creditTitleOptions.map(option => (
                                     <SelectItem key={option.value} value={option.value}>
                                         {option.label}
@@ -354,7 +333,7 @@ export default function OADashboardPage() {
                         <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
                         <Select value={getCurrentAcademicYear()} disabled>
                             <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                            <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+                            <SelectContent className="z-[150]">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
                         </Select>
                         </div>
                     </div>
@@ -389,9 +368,9 @@ export default function OADashboardPage() {
                             </div>
                         </CardHeader>
                         <CardContent className="text-sm space-y-3">
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'N/A'}</span></p>
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Dept:</strong> {selectedFaculty.department || 'N/A'}</p>
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Email:</strong> {selectedFaculty.email || 'N/A'}</p>
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'n/a'}</span></p>
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Dept:</strong> {selectedFaculty.department || 'n/a'}</p>
+                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Email:</strong> {selectedFaculty.email || 'n/a'}</p>
                         </CardContent>
                     </Card>
                 ) : (

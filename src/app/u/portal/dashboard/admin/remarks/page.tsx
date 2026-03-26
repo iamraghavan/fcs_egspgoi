@@ -54,7 +54,6 @@ import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 
-
 const API_BASE_URL = '';
 
 type User = {
@@ -195,7 +194,7 @@ export default function ManageRemarksPage() {
   
   const handleFacultySelect = (faculty: User) => {
     setSelectedFaculty(faculty);
-    setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
+    setFacultySearch(`${faculty.name} (${faculty.department || 'n/a'})`);
     setShowSuggestions(false);
   };
   
@@ -224,7 +223,7 @@ export default function ManageRemarksPage() {
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
-      showAlert("Authentication Error", "Admin token not found.");
+      showAlert("Authentication error", "Admin token not found.");
       return;
     }
     try {
@@ -355,13 +354,13 @@ export default function ManageRemarksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFaculty || !points || !title || !creditTitleId) {
-      showAlert("Incomplete Form", "Please ensure a faculty member and a valid remark template are selected.");
+      showAlert("Incomplete form", "Please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
 
     if (!adminToken) {
-      showAlert("Authentication Error", "Admin token not found.");
+      showAlert("Authentication error", "Admin token not found.");
       setIsLoading(false);
       return;
     }
@@ -376,7 +375,7 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,
@@ -388,7 +387,7 @@ export default function ManageRemarksPage() {
       }
 
       toast({
-        title: "Remark Issued",
+        title: "Remark issued",
         description: "The negative remark has been successfully recorded.",
       });
 
@@ -403,7 +402,7 @@ export default function ManageRemarksPage() {
       setPage(1);
       setIsFormOpen(false);
 
-      // Fire-and-forget the email notification
+      // notify via server
       fetch(`${API_BASE_URL}/api/v1/notifications/remark`, {
         method: 'POST',
         headers: {
@@ -420,7 +419,7 @@ export default function ManageRemarksPage() {
       }).catch(console.error);
 
     } catch (error: any) {
-      showAlert("Submission Failed", error.message);
+      showAlert("Submission failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -439,7 +438,7 @@ export default function ManageRemarksPage() {
     if (Array.from(formData.keys()).length === 0) {
         setIsSubmittingEdit(false);
         setIsEditDialogOpen(false);
-        toast({ title: "No Changes", description: "No changes were made to the remark." });
+        toast({ title: "No changes", description: "No changes were made to the remark." });
         return;
     }
 
@@ -455,11 +454,11 @@ export default function ManageRemarksPage() {
             throw new Error(responseData.message || "Failed to update remark.");
         }
 
-        toast({ title: "Remark Updated", description: "The remark has been successfully updated." });
+        toast({ title: "Remark updated", description: "The remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Update Failed", error.message);
+        showAlert("Update failed", error.message);
     } finally {
         setIsSubmittingEdit(false);
     }
@@ -467,7 +466,7 @@ export default function ManageRemarksPage() {
 
   const handleDeleteRemark = async (creditId: string) => {
       if (!adminToken) {
-          showAlert("Authentication Error", "Admin token not found.");
+          showAlert("Authentication error", "Admin token not found.");
           return;
       }
       try {
@@ -481,10 +480,10 @@ export default function ManageRemarksPage() {
               throw new Error(responseData.message || "Failed to delete remark.");
           }
 
-          toast({ title: "Remark Deleted", description: "The remark has been permanently deleted and credit balance restored." });
+          toast({ title: "Remark deleted", description: "The remark has been permanently deleted and credit balance restored." });
           fetchRemarks(page);
       } catch (error: any) {
-          showAlert("Delete Failed", error.message);
+          showAlert("Delete failed", error.message);
       }
   };
   
@@ -532,7 +531,7 @@ export default function ManageRemarksPage() {
                               autoComplete="off"
                             />
                              {showSuggestions && suggestedFaculty.length > 0 && (
-                              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                              <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
                                 {suggestedFaculty.map(faculty => (
                                   <div
                                     key={faculty._id}
@@ -540,7 +539,7 @@ export default function ManageRemarksPage() {
                                     onClick={() => handleFacultySelect(faculty)}
                                   >
                                     <p className="font-semibold text-sm">{faculty.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{faculty.department || 'N/A'} - {faculty.college || 'N/A'}</p>
+                                    <p className="text-[10px] text-muted-foreground">{faculty.department || 'n/a'} - {faculty.college || 'n/a'}</p>
                                   </div>
                                 ))}
                               </div>
@@ -552,7 +551,7 @@ export default function ManageRemarksPage() {
                                 <SelectTrigger id="creditTitle">
                                     <SelectValue placeholder="Select a template..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="z-[150]">
                                     {creditTitleOptions.map(option => (
                                         <SelectItem key={option.value} value={option.value}>
                                             {option.label}
@@ -574,7 +573,7 @@ export default function ManageRemarksPage() {
                             <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
                             <Select value={getCurrentAcademicYear()} disabled>
                                 <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                                <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+                                <SelectContent className="z-[150]">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
                             </Select>
                             </div>
                         </div>
@@ -601,8 +600,8 @@ export default function ManageRemarksPage() {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="text-xs space-y-2 p-4 pt-0">
-                                    <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'N/A'}</p>
-                                    <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'N/A'}</span></p>
+                                    <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'n/a'}</p>
+                                    <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'n/a'}</span></p>
                                 </CardContent>
                             </Card>
                         ) : (
@@ -644,7 +643,7 @@ export default function ManageRemarksPage() {
                    <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                         <SelectValue placeholder="Filter by template..." />
                    </SelectTrigger>
-                   <SelectContent>
+                   <SelectContent className="z-[150]">
                         <SelectItem value="all">All Templates</SelectItem>
                         {creditTitleOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
@@ -655,7 +654,7 @@ export default function ManageRemarksPage() {
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                       <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]">
                       <SelectItem value="all">All Years</SelectItem>
                       {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                   </SelectContent>
@@ -664,7 +663,7 @@ export default function ManageRemarksPage() {
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                       <SelectValue placeholder="Select College" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]">
                       <SelectItem value="all">All Colleges</SelectItem>
                       {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
                   </SelectContent>
@@ -673,7 +672,7 @@ export default function ManageRemarksPage() {
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0">
                       <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]">
                       <SelectItem value="all">All Departments</SelectItem>
                        {Object.entries(filteredDepartments).map(([group, courses]) => (
                           <SelectGroup key={group}>
@@ -794,7 +793,7 @@ export default function ManageRemarksPage() {
                         <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01">
                             <SelectValue placeholder="Select a template..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[150]">
                             {creditTitleOptions.map(option => (
                                 <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                             ))}

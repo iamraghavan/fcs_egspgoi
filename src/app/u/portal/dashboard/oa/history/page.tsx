@@ -273,7 +273,7 @@ export default function IssuedHistoryPage() {
     if (Array.from(formData.keys()).length === 0) {
         setIsSubmittingEdit(false);
         setIsEditDialogOpen(false);
-        toast({ title: "No Changes", description: "No changes were made to the remark." });
+        toast({ title: "No changes", description: "No changes were made to the remark." });
         return;
     }
 
@@ -289,11 +289,11 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "Failed to update remark.");
         }
 
-        toast({ title: "Remark Updated", description: "The remark has been successfully updated and faculty balance recalculated." });
+        toast({ title: "Remark updated", description: "The remark has been successfully updated and faculty balance recalculated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Update Failed", error.message);
+        showAlert("Update failed", error.message);
     } finally {
         setIsSubmittingEdit(false);
     }
@@ -301,7 +301,7 @@ export default function IssuedHistoryPage() {
 
   const handleDelete = async (id: string) => {
     if (!adminToken) {
-        showAlert("Authentication Error", "Admin token not found.");
+        showAlert("Authentication error", "Admin token not found.");
         return;
     }
 
@@ -316,10 +316,10 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "Failed to delete remark.");
         }
 
-        toast({ title: "Remark Deleted", description: "The remark has been permanently removed and credit balance restored." });
+        toast({ title: "Remark deleted", description: "The remark has been permanently removed and credit balance restored." });
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Delete Failed", error.message);
+        showAlert("Delete failed", error.message);
     }
   };
 
@@ -381,7 +381,7 @@ export default function IssuedHistoryPage() {
                 </div>
                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="z-[150]">
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
@@ -392,7 +392,7 @@ export default function IssuedHistoryPage() {
                 </Select>
                  <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                     <SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Academic Year" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="z-[150]">
                         <SelectItem value="all">All Years</SelectItem>
                         {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                     </SelectContent>
@@ -406,7 +406,7 @@ export default function IssuedHistoryPage() {
                         ) : ( <span>Date Range</span> )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0 rounded-none" align="start">
+                    <PopoverContent className="z-[150] w-auto p-0 rounded-none" align="start">
                       <Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} />
                     </PopoverContent>
                   </Popover>
@@ -518,7 +518,7 @@ export default function IssuedHistoryPage() {
                         <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 h-11">
                             <SelectValue placeholder="Select updated template..." />
                         </SelectTrigger>
-                        <SelectContent>
+                        <SelectContent className="z-[150]">
                             {creditTitles.map(ct => (
                                 <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
                             ))}
@@ -610,7 +610,7 @@ export default function IssuedHistoryPage() {
                             <Avatar className="h-6 w-6">
                                 <AvatarFallback className="bg-primary/10 text-primary text-[10px]">{selectedRemark.issuedBySnapshot?.name?.charAt(0)}</AvatarFallback>
                             </Avatar>
-                            <span className="font-semibold">{selectedRemark.issuedBySnapshot?.name || 'N/A'}</span>
+                            <span className="font-semibold">{selectedRemark.issuedBySnapshot?.name || 'n/a'}</span>
                         </div>
                     </div>
                     <div>
