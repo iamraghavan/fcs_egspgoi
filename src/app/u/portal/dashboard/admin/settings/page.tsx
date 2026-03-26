@@ -422,7 +422,7 @@ export default function AdminSettingsPage() {
                                 <CardContent>
                                     <PushNotificationManager />
                                 </CardContent>
-                            </div>
+                            </Card>
                         </div>
                     </TabsContent>
                 </Tabs>
