@@ -96,9 +96,9 @@ export default function DynamicReportsPage() {
 
   // Search/Autocomplete States
   const [facultyQuery, setFacultyQuery] = useState("");
-  const [facultyResults, setFacultyList] = useState<Faculty[]>([]);
+  const [allUsers, setAllUsers] = useState<Faculty[]>([]);
   const [showFacultySuggestions, setShowFacultySuggestions] = useState(false);
-  const [isSearchingFaculty, setIsSearchingFaculty] = useState(false);
+  const [isUsersLoading, setIsUsersLoading] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
   // Data State
@@ -106,32 +106,38 @@ export default function DynamicReportsPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
 
-  // Handle Faculty Search
+  // Fetch all users for autocomplete once
   useEffect(() => {
-    if (level !== 'faculty' || facultyQuery.length < 2) {
-        setFacultyList([]);
-        setIsSearchingFaculty(false);
-        return;
-    }
-    
-    setIsSearchingFaculty(true);
-    const timer = setTimeout(async () => {
+    const fetchAllUsers = async () => {
+        if (!token) return;
+        setIsUsersLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/v1/users?search=${encodeURIComponent(facultyQuery)}&limit=5`, {
+            const res = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
             if (data.success) {
-                setFacultyList(data.items);
+                setAllUsers(data.items);
             }
         } catch (e) {
-            console.error("Faculty fetch failed", e);
+            console.error("Failed to fetch users", e);
         } finally {
-            setIsSearchingFaculty(false);
+            setIsUsersLoading(false);
         }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [facultyQuery, level, token]);
+    };
+    fetchAllUsers();
+  }, [token]);
+
+  // Local filtering for suggestions
+  const filteredFacultySuggestions = useMemo(() => {
+    if (!facultyQuery || facultyQuery.length < 2) return [];
+    const term = facultyQuery.toLowerCase();
+    return allUsers.filter(f => 
+        f.name.toLowerCase().includes(term) || 
+        f.facultyID.toLowerCase().includes(term) ||
+        f.department.toLowerCase().includes(term)
+    ).slice(0, 8); // Limit results for better performance and UI
+  }, [allUsers, facultyQuery]);
 
   const fetchReportPreview = useCallback(async () => {
     if (!token) return;
@@ -576,13 +582,13 @@ export default function DynamicReportsPage() {
                             />
                             {facultyQuery && (
                                 <button 
-                                    onClick={() => { setFacultyQuery(""); setLevelId(""); setFacultyList([]); }}
+                                    onClick={() => { setFacultyQuery(""); setLevelId(""); }}
                                     className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-muted rounded-full"
                                 >
                                     <X className="h-3 w-3 text-muted-foreground" />
                                 </button>
                             )}
-                            {isSearchingFaculty && (
+                            {isUsersLoading && (
                                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                                 </div>
@@ -590,8 +596,8 @@ export default function DynamicReportsPage() {
                         </div>
                         {showFacultySuggestions && facultyQuery.length >= 2 && (
                             <div className="absolute z-[100] w-full mt-1 bg-popover border rounded-md shadow-lg overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-                                {facultyResults.length > 0 ? (
-                                    facultyResults.map(f => (
+                                {filteredFacultySuggestions.length > 0 ? (
+                                    filteredFacultySuggestions.map(f => (
                                         <button
                                             key={f._id}
                                             type="button"
@@ -606,7 +612,7 @@ export default function DynamicReportsPage() {
                                             <p className="text-xs text-muted-foreground">{f.facultyID} &middot; {f.department}</p>
                                         </button>
                                     ))
-                                ) : !isSearchingFaculty ? (
+                                ) : !isUsersLoading ? (
                                     <div className="p-4 text-center text-xs text-muted-foreground">
                                         No faculty found matching "{facultyQuery}"
                                     </div>
