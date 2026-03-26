@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -46,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Eye, Search, Edit, Trash2 } from "lucide-react";
+import { PlusCircle, Eye, Search, Edit, Trash2, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
@@ -100,12 +101,6 @@ type NegativeRemark = {
     title: string;
     type: 'negative';
     updatedAt: string;
-    appeal?: {
-      by: string;
-      reason: string;
-      status: 'pending' | 'accepted' | 'rejected';
-      createdAt: string;
-    };
 };
 
 type Departments = {
@@ -116,7 +111,7 @@ const getCurrentAcademicYear = () => {
     const today = new Date();
     const currentMonth = today.getMonth();
     const currentYear = today.getFullYear();
-    if (currentMonth >= 5) { // June or later
+    if (currentMonth >= 5) {
       return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
     }
     return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
@@ -192,7 +187,7 @@ export default function ManageRemarksPage() {
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
-    setSelectedFaculty(null); // Clear selection when user types
+    setSelectedFaculty(null);
     if (!showSuggestions) {
       setShowSuggestions(true);
     }
@@ -211,7 +206,7 @@ export default function ManageRemarksPage() {
         f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
         (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
       )
-      .sort((a, b) => a.name.localeCompare(b.name)) // Sort alphabetically
+      .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 10);
   }, [facultySearch, facultyList]);
   
@@ -245,15 +240,11 @@ export default function ManageRemarksPage() {
       const facultyData = await facultyResponse.json();
       if (facultyData.success) {
         setFacultyList(facultyData.items);
-      } else {
-        throw new Error(facultyData.message || "Failed to fetch faculty");
       }
 
       const creditTitlesData = await creditTitlesResponse.json();
       if (creditTitlesData.success) {
         setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'negative'));
-      } else {
-        throw new Error(creditTitlesData.message || "Failed to fetch credit titles");
       }
     } catch (error: any) {
       showAlert("Error fetching initial data", error.message);
@@ -305,19 +296,19 @@ export default function ManageRemarksPage() {
     if (adminToken) {
       fetchDropdownData();
     }
-  }, [uid, adminToken]);
+  }, [adminToken]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
         if (adminToken) {
             fetchRemarks(page);
         }
-    }, 500); // Debounce API call
+    }, 500);
     return () => clearTimeout(timer);
   }, [page, adminToken, searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
-    setPage(1); // Reset to first page whenever filters change
+    setPage(1);
   }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
@@ -325,9 +316,6 @@ export default function ManageRemarksPage() {
     if (selectedTitle) {
       setTitle(selectedTitle.title);
       setPoints(selectedTitle.points);
-    } else {
-      setTitle("");
-      setPoints("");
     }
   }, [creditTitleId, creditTitles]);
 
@@ -359,7 +347,7 @@ export default function ManageRemarksPage() {
       setShortProofUrl(null);
       shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl))
         .then(setShortProofUrl)
-        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails.proofUrl))); // Fallback to full URL on error
+        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails.proofUrl)));
     }
   }, [selectedRemarkDetails]);
 
@@ -383,7 +371,7 @@ export default function ManageRemarksPage() {
     formData.append("points", points.toString());
     formData.append("academicYear", getCurrentAcademicYear());
     formData.append("title", title);
-    if (creditTitleId) formData.append("creditTitleId", creditTitleId);
+    formData.append("creditTitleId", creditTitleId);
     if (notes) formData.append("notes", notes);
     if (proof) formData.append("proof", proof);
 
@@ -404,7 +392,6 @@ export default function ManageRemarksPage() {
         description: "The negative remark has been successfully recorded.",
       });
 
-      // Reset form and close dialog *before* attempting to send email
       setSelectedFaculty(null);
       setFacultySearch("");
       setCreditTitleId("");
@@ -430,20 +417,7 @@ export default function ManageRemarksPage() {
           notes: notes,
           academicYear: getCurrentAcademicYear(),
         }),
-      }).then(async (emailResponse) => {
-          if (!emailResponse.ok) {
-            const errorData = await emailResponse.json();
-            showAlert(
-              "Email Notification Failed",
-              errorData.message || "The remark was saved, but the email notification could not be sent."
-            );
-          }
-      }).catch((emailError: any) => {
-          showAlert(
-            "Email Sending Error",
-            emailError.message || "An error occurred while trying to send the email."
-          );
-      });
+      }).catch(console.error);
 
     } catch (error: any) {
       showAlert("Submission Failed", error.message);
@@ -458,7 +432,6 @@ export default function ManageRemarksPage() {
     setIsSubmittingEdit(true);
 
     const formData = new FormData();
-    // Only append changed values
     if (editNotes !== (editingRemark.notes || "")) formData.append("notes", editNotes);
     if (editCreditTitleId !== (editingRemark.creditTitle || "")) formData.append("creditTitleId", editCreditTitleId);
     if (editProof) formData.append("proof", editProof);
@@ -471,7 +444,7 @@ export default function ManageRemarksPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
             body: formData,
@@ -498,7 +471,7 @@ export default function ManageRemarksPage() {
           return;
       }
       try {
-          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${creditId}`, {
+          const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${creditId}`, {
               method: "DELETE",
               headers: { "Authorization": `Bearer ${adminToken}` },
           });
@@ -508,24 +481,18 @@ export default function ManageRemarksPage() {
               throw new Error(responseData.message || "Failed to delete remark.");
           }
 
-          toast({ title: "Remark Deleted", description: "The remark has been permanently deleted." });
-          if (page > 1 && remarks.length === 1) {
-            setPage(page - 1);
-          } else {
-            fetchRemarks(page);
-          }
+          toast({ title: "Remark Deleted", description: "The remark has been permanently deleted and credit balance restored." });
+          fetchRemarks(page);
       } catch (error: any) {
           showAlert("Delete Failed", error.message);
       }
   };
   
  const creditTitleOptions = useMemo(() => {
-    const sortedTitles = creditTitles
+    return creditTitles
         .slice()
         .sort((a, b) => a.title.localeCompare(b.title))
         .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
-    
-    return sortedTitles;
 }, [creditTitles]);
 
 
@@ -572,9 +539,8 @@ export default function ManageRemarksPage() {
                                     className="cursor-pointer p-3 hover:bg-accent"
                                     onClick={() => handleFacultySelect(faculty)}
                                   >
-                                    <p className="font-semibold">{faculty.name}</p>
-                                    <p className="text-sm text-muted-foreground">{faculty.department || 'N/A'} - {faculty.college || 'N/A'}</p>
-                                    <p className="text-xs text-muted-foreground">{faculty.email || ''}</p>
+                                    <p className="font-semibold text-sm">{faculty.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{faculty.department || 'N/A'} - {faculty.college || 'N/A'}</p>
                                   </div>
                                 ))}
                               </div>
@@ -623,30 +589,29 @@ export default function ManageRemarksPage() {
                     </div>
                     <div className="md:col-span-1">
                         {selectedFaculty ? (
-                             <Card>
-                                <CardHeader className="flex flex-row items-center gap-4">
-                                    <Avatar className="h-12 w-12">
+                             <Card className="rounded-none border-cds-ui-03">
+                                <CardHeader className="flex flex-row items-center gap-4 p-4">
+                                    <Avatar className="h-10 w-10">
                                         <AvatarImage src={selectedFaculty.profileImage} />
                                         <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
                                     </Avatar>
                                     <div>
-                                        <CardTitle className="text-base">{selectedFaculty.name}</CardTitle>
-                                        <CardDescription>{selectedFaculty.facultyID}</CardDescription>
+                                        <CardTitle className="text-sm font-semibold">{selectedFaculty.name}</CardTitle>
+                                        <CardDescription className="text-[10px] uppercase font-mono">{selectedFaculty.facultyID}</CardDescription>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="text-sm space-y-2">
+                                <CardContent className="text-xs space-y-2 p-4 pt-0">
                                     <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'N/A'}</p>
                                     <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'N/A'}</span></p>
-                                    <p><strong className="font-medium text-muted-foreground">Email:</strong> {selectedFaculty.email || 'N/A'}</p>
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50">
-                                <p className="text-muted-foreground text-center p-4 text-xs">Search and select a faculty member above.</p>
+                            <div className="flex items-center justify-center h-full border border-dashed border-cds-ui-03 bg-cds-ui-01/50 p-6">
+                                <p className="text-muted-foreground text-center text-xs">Search and select a faculty member to see their profile details.</p>
                             </div>
                         )}
                     </div>
-                     <DialogFooter className="pt-4 md:col-span-3">
+                     <DialogFooter className="pt-4 md:col-span-3 border-t">
                         <DialogClose asChild>
                             <Button type="button" variant="secondary">Cancel</Button>
                         </DialogClose>
@@ -659,37 +624,35 @@ export default function ManageRemarksPage() {
         </Dialog>
       </header>
         
-      <Card>
-        <CardHeader>
-            <CardTitle>Issued Remarks History</CardTitle>
-            <CardDescription>A log of all negative remarks that have been issued.</CardDescription>
+      <Card className="rounded-none shadow-none">
+        <CardHeader className="bg-cds-ui-01/50 border-b">
+            <CardTitle className="text-base font-semibold">Issued Remarks History</CardTitle>
+            <CardDescription className="text-xs">A log of all negative remarks that have been issued across the institution.</CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
-              <div className="relative lg:col-span-1">
+        <CardContent className="p-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 border-b">
+              <div className="relative border-r">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                      placeholder="Search by title, faculty..." 
-                      className="pl-10"
+                      placeholder="Search title, faculty..." 
+                      className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
-               <Select value={creditTitleFilter} onValueChange={(value) => setCreditTitleFilter(value === "all" ? "all" : value)}>
-                   <SelectTrigger>
+               <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}>
+                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                         <SelectValue placeholder="Filter by template..." />
                    </SelectTrigger>
                    <SelectContent>
                         <SelectItem value="all">All Templates</SelectItem>
                         {creditTitleOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                            </SelectItem>
+                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                         ))}
                    </SelectContent>
                </Select>
               <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                       <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
                   <SelectContent>
@@ -698,7 +661,7 @@ export default function ManageRemarksPage() {
                   </SelectContent>
               </Select>
               <Select value={collegeFilter} onValueChange={setCollegeFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
                       <SelectValue placeholder="Select College" />
                   </SelectTrigger>
                   <SelectContent>
@@ -707,7 +670,7 @@ export default function ManageRemarksPage() {
                   </SelectContent>
               </Select>
               <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={!filteredDepartments || Object.keys(filteredDepartments).length === 0}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0">
                       <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
                   <SelectContent>
@@ -723,213 +686,207 @@ export default function ManageRemarksPage() {
                   </SelectContent>
               </Select>
           </div>
-          <div className="overflow-x-auto border rounded-lg">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-cds-ui-01">
                 <TableRow>
-                  <TableHead>Faculty</TableHead>
-                  <TableHead>Faculty ID</TableHead>
-                  <TableHead>Department</TableHead>
-                  <TableHead>Remark Title</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Faculty</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Department</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Remark Title</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Date</TableHead>
+                  <TableHead className="text-right text-xs font-bold text-cds-text-05">Points</TableHead>
+                  <TableHead className="text-center text-xs font-bold text-cds-text-05">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoadingRemarks ? (
-                   <TableRow><TableCell colSpan={7} className="text-center h-24">Loading remarks...</TableCell></TableRow>
+                   <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
-                  remarks.map((remark) => {
-                    const avatarUrl = remark.facultySnapshot.profileImage 
-                        ? (remark.facultySnapshot.profileImage.startsWith('http') ? remark.facultySnapshot.profileImage : `${API_BASE_URL}/${remark.facultySnapshot.profileImage.replace(/^\//, '')}`)
-                        : `https://ui-avatars.com/api/?name=${encodeURIComponent(remark.facultySnapshot.name)}&background=random`;
-
-                    return (
-                      <TableRow key={remark._id}>
+                  remarks.map((remark) => (
+                      <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
                         <TableCell>
                             <div className="flex items-center gap-3">
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={avatarUrl} />
+                                    <AvatarImage src={remark.facultySnapshot.profileImage} />
                                     <AvatarFallback>{remark.facultySnapshot.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
-                                <span className="font-medium text-foreground">{remark.facultySnapshot.name}</span>
+                                <div className="flex flex-col">
+                                    <span className="font-medium text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
+                                    <span className="text-[10px] text-muted-foreground uppercase font-mono">{remark.facultySnapshot.facultyID}</span>
+                                </div>
                             </div>
                         </TableCell>
-                        <TableCell>{remark.facultySnapshot.facultyID}</TableCell>
-                        <TableCell>{remark.facultySnapshot.department}</TableCell>
-                        <TableCell>{remark.title}</TableCell>
-                        <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
+                        <TableCell className="text-[12px] text-cds-text-02">{remark.facultySnapshot.department}</TableCell>
+                        <TableCell className="text-[12px] text-cds-text-01 max-w-[250px] truncate">{remark.title}</TableCell>
+                        <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
                         <TableCell className="text-center">
-                            <div className="flex justify-center items-center">
-                                <Dialog open={isDetailsOpen && selectedRemarkDetails?._id === remark._id} onOpenChange={setIsDetailsOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => setSelectedRemarkDetails(remark)}>
-                                            <Eye className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                     <DialogContent className="max-w-3xl">
-                                        <DialogHeader>
-                                        <DialogTitle>Remark Details</DialogTitle>
-                                        <DialogDescription>A complete overview of the recorded remark.</DialogDescription>
-                                        </DialogHeader>
-                                        {selectedRemarkDetails && (
-                                        <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
-                                            <Card>
-                                                <CardHeader className="flex flex-row items-center gap-4">
-                                                    <Avatar className="h-12 w-12">
-                                                        <AvatarImage src={selectedRemarkDetails.facultySnapshot.profileImage ? (selectedRemarkDetails.facultySnapshot.profileImage.startsWith('http') ? selectedRemarkDetails.facultySnapshot.profileImage : `${API_BASE_URL}/${selectedRemarkDetails.facultySnapshot.profileImage.replace(/^\//, '')}`) : `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedRemarkDetails.facultySnapshot.name)}&background=random`} />
-                                                        <AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback>
-                                                    </Avatar>
-                                                    <div>
-                                                        <CardTitle className="text-lg">{selectedRemarkDetails.facultySnapshot.name}</CardTitle>
-                                                        <CardDescription>{selectedRemarkDetails.facultySnapshot.facultyID}</CardDescription>
-                                                    </div>
-                                                </CardHeader>
-                                                <CardContent>
-                                                    <p><strong className="font-medium text-muted-foreground w-24 inline-block">Department:</strong> {selectedRemarkDetails.facultySnapshot.department}</p>
-                                                    <p><strong className="font-medium text-muted-foreground w-24 inline-block">College:</strong> {selectedRemarkDetails.facultySnapshot.college}</p>
-                                                </CardContent>
-                                            </Card>
-                                    
-                                            <Card>
-                                                <CardHeader>
-                                                    <CardTitle className="text-base">Remark Details</CardTitle>
-                                                </CardHeader>
-                                                <CardContent className="space-y-3">
-                                                     <p><strong className="font-medium text-muted-foreground block">Remark Title:</strong> {selectedRemarkDetails.title}</p>
-                                                    <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-destructive">{selectedRemarkDetails.points}</span></p>
-                                                    <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedRemarkDetails.createdAt).toLocaleString()}</p>
-                                                    <div>
-                                                        <strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong>
-                                                        <p className="mt-1 pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemarkDetails.notes || 'N/A'}</p>
-                                                    </div>
-                                                     <div>
-                                                        <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
-                                                        {selectedRemarkDetails.proofUrl ? (
-                                                            shortProofUrl ? (
-                                                                <Button asChild variant="link" className="p-0 h-auto">
-                                                                    <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                                </Button>
-                                                            ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
-                                                        ) : "Not Provided"}
-                                                    </div>
-                                                </CardContent>
-                                            </Card>
-                                    
-                                            {selectedRemarkDetails.appeal && (
-                                                <Card>
-                                                    <CardHeader>
-                                                        <CardTitle className="text-base">Appeal Information</CardTitle>
-                                                    </CardHeader>
-                                                    <CardContent className="space-y-3">
-                                                        <p><strong className="font-medium text-muted-foreground block">Appeal Status:</strong> {selectedRemarkDetails.appeal.status}</p>
-                                                        <p><strong className="font-medium text-muted-foreground block">Date Appealed:</strong> {new Date(selectedRemarkDetails.appeal.createdAt).toLocaleString()}</p>
-                                                        <div>
-                                                            <strong className="font-medium text-muted-foreground block">Appeal Reason:</strong>
-                                                            <p className="mt-1 pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedRemarkDetails.appeal.reason}</p>
-                                                        </div>
-                                                    </CardContent>
-                                                </Card>
-                                            )}
-                                    
-                                            <p className="border-t pt-4 mt-4"><strong className="font-medium text-muted-foreground block">Remark ID:</strong> <span className="font-mono text-xs">{selectedRemarkDetails._id}</span></p>
-                                        </div>
-                                        )}
-                                        <DialogFooter>
-                                            <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
-                                        </DialogFooter>
-                                    </DialogContent>
-                                </Dialog>
+                            <div className="flex justify-center items-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(remark)}>
+                                    <Eye className="h-4 w-4 text-cds-text-05" />
+                                </Button>
 
-                                <Dialog open={isEditDialogOpen && editingRemark?._id === remark._id} onOpenChange={setIsEditDialogOpen}>
-                                    <DialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" onClick={() => setEditingRemark(remark)}>
-                                            <Edit className="h-4 w-4" />
-                                        </Button>
-                                    </DialogTrigger>
-                                    <DialogContent>
-                                        <DialogHeader>
-                                            <DialogTitle>Edit Negative Remark</DialogTitle>
-                                            <DialogDescription>Update the details for this remark.</DialogDescription>
-                                        </DialogHeader>
-                                        <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                                            <div>
-                                                <Label htmlFor="edit-creditTitle">Remark Template</Label>
-                                                <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
-                                                    <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
-                                                    <SelectContent>
-                                                        {creditTitleOptions.map(option => (
-                                                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
-                                                        ))}
-                                                    </SelectContent>
-                                                </Select>
-                                            </div>
-                                            <div>
-                                                <Label htmlFor="edit-notes">Notes / Rationale</Label>
-                                                <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
-                                            </div>
-                                            <div>
-                                                <Label>Proof Document (Optional)</Label>
-                                                {editingRemark?.proofUrl && !editProof && (
-                                                    <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingRemark.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
-                                                )}
-                                                <FileUpload onFileSelect={setEditProof} />
-                                            </div>
-                                            <DialogFooter>
-                                                <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                                                <Button type="submit" disabled={isSubmittingEdit}>
-                                                    {isSubmittingEdit ? "Saving..." : "Save Changes"}
-                                                </Button>
-                                            </DialogFooter>
-                                        </form>
-                                    </DialogContent>
-                                </Dialog>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(remark); setIsEditDialogOpen(true); }}>
+                                    <Edit className="h-4 w-4 text-cds-text-05" />
+                                </Button>
 
                                 <AlertDialog>
                                     <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-cds-support-01 hover:text-cds-support-01 hover:bg-cds-support-01/10">
                                             <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </AlertDialogTrigger>
                                     <AlertDialogContent>
                                         <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                            <AlertDialogDescription>This will permanently delete the remark. This action cannot be undone.</AlertDialogDescription>
+                                            <div className="flex items-center gap-3 text-cds-support-01 mb-2">
+                                                <AlertCircle className="h-6 w-6" />
+                                                <AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle>
+                                            </div>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. The faculty's credit balance will be restored automatically upon removal of this remark.
+                                            </AlertDialogDescription>
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                            <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} className="bg-cds-support-01 hover:bg-cds-support-01/90 text-white rounded-none">
+                                                Delete Remark
+                                            </AlertDialogAction>
                                         </AlertDialogFooter>
                                     </AlertDialogContent>
                                 </AlertDialog>
                             </div>
                         </TableCell>
                       </TableRow>
-                    );
-                  })
+                    ))
                 ) : (
-                    <TableRow><TableCell colSpan={7} className="text-center h-24">No remarks found for the selected filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={6} className="text-center h-24">No remarks found.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+        <CardFooter className="flex items-center justify-between border-t py-3 bg-cds-ui-01/30">
+            <div className="text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
                 Page {page} of {totalPages || 1}
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs font-semibold" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                     Previous
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs font-semibold" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
                     Next
                 </Button>
             </div>
         </CardFooter>
       </Card>
+
+      {/* Edit Remark Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Edit Negative Remark</DialogTitle>
+                <DialogDescription>Correct the notes or change the violation type if issued incorrectly.</DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
+                <div>
+                    <Label htmlFor="edit-creditTitle" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Violation Type</Label>
+                    <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                        <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01">
+                            <SelectValue placeholder="Select a template..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                            {creditTitleOptions.map(option => (
+                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                </div>
+                <div>
+                    <Label htmlFor="edit-notes" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Notes / Reason</Label>
+                    <Textarea 
+                        id="edit-notes" 
+                        value={editNotes} 
+                        onChange={(e) => setEditNotes(e.target.value)} 
+                        placeholder="Update the reason for this remark..."
+                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2 focus:border-primary"
+                    />
+                </div>
+                <div>
+                    <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Proof Replacement (Optional)</Label>
+                    <FileUpload onFileSelect={setEditProof} description="Upload a new document to replace existing proof" />
+                </div>
+                <DialogFooter className="pt-4 border-t">
+                    <DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose>
+                    <Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">
+                        {isSubmittingEdit ? "Updating..." : "Save Changes"}
+                    </Button>
+                </DialogFooter>
+            </form>
+        </DialogContent>
+      </Dialog>
+      
+      {/* Details Dialog */}
+       <Dialog open={!!selectedRemarkDetails} onOpenChange={(open) => !open && setSelectedRemarkDetails(null)}>
+        <DialogContent className="sm:max-w-lg">
+            <DialogHeader>
+                <DialogTitle>Remark Details</DialogTitle>
+                <DialogDescription>A comprehensive overview of the recorded negative remark.</DialogDescription>
+            </DialogHeader>
+            {selectedRemarkDetails && (
+                <div className="space-y-6 py-4 text-sm">
+                    <div className="flex items-center gap-4 p-4 bg-cds-ui-01 border border-cds-ui-03">
+                        <Avatar className="h-12 w-12 border">
+                            <AvatarImage src={selectedRemarkDetails.facultySnapshot.profileImage} />
+                            <AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="font-bold text-base">{selectedRemarkDetails.facultySnapshot.name}</p>
+                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest">{selectedRemarkDetails.facultySnapshot.facultyID}</p>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Title</p>
+                            <p className="font-semibold leading-tight">{selectedRemarkDetails.title}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Deduction</p>
+                            <p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemarkDetails.points}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Institutional Context</p>
+                        <div className="grid grid-cols-2 gap-4 text-xs">
+                            <p><span className="text-muted-foreground">Department:</span> {selectedRemarkDetails.facultySnapshot.department}</p>
+                            <p><span className="text-muted-foreground">Academic Year:</span> {selectedRemarkDetails.academicYear}</p>
+                            <p><span className="text-muted-foreground">Date Issued:</span> {new Date(selectedRemarkDetails.createdAt).toLocaleString()}</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Notes / Rationale</p>
+                        <blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 rounded-r-sm leading-relaxed text-cds-text-02">
+                            {selectedRemarkDetails.notes || "No additional notes were provided at issuance."}
+                        </blockquote>
+                    </div>
+
+                    {selectedRemarkDetails.proofUrl && (
+                        <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
+                             <Button asChild variant="link" className="text-primary font-bold">
+                                <a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof Attachment</a>
+                            </Button>
+                        </div>
+                    )}
+                </div>
+            )}
+            <DialogFooter className="border-t pt-4">
+                <DialogClose asChild><Button variant="secondary" className="rounded-none">Close Details</Button></DialogClose>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
+
     </div>
   )
 }
