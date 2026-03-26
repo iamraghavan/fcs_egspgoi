@@ -367,8 +367,8 @@ export default function ManageRemarksPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFaculty || !points || !title) {
-      showAlert("Incomplete Form", "Please select a faculty member and fill out all required fields.");
+    if (!selectedFaculty || !points || !title || !creditTitleId) {
+      showAlert("Incomplete Form", "Please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
@@ -556,7 +556,7 @@ export default function ManageRemarksPage() {
                 <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
                     <div className="md:col-span-2 space-y-4">
                         <div ref={suggestionRef} className="relative">
-                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                            <Label className="mb-1" htmlFor="faculty">Faculty Member <span className="text-destructive">*</span></Label>
                             <Input 
                               id="faculty"
                               placeholder="Type to search for faculty..."
@@ -582,7 +582,7 @@ export default function ManageRemarksPage() {
                             )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
+                            <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
                              <Select value={creditTitleId} onValueChange={setCreditTitleId}>
                                 <SelectTrigger id="creditTitle">
                                     <SelectValue placeholder="Select a template..." />
@@ -597,16 +597,16 @@ export default function ManageRemarksPage() {
                             </Select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
+                            <Label className="mb-1" htmlFor="title">Title <span className="text-destructive">*</span></Label>
                             <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
+                                <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
                                 <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
                             </div>
                             <div>
-                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
+                            <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
                             <Select value={getCurrentAcademicYear()} disabled>
                                 <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
                                 <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
@@ -614,11 +614,11 @@ export default function ManageRemarksPage() {
                             </div>
                         </div>
                         <div>
-                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
+                        <Label className="mb-1" htmlFor="notes">Notes / Rationale</Label>
                         <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
                         </div>
                         <div>
-                        <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
+                        <Label className="mb-1">Upload Proof (Optional)</Label>
                         <FileUpload onFileSelect={setProof} />
                         </div>
                     </div>
@@ -643,7 +643,7 @@ export default function ManageRemarksPage() {
                             </Card>
                         ) : (
                             <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50">
-                                <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
+                                <p className="text-muted-foreground text-center p-4 text-xs">Search and select a faculty member above.</p>
                             </div>
                         )}
                     </div>
@@ -856,7 +856,7 @@ export default function ManageRemarksPage() {
                                         </DialogHeader>
                                         <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                                             <div>
-                                                <Label htmlFor="edit-creditTitle">Remark Template (Optional)</Label>
+                                                <Label htmlFor="edit-creditTitle">Remark Template</Label>
                                                 <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
                                                     <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
                                                     <SelectContent>

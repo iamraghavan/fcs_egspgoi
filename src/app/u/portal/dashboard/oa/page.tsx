@@ -20,6 +20,7 @@ import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
 
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
@@ -181,8 +182,8 @@ export default function OADashboardPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFaculty || !points || !title) {
-      showAlert("Incomplete Form", "Please select a faculty member and fill out all required fields.");
+    if (!selectedFaculty || !points || !title || !creditTitleId) {
+      showAlert("Incomplete Form", "Please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
@@ -301,7 +302,7 @@ export default function OADashboardPage() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div ref={suggestionRef} className="relative">
-                      <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                      <Label className="mb-1" htmlFor="faculty">Faculty Member <span className="text-destructive">*</span></Label>
                       <Input
                         id="faculty"
                         placeholder="Type to search for faculty..."
@@ -327,7 +328,7 @@ export default function OADashboardPage() {
                       )}
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Remark Template (Optional)</label>
+                        <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
                         <Select value={creditTitleId} onValueChange={setCreditTitleId}>
                             <SelectTrigger id="creditTitle">
                                 <SelectValue placeholder="Select a template..." />
@@ -342,16 +343,16 @@ export default function OADashboardPage() {
                         </Select>
                     </div>
                     <div>
-                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
+                        <Label className="mb-1" htmlFor="title">Title <span className="text-destructive">*</span></Label>
                         <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
+                            <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
                             <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
                         </div>
                         <div>
-                        <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
+                        <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
                         <Select value={getCurrentAcademicYear()} disabled>
                             <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
                             <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
@@ -359,11 +360,11 @@ export default function OADashboardPage() {
                         </div>
                     </div>
                     <div>
-                    <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
+                    <Label className="mb-1" htmlFor="notes">Notes / Rationale</Label>
                     <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
                     </div>
                     <div>
-                    <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
+                    <Label className="mb-1">Upload Proof (Optional)</Label>
                     <FileUpload onFileSelect={setProof} />
                     </div>
                 </CardContent>
