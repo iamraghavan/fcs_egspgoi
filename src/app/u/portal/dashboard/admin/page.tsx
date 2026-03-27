@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -37,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import _ from "lodash";
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
@@ -123,21 +123,24 @@ export default function AdminDashboard() {
             throw new Error(usersData.message || creditsData.message || trendsData.message || 'Failed to fetch analytics');
         }
 
-        const formattedUserGrowth = usersData.userGrowth ? Object.entries(usersData.userGrowth).map(([month, users]) => ({ month, users: Number(users) })) : [];
-        const formattedCreditStatus = creditsData.byStatus ? Object.entries(creditsData.byStatus).map(([name, value], index) => {
+        // Optimized formatting using Lodash
+        const formattedUserGrowth = _.map(usersData.userGrowth, (users, month) => ({ month, users: Number(users) }));
+        
+        const formattedCreditStatus = _.map(creditsData.byStatus, (value, name) => {
             let color = 'var(--cds-interactive-01)';
             if (name === 'pending') color = 'var(--cds-support-03)';
             if (name === 'rejected') color = 'var(--cds-support-01)';
             if (name === 'approved') color = 'var(--cds-support-02)';
             return { name, value: Number(value), color };
-        }) : [];
+        });
         
-        const formattedRecentActivities = (recentActivitiesData.success && (Array.isArray(recentActivitiesData.items) || Array.isArray(recentActivitiesData.data))) ? (recentActivitiesData.items || recentActivitiesData.data).map((item: any) => ({
+        const rawActivities = recentActivitiesData.items || recentActivitiesData.data || [];
+        const formattedRecentActivities = _.map(rawActivities, (item: any) => ({
              id: item._id,
              description: `Submission: "${item.title}"`,
              user: item.facultySnapshot?.name || item.faculty?.name || 'N/A',
              date: new Date(item.createdAt).toLocaleDateString()
-        })) : [];
+        }));
 
         setAnalytics({
             totalUsers: usersData.totalUsers,

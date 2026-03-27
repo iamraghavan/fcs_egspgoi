@@ -54,6 +54,8 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { format, parseISO } from "date-fns"
 import { cn } from "@/lib/utils"
+import _ from "lodash"
+import * as R from "ramda"
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
@@ -147,15 +149,20 @@ export default function DynamicReportsPage() {
     fetchAllUsers();
   }, [token]);
 
-  // Local filtering for suggestions with safety checks
+  // Optimized local filtering using Ramda
   const filteredFacultySuggestions = useMemo(() => {
     if (!facultyQuery || facultyQuery.length < 2) return [];
     const term = facultyQuery.toLowerCase();
-    return allUsers.filter(f => 
-        (f.name?.toLowerCase() || '').includes(term) || 
-        (f.facultyID?.toLowerCase() || '').includes(term) ||
-        (f.department?.toLowerCase() || '').includes(term)
-    ).slice(0, 8);
+    
+    return R.pipe(
+        R.filter((f: Faculty) => {
+            const nameMatch = (f.name?.toLowerCase() || '').includes(term);
+            const idMatch = (f.facultyID?.toLowerCase() || '').includes(term);
+            const deptMatch = (f.department?.toLowerCase() || '').includes(term);
+            return nameMatch || idMatch || deptMatch;
+        }),
+        R.take(10)
+    )(allUsers);
   }, [allUsers, facultyQuery]);
 
   const fetchReportPreview = useCallback(async () => {
@@ -197,45 +204,51 @@ export default function DynamicReportsPage() {
     }
   }, [view, sortBy, order, level, levelId, academicYear, creditType, status, startDate, endDate, token, showAlert]);
 
-  useEffect(() => {
-    const timer = setTimeout(fetchReportPreview, 500);
-    return () => clearTimeout(timer);
-  }, [fetchReportPreview]);
+  // Use Lodash debounce for performance optimization
+  const debouncedFetch = useMemo(
+    () => _.debounce(fetchReportPreview, 500),
+    [fetchReportPreview]
+  );
 
-  // Derived Statistics (Summary) - Only for Transaction view
+  useEffect(() => {
+    debouncedFetch();
+    return () => debouncedFetch.cancel();
+  }, [debouncedFetch]);
+
+  // Refactored Summary calculation using Ramda for better performance and readability
   const computedSummary = useMemo((): ReportSummary | null => {
-    if (view !== 'transactions' || !reportData || !reportData.data || !Array.isArray(reportData.data)) return null;
+    if (view !== 'transactions' || !reportData?.data || !Array.isArray(reportData.data)) return null;
     
     const data = reportData.data;
-    const stats: ReportSummary = {
-        totalPoints: 0,
-        count: data.length,
-        avgPoints: 0,
-        byStatus: [],
+    
+    const totalPoints = R.sum(R.map(item => Number(item.points) || 0, data));
+    const count = data.length;
+    
+    const statusGroups = R.groupBy((item: any) => item.status || 'unknown', data);
+    const byStatus = Object.entries(statusGroups).map(([status, items]) => ({ status, count: items!.length }));
+
+    const positivePoints = R.pipe(
+        R.filter((item: any) => item.type === 'positive'),
+        R.map((item: any) => Number(item.points) || 0),
+        R.sum
+    )(data);
+
+    const negativePoints = R.pipe(
+        R.filter((item: any) => item.type === 'negative'),
+        R.map((item: any) => Math.abs(Number(item.points) || 0)),
+        R.sum
+    )(data);
+
+    return {
+        totalPoints,
+        count,
+        avgPoints: count > 0 ? totalPoints / count : 0,
+        byStatus,
         byType: [
-            { type: 'positive', points: 0 },
-            { type: 'negative', points: 0 }
+            { type: 'positive', points: positivePoints },
+            { type: 'negative', points: negativePoints }
         ]
     };
-
-    const statusCounts: Record<string, number> = {};
-
-    data.forEach(item => {
-        const pts = Number(item.points) || 0;
-        stats.totalPoints += pts;
-        
-        const s = item.status || 'unknown';
-        statusCounts[s] = (statusCounts[s] || 0) + 1;
-
-        const t = item.type === 'positive' ? 'positive' : 'negative';
-        const typeObj = stats.byType.find(obj => obj.type === t);
-        if (typeObj) typeObj.points += Math.abs(pts);
-    });
-
-    stats.avgPoints = stats.count > 0 ? stats.totalPoints / stats.count : 0;
-    stats.byStatus = Object.entries(statusCounts).map(([status, count]) => ({ status, count }));
-
-    return stats;
   }, [reportData, view]);
 
   const handleDownload = (format: 'pdf' | 'excel' | 'html') => {
