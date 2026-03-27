@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState } from "react";
@@ -25,18 +24,13 @@ export default function ForgotPasswordPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+      await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
       });
-
-      // We don't care about the response status for security reasons,
-      // just that it completed.
       setIsSubmitted(true);
-
     } catch (error: any) {
-      // Still show the success message to prevent email enumeration
       setIsSubmitted(true);
     } finally {
       setIsLoading(false);
@@ -45,13 +39,12 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="w-full min-h-screen flex flex-col md:flex-row">
-      <div className="hidden md:flex flex-1 relative">
+      <div className="hidden md:flex flex-1 relative bg-cds-ui-05">
         <Image
           src={EngineeringCollegeImage}
           alt="EGS Pillay Engineering College"
-          layout="fill"
-          objectFit="cover"
-          quality={90}
+          fill
+          className="object-cover brightness-[0.4]"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
@@ -64,7 +57,8 @@ export default function ForgotPasswordPage() {
                     alt="College Logo"
                     width={100}
                     height={100}
-                    className="mx-auto mb-4"
+                    className="mx-auto mb-4 h-auto w-auto"
+                    priority
                 />
                 <h2 className="text-3xl font-bold text-foreground mb-2">
                     Forgot Password

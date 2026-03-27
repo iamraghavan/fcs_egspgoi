@@ -1,7 +1,6 @@
-
 import { Progress } from '@/components/ui/progress';
 import { Card, CardContent } from '@/components/ui/card';
-import { Twitter, Instagram, Facebook, Mail, Globe, Hammer } from 'lucide-react';
+import { Mail, Globe, Hammer } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
@@ -12,7 +11,7 @@ export default function MaintenancePage() {
   maintenanceEndDate.setDate(maintenanceEndDate.getDate() + 7);
 
   return (
-    <div className="font-maintenance flex flex-col items-center justify-center min-h-screen bg-[#FDF9F0] p-4 sm:p-6 relative overflow-hidden">
+    <div className="font-maintenance flex flex-col items-center justify-center min-h-screen bg-[#fdf9f0] p-4 sm:p-6 relative overflow-hidden">
         {/* Background depth effects */}
         <div className="absolute top-[-10%] -left-[10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] animate-pulse"></div>
         <div className="absolute bottom-[-10%] -right-[10%] w-[40%] h-[40%] bg-blue-500/5 rounded-full blur-[120px] animate-pulse delay-700"></div>
@@ -54,7 +53,7 @@ export default function MaintenancePage() {
                         </p>
                     </div>
 
-                    <div className="relative group rounded-2xl overflow-hidden aspect-[21/9] shadow-inner">
+                    <div className="relative group rounded-2xl overflow-hidden aspect-[21/9] shadow-inner bg-muted">
                         <Image
                             src={CarMechanicImage}
                             alt="Maintenance in Progress"

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, Suspense } from "react";
@@ -74,7 +73,6 @@ function VerifyWhatsApp() {
   const { showAlert } = useAlert();
 
   const [step, setStep] = useState<'initial' | 'enter-phone' | 'verify-otp'>('initial');
-  const [user, setUser] = useState<UserProfile | null>(null);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -97,13 +95,10 @@ function VerifyWhatsApp() {
         if (!res.ok || !data.success) {
           throw new Error(data.message || 'Failed to fetch user profile.');
         }
-        setUser(data.user);
         if (data.user.whatsappNumber) {
           setPhone(data.user.whatsappNumber);
-          setStep('enter-phone'); // Show number and let user trigger OTP
-        } else {
-          setStep('enter-phone');
         }
+        setStep('enter-phone');
       } catch (error: any) {
         showAlert('Error', error.message);
         router.push('/u/portal/auth?faculty_login&reason=error');
@@ -159,7 +154,7 @@ function VerifyWhatsApp() {
         throw new Error(data.message || 'OTP Verification failed.');
       }
       
-      setStep('initial'); // Show loader before redirect
+      setStep('initial');
       showAlert('Success!', 'Your WhatsApp number has been verified.');
       
       const role = localStorage.getItem("userRole");
@@ -241,13 +236,12 @@ function VerifyWhatsApp() {
 
   return (
     <div className="w-full min-h-screen flex flex-col md:flex-row">
-      <div className="hidden md:flex flex-1 relative">
+      <div className="hidden md:flex flex-1 relative bg-cds-ui-05">
         <Image
           src={EngineeringCollegeImage}
           alt="EGS Pillay Engineering College"
-          layout="fill"
-          objectFit="cover"
-          quality={90}
+          fill
+          className="object-cover brightness-[0.4]"
           priority
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/30 to-transparent"></div>
@@ -260,7 +254,8 @@ function VerifyWhatsApp() {
                     alt="College Logo"
                     width={100}
                     height={100}
-                    className="mx-auto mb-4"
+                    className="mx-auto mb-4 h-auto w-auto"
+                    priority
                 />
                 <h2 className="text-3xl font-bold text-foreground mb-2">
                     Verify Your WhatsApp
