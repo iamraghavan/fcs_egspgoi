@@ -46,7 +46,6 @@ import {
   ChevronRight,
   X,
   Trophy,
-  ArrowUpDown,
   ArrowUp,
   ArrowDown
 } from "lucide-react"
@@ -215,7 +214,7 @@ export default function DynamicReportsPage() {
     return () => debouncedFetch.cancel();
   }, [debouncedFetch]);
 
-  // Refactored Summary calculation using Ramda for better performance and readability
+  // Refactored Summary calculation using Ramda
   const computedSummary = useMemo((): ReportSummary | null => {
     if (view !== 'transactions' || !reportData?.data || !Array.isArray(reportData.data)) return null;
     
@@ -304,11 +303,20 @@ export default function DynamicReportsPage() {
 
   const getStatusColor = (s: string) => {
     switch(s) {
-        case 'approved': return '#10b981';
-        case 'pending': return '#f59e0b';
-        case 'rejected': return '#ef4444';
-        case 'appealed': return '#3b82f6';
-        default: return '#6b7280';
+        case 'approved': return 'var(--cds-support-02)';
+        case 'pending': return 'var(--cds-support-03)';
+        case 'rejected': return 'var(--cds-support-01)';
+        case 'appealed': return 'var(--cds-interactive-01)';
+        default: return 'var(--cds-text-05)';
+    }
+  };
+
+  const handleSortRanking = (field: "total" | "positive" | "negative" | "count") => {
+    if (sortBy === field) {
+        setOrder(order === 'desc' ? 'asc' : 'desc');
+    } else {
+        setSortBy(field);
+        setOrder('desc');
     }
   };
 
@@ -324,10 +332,10 @@ export default function DynamicReportsPage() {
     );
 
     return (
-        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-none border-cds-ui-03">
+        <Card className="animate-in fade-in slide-in-from-bottom-4 duration-500 shadow-none border-cds-ui-03 rounded-none">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b bg-cds-ui-01/30">
                 <div>
-                    <CardTitle className="text-base flex items-center gap-2">
+                    <CardTitle className="text-base font-semibold flex items-center gap-2">
                         <Trophy className="h-4 w-4 text-primary" />
                         Faculty Rankings
                     </CardTitle>
@@ -337,7 +345,7 @@ export default function DynamicReportsPage() {
                     <Button variant="outline" size="icon" className="h-8 w-8 rounded-none" disabled={previewPage === 1} onClick={() => setPreviewPage(p => Math.max(1, p - 1))}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
-                    <span className="text-[10px] font-bold uppercase tracking-wider px-2">Page {previewPage} of {totalPages || 1}</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 tabular-nums">Page {previewPage} of {totalPages || 1}</span>
                     <Button variant="outline" size="icon" className="h-8 w-8 rounded-none" disabled={previewPage >= totalPages} onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}>
                         <ChevronRight className="h-4 w-4" />
                     </Button>
@@ -350,10 +358,26 @@ export default function DynamicReportsPage() {
                             <tr className="text-left">
                                 <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05">Faculty Associate</th>
                                 <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05">Department</th>
-                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right">Positive (+)</th>
-                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right">Negative (-)</th>
-                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right">Net Total</th>
-                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-center">Activities</th>
+                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right cursor-pointer hover:bg-cds-ui-03 transition-colors" onClick={() => handleSortRanking('positive')}>
+                                    <div className="flex items-center justify-end gap-1">
+                                        Positive (+) {sortBy === 'positive' && (order === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
+                                    </div>
+                                </th>
+                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right cursor-pointer hover:bg-cds-ui-03 transition-colors" onClick={() => handleSortRanking('negative')}>
+                                    <div className="flex items-center justify-end gap-1">
+                                        Negative (-) {sortBy === 'negative' && (order === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
+                                    </div>
+                                </th>
+                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-right cursor-pointer hover:bg-cds-ui-03 transition-colors" onClick={() => handleSortRanking('total')}>
+                                    <div className="flex items-center justify-end gap-1 text-primary">
+                                        Net Total {sortBy === 'total' && (order === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
+                                    </div>
+                                </th>
+                                <th className="p-4 text-[11px] font-bold uppercase tracking-wider text-cds-text-05 text-center cursor-pointer hover:bg-cds-ui-03 transition-colors" onClick={() => handleSortRanking('count')}>
+                                    <div className="flex items-center justify-center gap-1">
+                                        Activities {sortBy === 'count' && (order === 'desc' ? <ArrowDown className="h-3 w-3" /> : <ArrowUp className="h-3 w-3" />)}
+                                    </div>
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-cds-ui-03">
@@ -364,17 +388,17 @@ export default function DynamicReportsPage() {
                                         <div className="text-[10px] text-cds-text-05 font-mono uppercase tracking-widest">{row.facultyID}</div>
                                     </td>
                                     <td className="p-4 text-[13px] text-cds-text-02">{row.department}</td>
-                                    <td className="p-4 text-right font-bold text-green-600 tabular-nums">+{row.positive}</td>
-                                    <td className="p-4 text-right font-bold text-red-600 tabular-nums">-{Math.abs(row.negative)}</td>
+                                    <td className="p-4 text-right font-bold text-cds-support-02 tabular-nums">+{row.positive.toLocaleString()}</td>
+                                    <td className="p-4 text-right font-bold text-cds-support-01 tabular-nums">-{Math.abs(row.negative).toLocaleString()}</td>
                                     <td className="p-4 text-right">
                                         <Badge className={cn(
-                                            "rounded-none font-bold tabular-nums",
-                                            row.total >= 0 ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                                            "rounded-none font-bold tabular-nums min-w-[40px] justify-center",
+                                            row.total >= 0 ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"
                                         )}>
-                                            {row.total}
+                                            {row.total.toLocaleString()}
                                         </Badge>
                                     </td>
-                                    <td className="p-4 text-center tabular-nums text-cds-text-05">{row.count}</td>
+                                    <td className="p-4 text-center tabular-nums text-cds-text-05 font-medium">{row.count}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -383,7 +407,7 @@ export default function DynamicReportsPage() {
             </CardContent>
             <CardFooter className="py-3 bg-cds-ui-01/30 border-t">
                 <p className="text-[10px] text-cds-text-05 font-bold uppercase tracking-widest text-center w-full">
-                    Displaying {totalRecords} faculty records identified.
+                    Displaying {totalRecords.toLocaleString()} faculty records identified.
                 </p>
             </CardFooter>
         </Card>
@@ -407,13 +431,13 @@ export default function DynamicReportsPage() {
                 <Card className="bg-primary/5 border-primary/10 rounded-none shadow-none">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-[10px] font-bold uppercase tracking-widest text-primary">Total Institution Points</CardDescription>
-                        <CardTitle className="text-2xl font-bold tabular-nums">{computedSummary?.totalPoints || 0}</CardTitle>
+                        <CardTitle className="text-2xl font-bold tabular-nums">{computedSummary?.totalPoints?.toLocaleString() || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="rounded-none shadow-none border-cds-ui-03">
                     <CardHeader className="pb-2">
                         <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Recorded Activities</CardDescription>
-                        <CardTitle className="text-2xl font-bold tabular-nums">{computedSummary?.count || 0}</CardTitle>
+                        <CardTitle className="text-2xl font-bold tabular-nums">{computedSummary?.count?.toLocaleString() || 0}</CardTitle>
                     </CardHeader>
                 </Card>
                 <Card className="rounded-none shadow-none border-cds-ui-03">
@@ -470,7 +494,7 @@ export default function DynamicReportsPage() {
                                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--cds-ui-03)" />
                                 <XAxis dataKey="type" stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false} tickFormatter={(v) => v.toUpperCase()} />
                                 <YAxis stroke="var(--cds-text-05)" fontSize={10} tickLine={false} axisLine={false}/>
-                                <Tooltip cursor={{fill: 'var(--cds-ui-01)'}} />
+                                <Tooltip cursor={{fill: 'var(--cds-ui-01)'}} contentStyle={{ borderRadius: '0' }} />
                                 <Bar dataKey="points" radius={0}>
                                     {(computedSummary?.byType || []).map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.type === 'positive' ? 'var(--cds-support-02)' : 'var(--cds-support-01)'} />
@@ -485,14 +509,14 @@ export default function DynamicReportsPage() {
             <Card className="rounded-none shadow-none border-cds-ui-03">
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b bg-cds-ui-01/30">
                     <div>
-                        <CardTitle className="text-base">Transactional Audit Preview</CardTitle>
+                        <CardTitle className="text-base font-semibold">Transactional Audit Preview</CardTitle>
                         <CardDescription className="text-xs">Individual credit transaction history.</CardDescription>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button variant="outline" size="icon" className="h-8 w-8 rounded-none" disabled={previewPage === 1} onClick={() => setPreviewPage(p => Math.max(1, p - 1))}>
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2">Page {previewPage} of {totalPages || 1}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 tabular-nums">Page {previewPage} of {totalPages || 1}</span>
                         <Button variant="outline" size="icon" className="h-8 w-8 rounded-none" disabled={previewPage >= totalPages} onClick={() => setPreviewPage(p => Math.min(totalPages, p + 1))}>
                             <ChevronRight className="h-4 w-4" />
                         </Button>
@@ -514,7 +538,7 @@ export default function DynamicReportsPage() {
                             <tbody className="divide-y divide-cds-ui-03">
                                 {paginatedData.map((row, i) => (
                                     <tr key={i} className="hover:bg-cds-ui-01/50 transition-colors">
-                                        <td className="p-4 whitespace-nowrap text-cds-text-02 tabular-nums">
+                                        <td className="p-4 whitespace-nowrap text-cds-text-02 tabular-nums text-[12px]">
                                             {row.createdAt ? format(parseISO(row.createdAt), 'dd MMM yyyy') : 'N/A'}
                                         </td>
                                         <td className="p-4">
@@ -522,7 +546,7 @@ export default function DynamicReportsPage() {
                                             <div className="text-[10px] text-cds-text-05 font-mono uppercase tracking-widest">{row.facultySnapshot?.facultyID || row.faculty || 'N/A'}</div>
                                         </td>
                                         <td className="p-4">
-                                            <p className="max-w-[250px] truncate text-[13px] font-medium" title={row.title}>{row.title}</p>
+                                            <p className="max-w-[250px] truncate text-[13px] font-medium text-cds-text-01" title={row.title}>{row.title}</p>
                                         </td>
                                         <td className="p-4">
                                             <Badge variant="outline" className={cn(
@@ -533,16 +557,16 @@ export default function DynamicReportsPage() {
                                             </Badge>
                                         </td>
                                         <td className="p-4 capitalize">
-                                            <div className="flex items-center gap-2 text-[13px]">
+                                            <div className="flex items-center gap-2 text-[12px] font-medium">
                                                 <div className="h-2 w-2 rounded-full" style={{backgroundColor: getStatusColor(row.status)}} />
                                                 {row.status}
                                             </div>
                                         </td>
                                         <td className={cn(
                                             "p-4 text-right font-bold tabular-nums",
-                                            row.type === 'positive' ? 'text-green-600' : 'text-red-600'
+                                            row.type === 'positive' ? 'text-cds-support-02' : 'text-cds-support-01'
                                         )}>
-                                            {row.type === 'positive' ? `+${row.points}` : row.points}
+                                            {row.type === 'positive' ? `+${row.points.toLocaleString()}` : row.points.toLocaleString()}
                                         </td>
                                     </tr>
                                 ))}
@@ -552,7 +576,7 @@ export default function DynamicReportsPage() {
                 </CardContent>
                 <CardFooter className="py-3 border-t bg-cds-ui-01/30">
                     <p className="text-[10px] text-cds-text-05 font-bold uppercase tracking-widest text-center w-full">
-                        Showing {(previewPage-1)*previewLimit + 1} to {Math.min(previewPage*previewLimit, totalRecords)} of {totalRecords} records.
+                        Showing {((previewPage-1)*previewLimit + 1).toLocaleString()} to {Math.min(previewPage*previewLimit, totalRecords).toLocaleString()} of {totalRecords.toLocaleString()} records.
                     </p>
                 </CardFooter>
             </Card>
@@ -576,13 +600,13 @@ export default function DynamicReportsPage() {
 
     if (!reportData || !reportData.data || (Array.isArray(reportData.data) && reportData.data.length === 0)) {
         return (
-            <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-cds-ui-03 bg-cds-ui-01/20">
+            <div className="flex flex-col items-center justify-center py-20 text-center border border-dashed border-cds-ui-03 bg-cds-ui-01/20 rounded-none">
                 <div className="p-4 bg-background border rounded-full shadow-sm mb-4">
                     <History className="h-10 w-10 text-cds-text-05" />
                 </div>
-                <h3 className="text-lg font-bold">No data matches your criteria</h3>
+                <h3 className="text-lg font-bold">No records matched your audit criteria</h3>
                 <p className="text-sm text-cds-text-05 max-w-xs mx-auto mt-1">
-                    Try adjusting your filters, selecting a different academic year, or changing the report level.
+                    Try adjusting your filters, selecting a different academic year, or broadening the audit range.
                 </p>
             </div>
         );
@@ -605,8 +629,8 @@ export default function DynamicReportsPage() {
     <div className="max-w-7xl mx-auto space-y-8">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b pb-6 border-sidebar-border">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-cds-text-01">Institutional Insights</h1>
-          <p className="text-sm text-cds-text-05 mt-1">High-fidelity reporting and performance auditing.</p>
+          <h1 className="text-3xl font-bold tracking-tight text-cds-text-01">Institutional Auditing</h1>
+          <p className="text-sm text-cds-text-05 mt-1">Generate high-fidelity performance reports and aggregations.</p>
         </div>
         <div className="flex items-center gap-2">
             <Button variant="outline" className="rounded-none font-semibold h-10 px-6" onClick={generateShareLink} disabled={!reportData || isSharing}>
@@ -614,11 +638,11 @@ export default function DynamicReportsPage() {
                 Share Report
             </Button>
             <Select onValueChange={(v) => handleDownload(v as any)}>
-                <SelectTrigger className="w-[160px] bg-primary text-primary-foreground border-none rounded-none h-10 font-bold uppercase tracking-wider text-[11px]">
+                <SelectTrigger className="w-[160px] bg-primary text-primary-foreground border-none rounded-none h-10 font-bold uppercase tracking-wider text-[11px] focus:ring-0">
                     <FileDown className="h-4 w-4 mr-2" />
-                    <SelectValue placeholder="Export Data" />
+                    <SelectValue placeholder="Export Audit" />
                 </SelectTrigger>
-                <SelectContent className="rounded-none">
+                <SelectContent className="rounded-none z-[200]">
                     <SelectItem value="pdf">Portable PDF</SelectItem>
                     <SelectItem value="excel">Excel Spreadsheet</SelectItem>
                     <SelectItem value="html">Interactive Web</SelectItem>
@@ -631,83 +655,52 @@ export default function DynamicReportsPage() {
         <aside className="lg:col-span-1 space-y-6">
           <Card className="shadow-none rounded-none border-cds-ui-03">
             <CardHeader className="pb-4 bg-cds-ui-01/50 border-b">
-                <CardTitle className="text-xs font-bold uppercase tracking-widest flex items-center gap-2">
+                <CardTitle className="text-[11px] font-bold uppercase tracking-widest flex items-center gap-2">
                     <Filter className="h-4 w-4 text-primary" />
-                    Report Configuration
+                    Audit Configuration
                 </CardTitle>
             </CardHeader>
             <CardContent className="space-y-5 pt-6">
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Report Perspective</label>
+                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">View Mode</label>
                     <Select value={view} onValueChange={(v: any) => { setView(v); setPreviewPage(1); }}>
                         <SelectTrigger className="bg-cds-ui-01 border-none rounded-none focus:ring-1 focus:ring-primary h-11">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-none">
-                            <SelectItem value="transactions"><History className="h-4 w-4 mr-2 inline" /> Transactions</SelectItem>
-                            <SelectItem value="ranking"><Trophy className="h-4 w-4 mr-2 inline" /> Rankings</SelectItem>
+                        <SelectContent className="rounded-none z-[200]">
+                            <SelectItem value="transactions"><History className="h-4 w-4 mr-2 inline" /> Transaction Log</SelectItem>
+                            <SelectItem value="ranking"><Trophy className="h-4 w-4 mr-2 inline" /> Faculty Ranking</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
-                {view === 'ranking' && (
-                    <div className="grid grid-cols-1 gap-4 animate-in slide-in-from-top-2">
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Rank By</label>
-                            <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-                                <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-10">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-none">
-                                    <SelectItem value="total">Net Credit Balance</SelectItem>
-                                    <SelectItem value="positive">Total Positive (+)</SelectItem>
-                                    <SelectItem value="negative">Total Deductions (-)</SelectItem>
-                                    <SelectItem value="count">Activity Volume</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Sort Order</label>
-                            <Select value={order} onValueChange={(v: any) => setOrder(v)}>
-                                <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-10">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent className="rounded-none">
-                                    <SelectItem value="desc"><ArrowDown className="h-3 w-3 mr-2 inline" /> Highest First</SelectItem>
-                                    <SelectItem value="asc"><ArrowUp className="h-3 w-3 mr-2 inline" /> Lowest First</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    </div>
-                )}
-
                 <Separator className="bg-cds-ui-03" />
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Auditing Level</label>
+                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Scope</label>
                     <Select value={level} onValueChange={(v: any) => { setLevel(v); setLevelId(""); setFacultyQuery(""); }}>
                         <SelectTrigger className="bg-cds-ui-01 border-none rounded-none focus:ring-1 focus:ring-primary h-11">
                             <SelectValue />
                         </SelectTrigger>
-                        <SelectContent className="rounded-none">
+                        <SelectContent className="rounded-none z-[200]">
                             <SelectItem value="college"><LayoutDashboard className="h-4 w-4 mr-2 inline" /> Institution Wide</SelectItem>
                             <SelectItem value="department"><Building2 className="h-4 w-4 mr-2 inline" /> Department Unit</SelectItem>
-                            <SelectItem value="faculty"><User className="h-4 w-4 mr-2 inline" /> Faculty Member</SelectItem>
+                            <SelectItem value="faculty"><User className="h-4 w-4 mr-2 inline" /> Individual Member</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
 
                 {level === 'department' && (
                     <div className="space-y-2 animate-in slide-in-from-top-2">
-                        <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Select Unit</label>
+                        <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Select Department</label>
                         <Select value={levelId} onValueChange={setLevelId}>
                             <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-11">
-                                <SelectValue placeholder="Pick a dept..." />
+                                <SelectValue placeholder="Locate unit..." />
                             </SelectTrigger>
-                            <SelectContent className="max-h-80 rounded-none">
+                            <SelectContent className="max-h-80 rounded-none z-[200]">
                                 {Object.entries(colleges).map(([collegeName, departments]) => (
                                     <SelectGroup key={collegeName}>
-                                        <SelectLabel className="text-primary font-bold bg-muted/50 p-2">{collegeName}</SelectLabel>
+                                        <SelectLabel className="text-primary font-bold bg-muted/50 p-2 text-[10px] uppercase tracking-widest">{collegeName}</SelectLabel>
                                         {Object.entries(departments).map(([group, courses]) => (
                                             <SelectGroup key={group}>
                                                 {courses.map(course => (
@@ -724,12 +717,12 @@ export default function DynamicReportsPage() {
 
                 {level === 'faculty' && (
                     <div className="space-y-2 animate-in slide-in-from-top-2 relative" ref={suggestionRef}>
-                        <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Locate Member</label>
+                        <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Faculty Associate</label>
                         <div className="relative">
                             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-cds-text-05" />
                             <Input 
-                                placeholder="Faculty name or ID..." 
-                                className="pl-9 bg-cds-ui-01 border-none rounded-none h-11" 
+                                placeholder="Search name or ID..." 
+                                className="pl-9 bg-cds-ui-01 border-none rounded-none h-11 focus:ring-1 focus:ring-primary" 
                                 value={facultyQuery}
                                 onChange={(e) => { setFacultyQuery(e.target.value); setShowFacultySuggestions(true); }}
                                 onFocus={() => setShowFacultySuggestions(true)}
@@ -737,7 +730,7 @@ export default function DynamicReportsPage() {
                             {facultyQuery && (
                                 <button 
                                     onClick={() => { setFacultyQuery(""); setLevelId(""); }}
-                                    className="absolute right-10 top-1/2 -translate-y-1/2 p-1 hover:bg-cds-ui-03 rounded-full"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 p-1 hover:bg-cds-ui-03 rounded-none"
                                 >
                                     <X className="h-3 w-3 text-cds-text-05" />
                                 </button>
@@ -749,7 +742,7 @@ export default function DynamicReportsPage() {
                             )}
                         </div>
                         {showFacultySuggestions && facultyQuery.length >= 2 && (
-                            <div className="absolute z-[200] w-full mt-1 bg-background border border-cds-ui-03 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                            <div className="absolute z-[250] w-full mt-1 bg-background border border-cds-ui-03 shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 rounded-none">
                                 {filteredFacultySuggestions.length > 0 ? (
                                     filteredFacultySuggestions.map(f => (
                                         <button
@@ -763,12 +756,12 @@ export default function DynamicReportsPage() {
                                             }}
                                         >
                                             <p className="text-sm font-bold text-cds-text-01">{f.name}</p>
-                                            <p className="text-[10px] text-cds-text-05 font-mono uppercase tracking-widest">{f.facultyID} &middot; {f.department}</p>
+                                            <p className="text-[10px] text-cds-text-05 font-mono uppercase tracking-widest">{f.facultyID || 'N/A'} &middot; {f.department || 'N/A'}</p>
                                         </button>
                                     ))
                                 ) : !isUsersLoading ? (
-                                    <div className="p-4 text-center text-xs text-cds-text-05 italic">
-                                        No matches for "{facultyQuery}"
+                                    <div className="p-4 text-center text-[11px] text-cds-text-05 italic font-medium">
+                                        No associates matched "{facultyQuery}"
                                     </div>
                                 ) : null}
                             </div>
@@ -779,14 +772,14 @@ export default function DynamicReportsPage() {
                 <Separator className="bg-cds-ui-03" />
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Academic Year</label>
+                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Academic Cycle</label>
                     <Select value={academicYear} onValueChange={setAcademicYear}>
                         <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-11"><SelectValue /></SelectTrigger>
-                        <SelectContent className="rounded-none">
-                            <SelectItem value="all">All Academic Cycles</SelectItem>
-                            <SelectItem value="2025-26">AY 2025-26</SelectItem>
-                            <SelectItem value="2024-25">AY 2024-25</SelectItem>
-                            <SelectItem value="2023-24">AY 2023-24</SelectItem>
+                        <SelectContent className="rounded-none z-[200]">
+                            <SelectItem value="all">Comprehensive Audit</SelectItem>
+                            <SelectItem value="2025-26">Academic Year 2025-26</SelectItem>
+                            <SelectItem value="2024-25">Academic Year 2024-25</SelectItem>
+                            <SelectItem value="2023-24">Academic Year 2023-24</SelectItem>
                         </SelectContent>
                     </Select>
                 </div>
@@ -794,13 +787,13 @@ export default function DynamicReportsPage() {
                 {view === 'transactions' && (
                     <div className="grid grid-cols-2 gap-3 animate-in fade-in">
                         <div className="space-y-2">
-                            <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Type</label>
+                            <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Credit Type</label>
                             <Select value={creditType} onValueChange={(v: any) => setCreditType(v)}>
                                 <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-10"><SelectValue /></SelectTrigger>
-                                <SelectContent className="rounded-none">
+                                <SelectContent className="rounded-none z-[200]">
                                     <SelectItem value="all">All</SelectItem>
-                                    <SelectItem value="positive">Positive</SelectItem>
-                                    <SelectItem value="negative">Negative</SelectItem>
+                                    <SelectItem value="positive">Positive (+)</SelectItem>
+                                    <SelectItem value="negative">Negative (-)</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -808,8 +801,8 @@ export default function DynamicReportsPage() {
                             <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Status</label>
                             <Select value={status} onValueChange={(v: any) => setStatus(v)}>
                                 <SelectTrigger className="bg-cds-ui-01 border-none rounded-none h-10"><SelectValue /></SelectTrigger>
-                                <SelectContent className="rounded-none">
-                                    <SelectItem value="all">All</SelectItem>
+                                <SelectContent className="rounded-none z-[200]">
+                                    <SelectItem value="all">All States</SelectItem>
                                     <SelectItem value="approved">Approved</SelectItem>
                                     <SelectItem value="pending">Pending</SelectItem>
                                     <SelectItem value="rejected">Rejected</SelectItem>
@@ -821,7 +814,7 @@ export default function DynamicReportsPage() {
                 )}
 
                 <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Activity Range</label>
+                    <label className="text-[10px] font-bold text-cds-text-05 uppercase tracking-widest">Temporal Range</label>
                     <div className="grid grid-cols-1 gap-2">
                         <Input type="date" className="bg-cds-ui-01 border-none rounded-none text-xs h-10" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
                         <Input type="date" className="bg-cds-ui-01 border-none rounded-none text-xs h-10" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
@@ -829,8 +822,8 @@ export default function DynamicReportsPage() {
                 </div>
             </CardContent>
             <CardFooter className="pt-0 pb-6">
-                <p className="text-[10px] text-cds-text-05 text-center w-full italic">
-                    Real-time aggregation: preview reflects live state.
+                <p className="text-[9px] font-bold uppercase tracking-widest text-cds-text-05 text-center w-full">
+                    Real-time verification: reflecting live system state.
                 </p>
             </CardFooter>
           </Card>

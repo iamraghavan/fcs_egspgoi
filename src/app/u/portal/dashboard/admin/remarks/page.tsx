@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -54,7 +53,7 @@ import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = '';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type User = {
   _id: string;
@@ -270,7 +269,8 @@ export default function ManageRemarksPage() {
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
-          const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative?${params.toString()}`, {
+          // Standardized path per Guide V2
+          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
@@ -375,7 +375,7 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative`, {
+      const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,
@@ -402,22 +402,6 @@ export default function ManageRemarksPage() {
       setPage(1);
       setIsFormOpen(false);
 
-      // notify via server
-      fetch(`${API_BASE_URL}/api/v1/notifications/remark`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          facultyId: selectedFaculty._id,
-          title: title,
-          points: Number(points),
-          notes: notes,
-          academicYear: getCurrentAcademicYear(),
-        }),
-      }).catch(console.error);
-
     } catch (error: any) {
       showAlert("Submission failed", error.message);
     } finally {
@@ -443,7 +427,7 @@ export default function ManageRemarksPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${editingRemark._id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
             body: formData,
@@ -470,7 +454,7 @@ export default function ManageRemarksPage() {
           return;
       }
       try {
-          const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${creditId}`, {
+          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${creditId}`, {
               method: "DELETE",
               headers: { "Authorization": `Bearer ${adminToken}` },
           });
