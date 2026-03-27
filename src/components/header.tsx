@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { GlobalSearch } from './global-search';
 import { Bell, HelpCircle, Settings, Menu } from 'lucide-react';
+import { format } from 'date-fns';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
@@ -22,11 +23,24 @@ type User = {
 export function Header({ user }: { user: User }) {
     const searchParams = useSearchParams();
     const [hasUnread, setHasUnread] = useState(false);
+    const [currentTime, setCurrentTime] = useState<string>("");
     
     const uid = searchParams.get('uid') || '';
     const settingsHref = user.role === 'admin' 
         ? `/u/portal/dashboard/admin/settings?uid=${uid}`
         : `/u/portal/dashboard/settings?uid=${uid}`;
+
+    useEffect(() => {
+        const updateTimer = () => {
+            const now = new Date();
+            // Format: DD/MM/YYYY - HH:MM:SS AM/PM IST
+            setCurrentTime(format(now, 'dd/MM/yyyy - hh:mm:ss a') + ' IST');
+        };
+
+        updateTimer();
+        const timer = setInterval(updateTimer, 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     useEffect(() => {
         const checkNotifications = async () => {
@@ -60,7 +74,9 @@ export function Header({ user }: { user: User }) {
         <div className="hidden md:flex items-center gap-2">
             <span className="text-primary font-bold tracking-tight text-xl">CreditWise</span>
             <span className="h-4 w-[1px] bg-border mx-2" />
-            <span className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Institutional Portal</span>
+            <span className="text-[10px] font-mono font-medium text-muted-foreground uppercase tracking-tight tabular-nums" suppressHydrationWarning>
+                {currentTime || 'Initializing...'}
+            </span>
         </div>
       </div>
 
