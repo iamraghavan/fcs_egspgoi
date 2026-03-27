@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -388,17 +389,17 @@ export default function DynamicReportsPage() {
                                         <div className="text-[10px] text-cds-text-05 font-mono uppercase tracking-widest">{row.facultyID}</div>
                                     </td>
                                     <td className="p-4 text-[13px] text-cds-text-02">{row.department}</td>
-                                    <td className="p-4 text-right font-bold text-cds-support-02 tabular-nums">+{ (row.positive ?? 0).toLocaleString() }</td>
-                                    <td className="p-4 text-right font-bold text-cds-support-01 tabular-nums">-{ Math.abs(row.negative ?? 0).toLocaleString() }</td>
+                                    <td className="p-4 text-right font-bold text-cds-support-02 tabular-nums">+{(row.positive ?? 0).toLocaleString()}</td>
+                                    <td className="p-4 text-right font-bold text-cds-support-01 tabular-nums">-{Math.abs(row.negative ?? 0).toLocaleString()}</td>
                                     <td className="p-4 text-right">
                                         <Badge className={cn(
                                             "rounded-none font-bold tabular-nums min-w-[40px] justify-center",
                                             (row.total ?? 0) >= 0 ? "bg-green-100 text-green-800 border-green-200" : "bg-red-100 text-red-800 border-red-200"
                                         )}>
-                                            { (row.total ?? 0).toLocaleString() }
+                                            {(row.total ?? 0).toLocaleString()}
                                         </Badge>
                                     </td>
-                                    <td className="p-4 text-center tabular-nums text-cds-text-05 font-medium">{ (row.count ?? 0).toLocaleString() }</td>
+                                    <td className="p-4 text-center tabular-nums text-cds-text-05 font-medium">{(row.count ?? 0).toLocaleString()}</td>
                                 </tr>
                             ))}
                         </tbody>
@@ -445,7 +446,8 @@ export default function DynamicReportsPage() {
                         <CardDescription className="text-[10px] font-bold uppercase tracking-widest">Avg Credit Velocity</CardDescription>
                         <CardTitle className="text-2xl font-bold tabular-nums">{(computedSummary?.avgPoints || 0).toFixed(1)}</CardTitle>
                     </CardHeader>
-                </div>
+                </Card>
+            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <Card className="rounded-none shadow-none border-cds-ui-03">
