@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -20,7 +19,6 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog"
 import {
   AlertDialog,
@@ -52,7 +50,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = '';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
 
 type IssuedRemark = {
     _id: string;
@@ -89,7 +87,6 @@ type CreditTitle = {
   type: 'positive' | 'negative';
 };
 
-
 type Departments = {
     [key: string]: string[];
 };
@@ -117,20 +114,17 @@ const generateYearOptions = () => {
     return years;
 };
 
-
 export default function IssuedHistoryPage() {
   const { showAlert } = useAlert();
   const { toast } = useToast();
   const searchParams = useSearchParams();
 
-  // Data for table
   const [remarks, setRemarks] = useState<IssuedRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
 
-  // Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
@@ -139,11 +133,9 @@ export default function IssuedHistoryPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
-  // Details view state
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
   
-  // Edit State
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
   const [editingRemark, setEditingRemark] = useState<IssuedRemark | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -266,19 +258,12 @@ export default function IssuedHistoryPage() {
     setIsSubmittingEdit(true);
 
     const formData = new FormData();
-    if (editNotes !== (editingRemark.notes || "")) formData.append("notes", editNotes);
-    if (editCreditTitleId && editCreditTitleId !== (editingRemark.creditTitle || "")) formData.append("creditTitleId", editCreditTitleId);
+    formData.append("notes", editNotes);
+    if (editCreditTitleId) formData.append("creditTitleId", editCreditTitleId);
     if (editProof) formData.append("proof", editProof);
 
-    if (Array.from(formData.keys()).length === 0) {
-        setIsSubmittingEdit(false);
-        setIsEditDialogOpen(false);
-        toast({ title: "No changes", description: "No changes were made to the remark." });
-        return;
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${editingRemark._id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
             body: formData,
@@ -306,7 +291,7 @@ export default function IssuedHistoryPage() {
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${id}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${adminToken}` },
         });
@@ -427,10 +412,10 @@ export default function IssuedHistoryPage() {
               </TableHeader>
               <TableBody>
                 {isLoadingRemarks ? (
-                   <TableRow><TableCell colSpan={6} className="text-center h-24">Loading transaction history...</TableCell></TableRow>
+                   <TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => {
-                    const isModifiable = remark.status === 'pending';
+                    const isModifiable = remark.status !== 'deleted';
                     return (
                       <TableRow key={remark._id} className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", remark.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
                         <TableCell>
@@ -471,7 +456,7 @@ export default function IssuedHistoryPage() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-none">
+                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} variant="destructive" className="rounded-none px-10">
                                             Confirm & Delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -509,7 +494,7 @@ export default function IssuedHistoryPage() {
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>Update Remark Details</DialogTitle>
-                <DialogDescription>Correct notes or modify the violation category if required.</DialogDescription>
+                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div className="space-y-1.5">

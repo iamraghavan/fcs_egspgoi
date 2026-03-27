@@ -1,4 +1,3 @@
-
 "use client"
 
 import { Button } from "@/components/ui/button"
@@ -46,7 +45,6 @@ export default function AdminSettingsPage() {
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const containerRef = useRef(null);
 
-  // State for password change
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -57,7 +55,7 @@ export default function AdminSettingsPage() {
     const token = localStorage.getItem("token");
     if (!token) {
       setLoading(false);
-      showAlert("Authentication Error", "You are not logged in.");
+      showAlert("Authentication error", "You are not logged in.");
       return;
     }
     try {
@@ -85,8 +83,8 @@ export default function AdminSettingsPage() {
           avatar: getAvatarUrl(userData),
           mfaEmailEnabled: userData.mfaEmailEnabled || false,
           mfaAppEnabled: userData.mfaAppEnabled || false,
-          role: userData.role || 'N/A',
-          facultyID: userData.facultyID || 'N/A',
+          role: userData.role || 'n/a',
+          facultyID: userData.facultyID || 'n/a',
           currentCredit: userData.currentCredit || 0,
           prefix: userData.prefix || "",
           designation: userData.designation || "",
@@ -131,8 +129,8 @@ export default function AdminSettingsPage() {
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
         const file = e.target.files[0];
-        if (file.size > 2 * 1024 * 1024) { // 2MB limit
-            showAlert("Image Too Large", "Profile image must be less than 2MB.");
+        if (file.size > 2 * 1024 * 1024) { 
+            showAlert("Image too large", "Profile image must be less than 2MB.");
             return;
         }
         setProfileImage(file);
@@ -164,13 +162,13 @@ export default function AdminSettingsPage() {
         });
         const responseData = await response.json();
         if(responseData.success) {
-            toast({ title: "Profile Updated", description: "Your profile has been successfully updated." });
+            toast({ title: "Profile updated", description: "Your profile has been successfully updated." });
             fetchUser();
         } else {
             throw new Error(responseData.message || "Failed to update profile.");
         }
     } catch (error: any) {
-        showAlert("Update Failed", error.message);
+        showAlert("Update failed", error.message);
     } finally {
         setIsSaving(false);
     }
@@ -179,11 +177,11 @@ export default function AdminSettingsPage() {
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword !== confirmPassword) {
-        showAlert("Password Mismatch", "New password and confirmation do not match.");
+        showAlert("Password mismatch", "New password and confirmation do not match.");
         return;
     }
     if (newPassword.length < 8) {
-        showAlert("Password Too Short", "New password must be at least 8 characters long.");
+        showAlert("Password too short", "New password must be at least 8 characters long.");
         return;
     }
 
@@ -209,7 +207,7 @@ export default function AdminSettingsPage() {
       }
 
       toast({
-        title: "Password Updated",
+        title: "Password updated",
         description: "Your password has been changed successfully.",
       });
       setCurrentPassword("");
@@ -217,7 +215,7 @@ export default function AdminSettingsPage() {
       setConfirmPassword("");
 
     } catch (error: any) {
-        showAlert("Password Change Failed", error.message);
+        showAlert("Password change failed", error.message);
     } finally {
         setIsChangingPassword(false);
     }

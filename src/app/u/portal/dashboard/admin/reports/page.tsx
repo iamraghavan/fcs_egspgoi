@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useCallback, useMemo, useRef } from "react"
@@ -97,12 +96,10 @@ export default function DynamicReportsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSharing, setIsSharing] = useState(false);
   
-  // V2 View States
   const [view, setView] = useState<"transactions" | "ranking">("transactions");
   const [sortBy, setSortBy] = useState<"total" | "positive" | "negative" | "count">("total");
   const [order, setOrder] = useState<"desc" | "asc">("desc");
 
-  // Filter States
   const [level, setLevel] = useState<"college" | "department" | "faculty">("college");
   const [levelId, setLevelId] = useState("");
   const [academicYear, setAcademicYear] = useState("all");
@@ -111,23 +108,19 @@ export default function DynamicReportsPage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
-  // Pagination State for Table Preview
   const [previewPage, setPreviewPage] = useState(1);
   const previewLimit = 15;
 
-  // Search/Autocomplete States
   const [facultyQuery, setFacultyQuery] = useState("");
   const [allUsers, setAllUsers] = useState<Faculty[]>([]);
   const [showFacultySuggestions, setShowFacultySuggestions] = useState(false);
   const [isUsersLoading, setIsUsersLoading] = useState(false);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-  // Data State
   const [reportData, setReportData] = useState<ReportData | null>(null);
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
 
-  // Fetch all users for autocomplete once
   useEffect(() => {
     const fetchAllUsers = async () => {
         if (!token) return;
@@ -149,7 +142,6 @@ export default function DynamicReportsPage() {
     fetchAllUsers();
   }, [token]);
 
-  // Optimized local filtering using Ramda
   const filteredFacultySuggestions = useMemo(() => {
     if (!facultyQuery || facultyQuery.length < 2) return [];
     const term = facultyQuery.toLowerCase();
@@ -204,7 +196,6 @@ export default function DynamicReportsPage() {
     }
   }, [view, sortBy, order, level, levelId, academicYear, creditType, status, startDate, endDate, token, showAlert]);
 
-  // Use Lodash debounce for performance optimization
   const debouncedFetch = useMemo(
     () => _.debounce(fetchReportPreview, 500),
     [fetchReportPreview]
@@ -215,7 +206,6 @@ export default function DynamicReportsPage() {
     return () => debouncedFetch.cancel();
   }, [debouncedFetch]);
 
-  // Refactored Summary calculation using Ramda
   const computedSummary = useMemo((): ReportSummary | null => {
     if (view !== 'transactions' || !reportData?.data || !Array.isArray(reportData.data)) return null;
     
@@ -390,7 +380,7 @@ export default function DynamicReportsPage() {
                                     </td>
                                     <td className="p-4 text-[13px] text-cds-text-02">{row.department}</td>
                                     <td className="p-4 text-right font-bold text-cds-support-02 tabular-nums">+{(row.positive ?? 0).toLocaleString()}</td>
-                                    <td className="p-4 text-right font-bold text-cds-support-01 tabular-nums">-{Math.abs(row.negative ?? 0).toLocaleString()}</td>
+                                    <td className="p-4 text-right font-bold text-cds-support-01 tabular-nums">-{(Math.abs(row.negative ?? 0)).toLocaleString()}</td>
                                     <td className="p-4 text-right">
                                         <Badge className={cn(
                                             "rounded-none font-bold tabular-nums min-w-[40px] justify-center",
@@ -537,7 +527,7 @@ export default function DynamicReportsPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-cds-ui-03">
-                                {paginatedData.map((row, i) => (
+                                {(paginatedData || []).map((row, i) => (
                                     <tr key={i} className="hover:bg-cds-ui-01/50 transition-colors">
                                         <td className="p-4 whitespace-nowrap text-cds-text-02 tabular-nums text-[12px]">
                                             {row.createdAt ? format(parseISO(row.createdAt), 'dd MMM yyyy') : 'N/A'}

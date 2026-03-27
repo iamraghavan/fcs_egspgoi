@@ -134,7 +134,6 @@ export default function ManageRemarksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  // Form state
   const [selectedFaculty, setSelectedFaculty] = useState<User | null>(null);
   const [facultySearch, setFacultySearch] = useState("");
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -146,15 +145,13 @@ export default function ManageRemarksPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isFormOpen, setIsFormOpen] = useState(false);
 
-  // Data for dropdowns
   const [facultyList, setFacultyList] = useState<User[]>([]);
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
 
-  // Data for table and filters
   const [remarks, setRemarks] = useState<NegativeRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   const [searchTerm, setSearchTerm] = useState("");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
@@ -163,12 +160,9 @@ export default function ManageRemarksPage() {
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
-  // Details view state
   const [selectedRemarkDetails, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
-  const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
 
-  // Edit State
   const [editingRemark, setEditingRemark] = useState<NegativeRemark | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editNotes, setEditNotes] = useState("");
@@ -176,12 +170,10 @@ export default function ManageRemarksPage() {
   const [editProof, setEditProof] = useState<File | null>(null);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
-
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const uid = searchParams.get('uid');
   const totalPages = Math.ceil(total / limit);
   const suggestionRef = useRef<HTMLDivElement>(null);
-
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
@@ -269,7 +261,6 @@ export default function ManageRemarksPage() {
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
-          // Standardized path per Guide V2
           const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
@@ -289,7 +280,6 @@ export default function ManageRemarksPage() {
           setIsLoadingRemarks(false);
       }
   };
-
 
   useEffect(() => {
     if (adminToken) {
@@ -349,7 +339,6 @@ export default function ManageRemarksPage() {
         .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails.proofUrl)));
     }
   }, [selectedRemarkDetails]);
-
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -415,16 +404,9 @@ export default function ManageRemarksPage() {
     setIsSubmittingEdit(true);
 
     const formData = new FormData();
-    if (editNotes !== (editingRemark.notes || "")) formData.append("notes", editNotes);
-    if (editCreditTitleId !== (editingRemark.creditTitle || "")) formData.append("creditTitleId", editCreditTitleId);
+    formData.append("notes", editNotes);
+    if (editCreditTitleId) formData.append("creditTitleId", editCreditTitleId);
     if (editProof) formData.append("proof", editProof);
-
-    if (Array.from(formData.keys()).length === 0) {
-        setIsSubmittingEdit(false);
-        setIsEditDialogOpen(false);
-        toast({ title: "No changes", description: "No changes were made to the remark." });
-        return;
-    }
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
@@ -477,7 +459,6 @@ export default function ManageRemarksPage() {
         .sort((a, b) => a.title.localeCompare(b.title))
         .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
 }, [creditTitles]);
-
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -731,7 +712,7 @@ export default function ManageRemarksPage() {
                                         </AlertDialogHeader>
                                         <AlertDialogFooter>
                                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90 rounded-none">
+                                            <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} variant="destructive" className="rounded-none px-10">
                                                 Delete Remark
                                             </AlertDialogAction>
                                         </AlertDialogFooter>
@@ -763,7 +744,6 @@ export default function ManageRemarksPage() {
         </CardFooter>
       </Card>
 
-      {/* Edit Remark Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
@@ -808,7 +788,6 @@ export default function ManageRemarksPage() {
         </DialogContent>
       </Dialog>
       
-      {/* Details Dialog */}
        <Dialog open={!!selectedRemarkDetails} onOpenChange={(open) => !open && setSelectedRemarkDetails(null)}>
         <DialogContent className="sm:max-w-lg">
             <DialogHeader>
@@ -865,7 +844,7 @@ export default function ManageRemarksPage() {
                 </div>
             )}
             <DialogFooter className="border-t pt-4">
-                <DialogClose asChild><Button variant="secondary" className="rounded-none">Close Details</Button></DialogClose>
+                <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Details</Button></DialogClose>
             </DialogFooter>
         </DialogContent>
     </Dialog>

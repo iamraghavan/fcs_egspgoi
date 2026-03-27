@@ -1,4 +1,3 @@
-
 import type { SVGProps } from "react";
 
 export function ErrorDogIcon(props: SVGProps<SVGSVGElement>) {
@@ -6,7 +5,7 @@ export function ErrorDogIcon(props: SVGProps<SVGSVGElement>) {
     <svg xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 180 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" {...props}>
       <g className="error-dog-delete-with-friction" fill="none">
         <g className="error-dog-dog" fill="none">
-          <g className="error-dog-dog" fill="none">
+          <g className="error-dog-dog-inner" fill="none">
             <g className="error-dog-head-neck-sitting" fill="none">
               <g className="error-dog-head-neck" fill="none">
                 <rect width="12.6818" height="21.2727" rx="0.818182" transform="matrix(-1 0 0 1 98.1817 60.9768)" fill="#f4f4f4" stroke="#000716" strokeWidth="1.63636px" strokeLinejoin="round" className="error-dog-illustration-primary-grey"></rect>
@@ -36,7 +35,7 @@ export function ErrorDogIcon(props: SVGProps<SVGSVGElement>) {
               <path d="M82.6362 103.727C76.9894 103.727 72.409 99.4673 72.409 94.2155C72.409 88.9636 76.9894 84.7041 82.6362 84.7041C88.2831 84.7041 92.8635 88.9636 92.8635 94.2155C92.8635 99.4673 88.2831 103.727 82.6362 103.727V103.727Z" fill="#000716" className="error-dog-shadow"></path>
               <path d="M82.1015 102.861C77.3167 102.861 73.436 98.9786 73.436 94.1917C73.436 89.4048 77.3167 85.5223 82.1015 85.5223C86.8862 85.5223 90.7669 89.4048 90.7669 94.1917C90.7669 98.9786 86.8862 102.861 82.1015 102.861V102.861Z" fill="#d1d5db" stroke="#000716" strokeWidth="1.63636px" strokeLinecap="round" strokeLinejoin="round" className="error-dog-illustration-secondary-grey"></path>
             </g>
-            <g className="error-dog-body-leg-foot-default" fill="none">
+            <g className="error-dog-body-leg-foot-default-back" fill="none">
               <path d="M125.182 143.613H111.254C107.608 143.613 104.639 146.466 104.639 149.996V151.966H125.182V143.621V143.613Z" fill="#ffffff" stroke="#000716" strokeWidth="1.63636px" strokeLinecap="round" strokeLinejoin="round" className="error-dog-illustration-white"></path>
             </g>
             <g className="error-dog-body-hinge-back" fill="none">
