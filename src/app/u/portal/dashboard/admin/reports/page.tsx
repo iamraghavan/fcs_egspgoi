@@ -56,7 +56,7 @@ import { cn } from "@/lib/utils"
 import _ from "lodash"
 import * as R from "ramda"
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
 
 type Faculty = {
   _id: string;

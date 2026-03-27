@@ -53,7 +53,7 @@ import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type User = {
   _id: string;
@@ -666,62 +666,65 @@ export default function ManageRemarksPage() {
                 {isLoadingRemarks ? (
                    <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
-                  remarks.map((remark) => (
-                      <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
-                        <TableCell>
-                            <div className="flex items-center gap-3">
-                                <Avatar className="h-8 w-8">
-                                    <AvatarImage src={remark.facultySnapshot.profileImage} />
-                                    <AvatarFallback>{remark.facultySnapshot.name.charAt(0)}</AvatarFallback>
-                                </Avatar>
-                                <div className="flex flex-col">
-                                    <span className="font-medium text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
-                                    <span className="text-[10px] text-muted-foreground uppercase font-mono">{remark.facultySnapshot.facultyID}</span>
+                  remarks.map((remark) => {
+                      const isModifiable = remark.status !== 'deleted';
+                      return (
+                        <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
+                            <TableCell>
+                                <div className="flex items-center gap-3">
+                                    <Avatar className="h-8 w-8">
+                                        <AvatarImage src={remark.facultySnapshot.profileImage} />
+                                        <AvatarFallback>{remark.facultySnapshot.name.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div className="flex flex-col">
+                                        <span className="font-medium text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
+                                        <span className="text-[10px] text-muted-foreground uppercase font-mono">{remark.facultySnapshot.facultyID}</span>
+                                    </div>
                                 </div>
-                            </div>
-                        </TableCell>
-                        <TableCell className="text-[12px] text-cds-text-02">{remark.facultySnapshot.department}</TableCell>
-                        <TableCell className="text-[12px] text-cds-text-01 max-w-[250px] truncate">{remark.title}</TableCell>
-                        <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex justify-center items-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(remark)}>
-                                    <Eye className="h-4 w-4 text-cds-text-05" />
-                                </Button>
+                            </TableCell>
+                            <TableCell className="text-[12px] text-cds-text-02">{remark.facultySnapshot.department}</TableCell>
+                            <TableCell className="text-[12px] text-cds-text-01 max-w-[250px] truncate">{remark.title}</TableCell>
+                            <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
+                            <TableCell className="text-center">
+                                <div className="flex justify-center items-center gap-1">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(remark)}>
+                                        <Eye className="h-4 w-4 text-cds-text-05" />
+                                    </Button>
 
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(remark); setIsEditDialogOpen(true); }}>
-                                    <Edit className="h-4 w-4 text-cds-text-05" />
-                                </Button>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-cds-text-05" onClick={() => { setEditingRemark(remark); setIsEditDialogOpen(true); }} disabled={!isModifiable}>
+                                        <Edit className="h-4 w-4 text-cds-text-05" />
+                                    </Button>
 
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10">
-                                            <Trash2 className="h-4 w-4" />
-                                        </Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <div className="flex items-center gap-3 text-destructive mb-2">
-                                                <AlertCircle className="h-6 w-6" />
-                                                <AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle>
-                                            </div>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. The faculty's credit balance will be restored automatically upon removal of this remark.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} variant="destructive" className="rounded-none px-10">
-                                                Delete Remark
-                                            </AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={!isModifiable}>
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <div className="flex items-center gap-3 text-destructive mb-2">
+                                                    <AlertCircle className="h-6 w-6" />
+                                                    <AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle>
+                                                </div>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. The faculty's credit balance will be restored automatically upon removal of this remark.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} variant="destructive" className="rounded-none px-10">
+                                                    Delete Remark
+                                                </AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </TableCell>
+                        </TableRow>
+                      )
+                    })
                 ) : (
                     <TableRow><TableCell colSpan={6} className="text-center h-24">No remarks found.</TableCell></TableRow>
                 )}

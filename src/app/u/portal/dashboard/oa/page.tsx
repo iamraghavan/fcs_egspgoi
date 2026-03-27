@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -23,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 
 
-const API_BASE_URL = '';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
 
 type User = {
   _id: string;
@@ -197,7 +196,8 @@ export default function OADashboardPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/credits/negative`, {
+      // Corrected to restored API path /credits/credits/negative
+      const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,

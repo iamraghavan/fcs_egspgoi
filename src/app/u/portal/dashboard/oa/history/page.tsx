@@ -50,7 +50,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
 
 type IssuedRemark = {
     _id: string;
@@ -122,7 +122,7 @@ export default function IssuedHistoryPage() {
   const [remarks, setRemarks] = useState<IssuedRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -263,6 +263,7 @@ export default function IssuedHistoryPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
+        // Corrected to restored API path /credits/credits/negative
         const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
@@ -291,6 +292,7 @@ export default function IssuedHistoryPage() {
     }
 
     try {
+        // Corrected to restored API path /credits/credits/negative
         const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${id}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${adminToken}` },
