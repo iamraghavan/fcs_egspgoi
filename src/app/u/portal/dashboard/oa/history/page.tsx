@@ -287,7 +287,7 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "failed to update remark.");
         }
 
-        toast({ title: "remark updated", description: "The remark has been successfully updated." });
+        toast({ title: "remark updated", description: "the remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
@@ -299,7 +299,7 @@ export default function IssuedHistoryPage() {
 
   const handleDelete = async (id: string) => {
     if (!adminToken) {
-        showAlert("authentication error", "Admin token not found.");
+        showAlert("authentication error", "admin token not found.");
         return;
     }
 
@@ -314,7 +314,7 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "failed to delete remark.");
         }
 
-        toast({ title: "remark deleted", description: "The remark has been permanently removed." });
+        toast({ title: "remark deleted", description: "the remark has been permanently removed." });
         fetchRemarks(page);
     } catch (error: any) {
         showAlert("delete failed", error.message);
@@ -326,12 +326,12 @@ export default function IssuedHistoryPage() {
     if (!confirm) return;
 
     if (!adminToken) {
-        showAlert("authentication error", "Admin token not found.");
+        showAlert("authentication error", "admin token not found.");
         return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${creditId}/reopen`, {
+        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${creditId}/reopen`, {
             method: "PATCH",
             headers: { "Authorization": `Bearer ${adminToken}` },
         });
@@ -341,7 +341,7 @@ export default function IssuedHistoryPage() {
             throw new Error(data.message || "failed to re-open appeal window.");
         }
 
-        toast({ title: "window re-opened", description: "The faculty member can now submit a new appeal." });
+        toast({ title: "window re-opened", description: "the faculty member can now submit a new appeal." });
         fetchRemarks(page);
         if (selectedRemark?._id === creditId) {
             setSelectedRemark({ ...selectedRemark, status: 'pending' });
@@ -420,7 +420,7 @@ export default function IssuedHistoryPage() {
                 </div>
                  <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger>
-                  <SelectContent className="z-[150]">
+                  <SelectContent className="z-[150] rounded-none">
                       <SelectItem value="all">All Statuses</SelectItem>
                       <SelectItem value="pending">Pending</SelectItem>
                       <SelectItem value="approved">Approved</SelectItem>
@@ -431,7 +431,7 @@ export default function IssuedHistoryPage() {
                 </Select>
                  <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                     <SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Academic Year" /></SelectTrigger>
-                    <SelectContent className="z-[150]">
+                    <SelectContent className="z-[150] rounded-none">
                         <SelectItem value="all">All Years</SelectItem>
                         {dynamicFilters.years.map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                     </SelectContent>
@@ -494,23 +494,23 @@ export default function IssuedHistoryPage() {
 
                              <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={!isModifiable}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={!isModifiable}>
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="rounded-none">
                                     <AlertDialogHeader>
                                         <div className="flex items-center gap-3 text-destructive mb-2">
                                             <AlertCircle className="h-6 w-6" />
                                             <AlertDialogTitle>Delete Negative Remark?</AlertDialogTitle>
                                         </div>
                                         <AlertDialogDescription>
-                                            This action cannot be undone. The faculty's credit balance will be restored automatically upon removal of this remark.
+                                            This action cannot be undone. the faculty's credit balance will be restored automatically upon removal of this remark.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90">
+                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">
                                             Confirm & Delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
@@ -545,7 +545,7 @@ export default function IssuedHistoryPage() {
 
       {/* Edit Remark Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md rounded-none">
             <DialogHeader>
                 <DialogTitle>Update Remark Details</DialogTitle>
                 <DialogDescription>Correct notes or modify the violation category.</DialogDescription>
@@ -557,7 +557,7 @@ export default function IssuedHistoryPage() {
                         <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 h-11">
                             <SelectValue placeholder="Select updated template..." />
                         </SelectTrigger>
-                        <SelectContent className="z-[150]">
+                        <SelectContent className="z-[150] rounded-none">
                             {creditTitles.map(ct => (
                                 <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
                             ))}
@@ -590,7 +590,7 @@ export default function IssuedHistoryPage() {
 
       {/* Details Dialog */}
        <Dialog open={!!selectedRemark} onOpenChange={(open) => !open && setSelectedRemark(null)}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-2xl rounded-none">
             <DialogHeader>
                 <DialogTitle>Remark Audit Details</DialogTitle>
                 <DialogDescription>Full record of the negative credit transaction.</DialogDescription>
@@ -633,7 +633,7 @@ export default function IssuedHistoryPage() {
                     </div>
                 </div>
 
-                <Separator />
+                <Separator className="bg-cds-ui-03" />
 
                 <div>
                     <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Administrative Rationale</p>
@@ -660,7 +660,7 @@ export default function IssuedHistoryPage() {
                                     <Button asChild variant="link" className="p-0 h-auto text-primary font-bold">
                                         <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">Download Proof Document</a>
                                     </Button>
-                                ) : <span className="text-xs text-muted-foreground italic animate-pulse">Generating secure access link...</span>}
+                                ) : <span className="text-xs text-muted-foreground italic animate-pulse">generating secure access link...</span>}
                             </div>
                         ) : <span className="text-xs text-muted-foreground italic">No proof attached to this transaction.</span>}
                     </div>

@@ -232,7 +232,7 @@ export default function ManageRemarksPage() {
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
-      showAlert("authentication error", "Admin token not found.");
+      showAlert("authentication error", "admin token not found.");
       return;
     }
     try {
@@ -360,13 +360,13 @@ export default function ManageRemarksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFaculty || !points || !title || !creditTitleId) {
-      showAlert("incomplete form", "Please ensure a faculty member and a valid remark template are selected.");
+      showAlert("incomplete form", "please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
 
     if (!adminToken) {
-      showAlert("authentication error", "Admin token not found.");
+      showAlert("authentication error", "admin token not found.");
       setIsLoading(false);
       return;
     }
@@ -394,7 +394,7 @@ export default function ManageRemarksPage() {
 
       toast({
         title: "remark issued",
-        description: "The negative remark has been successfully recorded.",
+        description: "the negative remark has been successfully recorded.",
       });
 
       setSelectedFaculty(null);
@@ -437,7 +437,7 @@ export default function ManageRemarksPage() {
             throw new Error(responseData.message || "failed to update remark.");
         }
 
-        toast({ title: "remark updated", description: "The remark has been successfully updated." });
+        toast({ title: "remark updated", description: "the remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
@@ -449,7 +449,7 @@ export default function ManageRemarksPage() {
 
   const handleDeleteRemark = async (creditId: string) => {
       if (!adminToken) {
-          showAlert("authentication error", "Admin token not found.");
+          showAlert("authentication error", "admin token not found.");
           return;
       }
       try {
@@ -463,7 +463,7 @@ export default function ManageRemarksPage() {
               throw new Error(responseData.message || "failed to delete remark.");
           }
 
-          toast({ title: "remark deleted", description: "The remark has been permanently deleted and credit balance restored." });
+          toast({ title: "remark deleted", description: "the remark has been permanently deleted and credit balance restored." });
           fetchRemarks(page);
       } catch (error: any) {
           showAlert("delete failed", error.message);
@@ -475,12 +475,12 @@ export default function ManageRemarksPage() {
     if (!confirm) return;
 
     if (!adminToken) {
-        showAlert("authentication error", "Admin token not found.");
+        showAlert("authentication error", "admin token not found.");
         return;
     }
 
     try {
-        const response = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${creditId}/reopen`, {
+        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${creditId}/reopen`, {
             method: "PATCH",
             headers: { "Authorization": `Bearer ${adminToken}` },
         });
@@ -490,7 +490,7 @@ export default function ManageRemarksPage() {
             throw new Error(data.message || "failed to re-open appeal window.");
         }
 
-        toast({ title: "window re-opened", description: "The faculty member can now submit a new appeal." });
+        toast({ title: "window re-opened", description: "the faculty member can now submit a new appeal." });
         fetchRemarks(page);
         if (selectedRemarkDetails?._id === creditId) {
             setSelectedRemarkDetails({ ...selectedRemarkDetails, status: 'pending' });
@@ -503,15 +503,15 @@ export default function ManageRemarksPage() {
   const getStatusBadge = (status: NegativeRemark['status']) => {
     switch (status) {
         case 'approved':
-            return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
+            return <Badge className="bg-green-100 text-green-800 border-green-200 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
         case 'rejected':
         case 'deleted':
-            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200"><XCircle className="w-3 h-3 mr-1" /> {status}</Badge>;
+            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200 rounded-none"><XCircle className="w-3 h-3 mr-1" /> {status}</Badge>;
         case 'appealed':
-            return <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200"><AlertCircle className="w-3 h-3 mr-1" /> Appealed</Badge>;
+            return <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200 rounded-none"><AlertCircle className="w-3 h-3 mr-1" /> Appealed</Badge>;
         case 'pending':
         default:
-            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
     }
   };
 
@@ -782,7 +782,7 @@ export default function ManageRemarksPage() {
                                                     <AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle>
                                                 </div>
                                                 <AlertDialogDescription>
-                                                    This action cannot be undone. The faculty's credit balance will be restored automatically upon removal of this remark.
+                                                    This action cannot be undone. the faculty's credit balance will be restored automatically upon removal of this remark.
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>

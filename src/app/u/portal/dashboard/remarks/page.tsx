@@ -92,15 +92,11 @@ export default function NegativeRemarksPage() {
   const router = useRouter();
 
   // Fetch configurations dynamically from Firebase Remote Config
-  const remoteAppealWindow = useRemoteConfig('appeal_window_days')?.asNumber();
   const amnestyActive = useRemoteConfig('amnesty_active')?.asBoolean() || false;
   
-  const APPEAL_WINDOW_DAYS = remoteAppealWindow || 7;
-
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [selectedRemark, setSelectedRemark] = useState<NegativeCredit | null>(null);
-  const [currentTime, setCurrentTime] = useState<Date>(new Date());
 
   // Modal/Dialog states
   const [isAppealDialogOpen, setIsAppealDialogOpen] = useState(false);
@@ -115,11 +111,6 @@ export default function NegativeRemarksPage() {
 
   const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
   const facultyId = searchParams.get('uid');
-
-  useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-    return () => clearInterval(timer);
-  }, []);
 
   const fetchRemarks = async () => {
       setIsLoadingRemarks(true);
@@ -136,23 +127,23 @@ export default function NegativeRemarksPage() {
           if (!response.ok) {
             const errorText = await response.text();
              if (errorText.includes('<!DOCTYPE')) {
-                showAlert("Error fetching remarks", "The API returned an invalid response. The endpoint might be incorrect.");
+                showAlert("error fetching remarks", "the api returned an invalid response. the endpoint might be incorrect.");
             } else {
                 const errorJson = JSON.parse(errorText);
-                showAlert("Error fetching remarks", errorJson.message || 'An unknown error occurred.');
+                showAlert("error fetching remarks", errorJson.message || 'an unknown error occurred.');
             }
-            throw new Error(`Failed to fetch remarks`);
+            throw new Error(`failed to fetch remarks`);
           }
           
           const data = await response.json();
           if (data.success) {
               setRemarks(data.items);
           } else {
-              throw new Error(data.message || "Failed to fetch remarks");
+              throw new Error(data.message || "failed to fetch remarks");
           }
       } catch (error: any) {
-        if (!error.message.includes('Failed to fetch remarks')) {
-            showAlert("Error fetching remarks", error.message);
+        if (!error.message.includes('failed to fetch remarks')) {
+            showAlert("error fetching remarks", error.message);
         }
         setRemarks([]);
       } finally {
@@ -166,6 +157,11 @@ export default function NegativeRemarksPage() {
     }
   }, [token, facultyId]);
   
+  const getProofUrl = (url: string) => {
+    if (!url) return '';
+    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+  };
+
   useEffect(() => {
     if (selectedRemark?.proofUrl) {
         setShortProofUrl(null);
@@ -175,11 +171,11 @@ export default function NegativeRemarksPage() {
                 if(selectedRemark.proofUrl) setShortProofUrl(getProofUrl(selectedRemark.proofUrl))
             });
     }
-}, [selectedRemark]);
+  }, [selectedRemark]);
 
   const handleAppealSubmit = async (isEdit: boolean) => {
     if (!selectedRemark || !appealReason.trim()) {
-        showAlert("Incomplete Form", "Please provide a reason for your appeal.");
+        showAlert("incomplete form", "please provide a reason for your appeal.");
         return;
     }
     setIsSubmittingAppeal(true);
@@ -204,12 +200,12 @@ export default function NegativeRemarksPage() {
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || `Failed to ${isEdit ? 'update' : 'submit'} appeal.`);
+            throw new Error(responseData.message || `failed to ${isEdit ? 'update' : 'submit'} appeal.`);
         }
         
         toast({
-            title: `Appeal ${isEdit ? 'Updated' : 'Submitted'}`,
-            description: `Your appeal has been successfully ${isEdit ? 'updated' : 'submitted'}.`,
+            title: `appeal ${isEdit ? 'updated' : 'submitted'}`,
+            description: `your appeal has been successfully ${isEdit ? 'updated' : 'submitted'}.`,
         });
 
         setIsAppealDialogOpen(false);
@@ -218,7 +214,7 @@ export default function NegativeRemarksPage() {
         router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`);
 
     } catch (error: any) {
-        showAlert("Appeal Failed", error.message);
+        showAlert("appeal failed", error.message);
     } finally {
         setIsSubmittingAppeal(false);
     }
@@ -232,27 +228,21 @@ export default function NegativeRemarksPage() {
         });
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "Failed to withdraw appeal.");
+            throw new Error(responseData.message || "failed to withdraw appeal.");
         }
-        toast({ title: "Appeal Withdrawn", description: "Your appeal has been withdrawn."});
+        toast({ title: "appeal withdrawn", description: "your appeal has been withdrawn."});
         fetchRemarks();
     } catch(error: any) {
-        showAlert("Withdrawal Failed", error.message);
+        showAlert("withdrawal failed", error.message);
     }
   }
-
-
-  const getProofUrl = (url: string) => {
-    if (!url) return '';
-    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
 
   const getStatusBadge = (remark: NegativeCredit) => {
     if (remark.status === 'appealed' && remark.appeal) {
       switch (remark.appeal.status) {
-        case 'pending': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">Appeal Pending</Badge>;
-        case 'accepted': return <Badge variant="default" className="bg-green-100 text-green-800">Appeal Accepted</Badge>;
-        case 'rejected': return <Badge variant="destructive">Appeal Rejected</Badge>;
+        case 'pending': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 rounded-none">Appeal Pending</Badge>;
+        case 'accepted': return <Badge variant="default" className="bg-green-100 text-green-800 rounded-none">Appeal Accepted</Badge>;
+        case 'rejected': return <Badge variant="destructive" className="rounded-none">Appeal Rejected</Badge>;
       }
     }
     
@@ -262,7 +252,7 @@ export default function NegativeRemarksPage() {
         case 'rejected': variant = 'destructive'; break;
         case 'appealed': variant = 'secondary'; break;
     }
-    return <Badge variant={variant} className={remark.status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{remark.status}</Badge>;
+    return <Badge variant={variant} className={cn("rounded-none", remark.status === 'approved' && 'bg-green-100 text-green-800')}>{remark.status}</Badge>;
   };
 
   const renderAppealDialog = (isEdit = false) => (
@@ -279,28 +269,29 @@ export default function NegativeRemarksPage() {
                 <label htmlFor="reason" className="text-sm font-medium">Reason for Appeal <span className="text-red-500">*</span></label>
                 <Textarea 
                     id="reason" 
-                    placeholder="Explain why you are appealing this remark..."
+                    placeholder="explain why you are appealing this remark..."
                     value={appealReason}
                     onChange={(e) => setAppealReason(e.target.value)} 
                     rows={4}
                     aria-required="true"
+                    className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"
                 />
             </div>
             <div className="space-y-2">
                 <label htmlFor="proof" className="text-sm font-medium">Proof Document (Optional)</label>
                 <FileUpload onFileSelect={setAppealProof} />
-                 <div className="flex items-start gap-2 text-sm text-blue-700 p-3 bg-blue-50 rounded-md mt-2" role="note">
+                 <div className="flex items-start gap-2 text-sm text-blue-700 p-3 bg-blue-50 rounded-none mt-2" role="note">
                     <Info className="h-4 w-4 mt-0.5 flex-shrink-0" />
                     <p>
-                        <strong>Tip:</strong> If you have multiple files, please combine them into a single .zip file (under 10MB) before uploading.
+                        <strong>Tip:</strong> if you have multiple files, please combine them into a single .zip file (under 10mb) before uploading.
                     </p>
                 </div>
             </div>
           </div>
           <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => isEdit ? setIsEditAppealDialogOpen(false) : setIsAppealDialogOpen(false)}>Cancel</Button>
-            <Button onClick={() => handleAppealSubmit(isEdit)} disabled={isSubmittingAppeal || !appealReason.trim()}>
-                {isSubmittingAppeal ? 'Submitting...' : 'Submit Appeal'}
+            <Button type="button" variant="secondary" onClick={() => isEdit ? setIsEditAppealDialogOpen(false) : setIsAppealDialogOpen(false)} className="rounded-none">Cancel</Button>
+            <Button onClick={() => handleAppealSubmit(isEdit)} disabled={isSubmittingAppeal || !appealReason.trim()} className="rounded-none">
+                {isSubmittingAppeal ? 'submitting...' : 'submit appeal'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -315,33 +306,33 @@ export default function NegativeRemarksPage() {
       </header>
         
       {amnestyActive && (
-        <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 flex gap-3 items-center">
+        <div className="bg-primary/10 border border-primary/20 rounded-none p-4 flex gap-3 items-center">
             <Info className="h-5 w-5 text-primary" />
-            <p className="text-sm font-medium text-primary">Special Window Active: You can currently appeal any remark regardless of its date.</p>
+            <p className="text-sm font-medium text-primary">Special Window Active: you can currently appeal any remark regardless of its date.</p>
         </div>
       )}
 
-      <Card>
-        <CardHeader>
-            <CardTitle>Remarks History</CardTitle>
-            <CardDescription>
+      <Card className="rounded-none shadow-none border-cds-ui-03">
+        <CardHeader className="bg-cds-ui-01/50 border-b">
+            <CardTitle className="text-base font-semibold">Remarks History</CardTitle>
+            <CardDescription className="text-xs">
                 A log of all negative remarks issued to you. 
                 {amnestyActive 
                     ? " Amnesty mode is active: all remarks are currently appealable." 
-                    : ` Appeals must be filed within ${APPEAL_WINDOW_DAYS} days of issuance unless re-opened by Admin.`
+                    : " Institutional policy: appeals must be filed within the allowed window unless re-opened by Admin."
                 }
             </CardDescription>
         </CardHeader>
-        <CardContent>
-          <div className="overflow-x-auto border rounded-lg">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-cds-ui-01">
                 <TableRow>
-                  <TableHead>Remark Title</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Points</TableHead>
-                  <TableHead className="text-center">Actions</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Remark Title</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Date</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Status</TableHead>
+                  <TableHead className="text-right text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Points</TableHead>
+                  <TableHead className="text-center text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -354,22 +345,24 @@ export default function NegativeRemarksPage() {
                     const isBlocked = eligibility && !eligibility.canAppeal && remark.status !== 'appealed';
 
                     return (
-                      <TableRow key={remark._id}>
-                        <TableCell className="font-medium text-foreground">
-                          {remark.title}
-                          {isBlocked && (
-                            <span className="ml-2 inline-flex items-center text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded" title={eligibility.reason}>
-                              <Clock className="h-3 w-3 mr-1" /> {eligibility.reason.includes('expired') ? 'Window Expired' : 'Blocked'}
-                            </span>
-                          )}
+                      <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
+                        <TableCell>
+                          <div className="flex flex-col gap-1">
+                            <span className="font-medium text-cds-text-01 text-[13px]">{remark.title}</span>
+                            {isBlocked && (
+                                <div className="flex items-center gap-1 text-[10px] text-destructive font-bold uppercase tracking-wider">
+                                    <Clock className="h-3 w-3" /> {eligibility.reason}
+                                </div>
+                            )}
+                          </div>
                         </TableCell>
-                        <TableCell>{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell>{getStatusBadge(remark)}</TableCell>
-                        <TableCell className="text-right font-semibold text-destructive">{remark.points}</TableCell>
+                        <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-[12px]">{getStatusBadge(remark)}</TableCell>
+                        <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
                         <TableCell className="text-center">
                             <DropdownMenu>
-                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
+                                <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 rounded-none"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="rounded-none">
                                     <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsDetailsDialogOpen(true); }}>View Details</DropdownMenuItem>
                                      <DropdownMenuSeparator />
                                     {canAppeal && (
@@ -396,8 +389,8 @@ export default function NegativeRemarksPage() {
                                                     </AlertDialogDescription>
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
-                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleWithdrawAppeal(remark._id)} className="bg-destructive hover:bg-destructive/90">Withdraw</AlertDialogAction>
+                                                    <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleWithdrawAppeal(remark._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Withdraw</AlertDialogAction>
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                           </AlertDialog>
@@ -415,7 +408,7 @@ export default function NegativeRemarksPage() {
                     );
                   })
                 ) : (
-                    <TableRow><TableCell colSpan={5} className="text-center h-24">No remarks found.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={5} className="text-center h-24 italic text-muted-foreground">No negative remarks found.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
@@ -433,39 +426,43 @@ export default function NegativeRemarksPage() {
                 <DialogDescription>A detailed overview of the remark issued to you.</DialogDescription>
             </DialogHeader>
             {selectedRemark && (
-                <div className="space-y-4 py-4 text-sm">
-                    <div>
-                        <p className="font-medium text-muted-foreground">Title</p>
-                        <p className="font-semibold">{selectedRemark.title}</p>
+                <div className="space-y-6 py-4 text-sm">
+                    <div className="grid grid-cols-2 gap-6">
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Title</p>
+                            <p className="font-semibold leading-tight">{selectedRemark.title}</p>
+                        </div>
+                        <div className="text-right">
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Deduction</p>
+                            <p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemark.points}</p>
+                        </div>
                     </div>
-                    <div>
-                        <p className="font-medium text-muted-foreground">Points Deducted</p>
-                        <p className="font-bold text-destructive">{selectedRemark.points}</p>
+
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                        <p><span className="text-muted-foreground">Academic Year:</span> {selectedRemark.academicYear}</p>
+                        <p><span className="text-muted-foreground">Date Issued:</span> {new Date(selectedRemark.createdAt).toLocaleString()}</p>
                     </div>
+
                     <div>
-                        <p className="font-medium text-muted-foreground">Date Issued</p>
-                        <p>{new Date(selectedRemark.createdAt).toLocaleString()}</p>
-                    </div>
-                    <div>
-                        <p className="font-medium text-muted-foreground">Administrator's Notes</p>
-                        <blockquote className="mt-1 border-l-2 pl-4 italic bg-muted/50 p-2 rounded-r-md">
-                            {selectedRemark.notes || "No notes were provided."}
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Administrator's Notes</p>
+                        <blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 rounded-r-none leading-relaxed text-cds-text-02">
+                            {selectedRemark.notes || "no notes were provided."}
                         </blockquote>
                     </div>
+
                     {selectedRemark.proofUrl && (
-                        <div>
-                            <p className="font-medium text-muted-foreground">Proof Document</p>
+                        <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
                              {shortProofUrl ? (
-                                <Button asChild variant="link" className="p-0 h-auto">
-                                <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-                            </Button>
-                            ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>}
+                                <Button asChild variant="link" className="text-primary font-bold">
+                                    <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Original Proof Attachment</a>
+                                </Button>
+                            ) : <span className="text-xs text-muted-foreground italic animate-pulse">generating secure link...</span>}
                         </div>
                     )}
                 </div>
             )}
-            <DialogFooter>
-                <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+            <DialogFooter className="border-t pt-4">
+                <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Details</Button></DialogClose>
             </DialogFooter>
         </DialogContent>
     </Dialog>
