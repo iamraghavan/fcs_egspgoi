@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -46,14 +47,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Eye, Search, Edit, Trash2, AlertCircle } from "lucide-react";
+import { PlusCircle, Eye, Search, Edit, Trash2, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
+import { Badge } from "@/components/ui/badge";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
 
 type User = {
   _id: string;
@@ -95,7 +97,7 @@ type NegativeRemark = {
         size: string;
     };
     proofUrl?: string;
-    status: 'pending' | 'approved' | 'rejected' | 'appealed';
+    status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
     title: string;
     type: 'negative';
     updatedAt: string;
@@ -151,9 +153,12 @@ export default function ManageRemarksPage() {
   const [remarks, setRemarks] = useState<NegativeRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  
+  // Filter States
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
   const [creditTitleFilter, setCreditTitleFilter] = useState("all");
   const [collegeFilter, setCollegeFilter] = useState("all");
@@ -256,6 +261,7 @@ export default function ManageRemarksPage() {
           });
 
           if (searchTerm) params.append('search', searchTerm);
+          if (statusFilter !== 'all') params.append('status', statusFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
           if (creditTitleFilter !== 'all') params.append('templateId', creditTitleFilter);
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
@@ -265,12 +271,14 @@ export default function ManageRemarksPage() {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
-          const data = await response.json();
-          if (data.success) {
-              setRemarks(data.items);
-              setTotal(data.total);
+          const resData = await response.json();
+          if (resData.success) {
+              const items = resData.items || resData.data?.items || [];
+              const totalCount = resData.total || resData.data?.total || items.length;
+              setRemarks(items);
+              setTotal(totalCount);
           } else {
-              throw new Error(data.message || "Failed to fetch remarks");
+              throw new Error(resData.message || "Failed to fetch remarks");
           }
       } catch (error: any) {
           showAlert("Error fetching remarks", error.message);
@@ -294,11 +302,11 @@ export default function ManageRemarksPage() {
         }
     }, 500);
     return () => clearTimeout(timer);
-  }, [page, adminToken, searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
+  }, [page, adminToken, searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
+  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     const selectedTitle = creditTitles.find(ct => ct._id === creditTitleId);
@@ -453,12 +461,27 @@ export default function ManageRemarksPage() {
       }
   };
   
- const creditTitleOptions = useMemo(() => {
+  const creditTitleOptions = useMemo(() => {
     return creditTitles
         .slice()
         .sort((a, b) => a.title.localeCompare(b.title))
         .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
-}, [creditTitles]);
+  }, [creditTitles]);
+
+  const getStatusBadge = (status: NegativeRemark['status']) => {
+    switch (status) {
+        case 'approved':
+            return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
+        case 'rejected':
+        case 'deleted':
+            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200"><XCircle className="w-3 h-3 mr-1" /> {status}</Badge>;
+        case 'appealed':
+            return <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200"><AlertCircle className="w-3 h-3 mr-1" /> Appealed</Badge>;
+        case 'pending':
+        default:
+            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+    }
+  };
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
@@ -594,8 +617,8 @@ export default function ManageRemarksPage() {
             <CardDescription className="text-xs">A log of all negative remarks that have been issued across the institution.</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-0 border-b">
-              <div className="relative border-r">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-0 border-b">
+              <div className="relative border-r lg:col-span-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                       placeholder="Search title, faculty..." 
@@ -606,7 +629,7 @@ export default function ManageRemarksPage() {
               </div>
                <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}>
                    <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                        <SelectValue placeholder="Filter by template..." />
+                        <SelectValue placeholder="Template" />
                    </SelectTrigger>
                    <SelectContent className="z-[150]">
                         <SelectItem value="all">All Templates</SelectItem>
@@ -615,9 +638,21 @@ export default function ManageRemarksPage() {
                         ))}
                    </SelectContent>
                </Select>
+               <Select value={statusFilter} onValueChange={setStatusFilter}>
+                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
+                        <SelectValue placeholder="Status" />
+                   </SelectTrigger>
+                   <SelectContent className="z-[150]">
+                        <SelectItem value="all">All Statuses</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="approved">Approved</SelectItem>
+                        <SelectItem value="appealed">Appealed</SelectItem>
+                        <SelectItem value="rejected">Rejected</SelectItem>
+                   </SelectContent>
+               </Select>
               <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                      <SelectValue placeholder="Select Year" />
+                      <SelectValue placeholder="Year" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Years</SelectItem>
@@ -626,7 +661,7 @@ export default function ManageRemarksPage() {
               </Select>
               <Select value={collegeFilter} onValueChange={setCollegeFilter}>
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                      <SelectValue placeholder="Select College" />
+                      <SelectValue placeholder="College" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Colleges</SelectItem>
@@ -635,7 +670,7 @@ export default function ManageRemarksPage() {
               </Select>
               <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={!filteredDepartments || Object.keys(filteredDepartments).length === 0}>
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0">
-                      <SelectValue placeholder="Select Department" />
+                      <SelectValue placeholder="Dept" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Departments</SelectItem>
@@ -656,7 +691,7 @@ export default function ManageRemarksPage() {
                 <TableRow>
                   <TableHead className="text-xs font-bold text-cds-text-05">Faculty</TableHead>
                   <TableHead className="text-xs font-bold text-cds-text-05">Department</TableHead>
-                  <TableHead className="text-xs font-bold text-cds-text-05">Remark Title</TableHead>
+                  <TableHead className="text-xs font-bold text-cds-text-05">Status</TableHead>
                   <TableHead className="text-xs font-bold text-cds-text-05">Date</TableHead>
                   <TableHead className="text-right text-xs font-bold text-cds-text-05">Points</TableHead>
                   <TableHead className="text-center text-xs font-bold text-cds-text-05">Actions</TableHead>
@@ -683,7 +718,7 @@ export default function ManageRemarksPage() {
                                 </div>
                             </TableCell>
                             <TableCell className="text-[12px] text-cds-text-02">{remark.facultySnapshot.department}</TableCell>
-                            <TableCell className="text-[12px] text-cds-text-01 max-w-[250px] truncate">{remark.title}</TableCell>
+                            <TableCell className="text-[12px]">{getStatusBadge(remark.status)}</TableCell>
                             <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
                             <TableCell className="text-center">
@@ -826,6 +861,7 @@ export default function ManageRemarksPage() {
                         <div className="grid grid-cols-2 gap-4 text-xs">
                             <p><span className="text-muted-foreground">Department:</span> {selectedRemarkDetails.facultySnapshot.department}</p>
                             <p><span className="text-muted-foreground">Academic Year:</span> {selectedRemarkDetails.academicYear}</p>
+                            <p><span className="text-muted-foreground">Status:</span> <span className="capitalize">{selectedRemarkDetails.status}</span></p>
                             <p><span className="text-muted-foreground">Date Issued:</span> {new Date(selectedRemarkDetails.createdAt).toLocaleString()}</p>
                         </div>
                     </div>
