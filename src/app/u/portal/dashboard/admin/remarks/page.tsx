@@ -54,6 +54,7 @@ import { useAlert } from "@/context/alert-context";
 import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
+import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
 
@@ -103,8 +104,11 @@ type NegativeRemark = {
     updatedAt: string;
 };
 
-type Departments = {
-    [key: string]: string[];
+type DynamicFilters = {
+    templates: string[];
+    years: string[];
+    colleges: string[];
+    departments: string[];
 };
 
 const getCurrentAcademicYear = () => {
@@ -120,7 +124,6 @@ const getCurrentAcademicYear = () => {
 const generateYearOptions = () => {
     const currentYearString = getCurrentAcademicYear();
     const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
     const years = [];
     for (let i = 0; i < 5; i++) {
         const startYear = startCurrentYear - i;
@@ -156,6 +159,14 @@ export default function ManageRemarksPage() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   
+  // Dynamic Filter Options from API
+  const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
+      templates: [],
+      years: [],
+      colleges: [],
+      departments: []
+  });
+
   // Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -163,7 +174,6 @@ export default function ManageRemarksPage() {
   const [creditTitleFilter, setCreditTitleFilter] = useState("all");
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
-  const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
   
   const [selectedRemarkDetails, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
@@ -218,7 +228,7 @@ export default function ManageRemarksPage() {
 
   const fetchDropdownData = async () => {
     if (!adminToken) {
-      showAlert("Authentication error", "Admin token not found.");
+      showAlert("authentication error", "Admin token not found.");
       return;
     }
     try {
@@ -241,7 +251,7 @@ export default function ManageRemarksPage() {
         setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'negative'));
       }
     } catch (error: any) {
-      showAlert("Error fetching initial data", error.message);
+      showAlert("error fetching initial data", error.message);
     }
   };
 
@@ -266,7 +276,7 @@ export default function ManageRemarksPage() {
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
-          const response = await fetch(`${API_BASE_URL}/credits/credits/negative?${params.toString()}`, {
+          const response = await fetch(`${API_BASE_URL}/admin/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
@@ -276,17 +286,27 @@ export default function ManageRemarksPage() {
               const totalCount = resData.total || resData.data?.total || items.length;
               setRemarks(items);
               setTotal(totalCount);
+              
+              if (resData.filters) {
+                  setDynamicFilters(resData.filters);
+              }
           } else {
-              throw new Error(resData.message || "Failed to fetch remarks");
+              throw new Error(resData.message || "failed to fetch remarks");
           }
       } catch (error: any) {
-          showAlert("Error fetching remarks", error.message);
+          showAlert("error fetching remarks", error.message);
           setRemarks([]);
           setTotal(0);
       } finally {
           setIsLoadingRemarks(false);
       }
   };
+
+  // Debounced fetch using Lodash
+  const debouncedFetch = useMemo(
+    () => _.debounce((p) => fetchRemarks(p), 300),
+    [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, adminToken]
+  );
 
   useEffect(() => {
     if (adminToken) {
@@ -295,13 +315,9 @@ export default function ManageRemarksPage() {
   }, [adminToken]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-        if (adminToken) {
-            fetchRemarks(page);
-        }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [page, adminToken, searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
+    debouncedFetch(page);
+    return () => debouncedFetch.cancel();
+  }, [page, debouncedFetch]);
   
   useEffect(() => {
     setPage(1);
@@ -314,16 +330,6 @@ export default function ManageRemarksPage() {
       setPoints(selectedTitle.points);
     }
   }, [creditTitleId, creditTitles]);
-
-  useEffect(() => {
-    if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
-      setFilteredDepartments(colleges[collegeFilter as keyof typeof colleges]);
-      setDepartmentFilter("all"); 
-    } else {
-      setFilteredDepartments({});
-      setDepartmentFilter("all");
-    }
-  }, [collegeFilter]);
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
@@ -350,13 +356,13 @@ export default function ManageRemarksPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedFaculty || !points || !title || !creditTitleId) {
-      showAlert("Incomplete form", "Please ensure a faculty member and a valid remark template are selected.");
+      showAlert("incomplete form", "Please ensure a faculty member and a valid remark template are selected.");
       return;
     }
     setIsLoading(true);
 
     if (!adminToken) {
-      showAlert("Authentication error", "Admin token not found.");
+      showAlert("authentication error", "Admin token not found.");
       setIsLoading(false);
       return;
     }
@@ -379,11 +385,11 @@ export default function ManageRemarksPage() {
 
       const responseData = await response.json();
       if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || "Failed to issue remark.");
+        throw new Error(responseData.message || "failed to issue remark.");
       }
 
       toast({
-        title: "Remark issued",
+        title: "remark issued",
         description: "The negative remark has been successfully recorded.",
       });
 
@@ -399,7 +405,7 @@ export default function ManageRemarksPage() {
       setIsFormOpen(false);
 
     } catch (error: any) {
-      showAlert("Submission failed", error.message);
+      showAlert("submission failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -424,14 +430,14 @@ export default function ManageRemarksPage() {
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "Failed to update remark.");
+            throw new Error(responseData.message || "failed to update remark.");
         }
 
-        toast({ title: "Remark updated", description: "The remark has been successfully updated." });
+        toast({ title: "remark updated", description: "The remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Update failed", error.message);
+        showAlert("update failed", error.message);
     } finally {
         setIsSubmittingEdit(false);
     }
@@ -439,7 +445,7 @@ export default function ManageRemarksPage() {
 
   const handleDeleteRemark = async (creditId: string) => {
       if (!adminToken) {
-          showAlert("Authentication error", "Admin token not found.");
+          showAlert("authentication error", "Admin token not found.");
           return;
       }
       try {
@@ -450,23 +456,16 @@ export default function ManageRemarksPage() {
 
           const responseData = await response.json();
           if (!response.ok || !responseData.success) {
-              throw new Error(responseData.message || "Failed to delete remark.");
+              throw new Error(responseData.message || "failed to delete remark.");
           }
 
-          toast({ title: "Remark deleted", description: "The remark has been permanently deleted and credit balance restored." });
+          toast({ title: "remark deleted", description: "The remark has been permanently deleted and credit balance restored." });
           fetchRemarks(page);
       } catch (error: any) {
-          showAlert("Delete failed", error.message);
+          showAlert("delete failed", error.message);
       }
   };
   
-  const creditTitleOptions = useMemo(() => {
-    return creditTitles
-        .slice()
-        .sort((a, b) => a.title.localeCompare(b.title))
-        .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` }));
-  }, [creditTitles]);
-
   const getStatusBadge = (status: NegativeRemark['status']) => {
     switch (status) {
         case 'approved':
@@ -550,9 +549,9 @@ export default function ManageRemarksPage() {
                                     <SelectValue placeholder="Select a template..." />
                                 </SelectTrigger>
                                 <SelectContent className="z-[150]">
-                                    {creditTitleOptions.map(option => (
-                                        <SelectItem key={option.value} value={option.value}>
-                                            {option.label}
+                                    {creditTitles.map(ct => (
+                                        <SelectItem key={ct._id} value={ct._id}>
+                                            {ct.title} ({ct.points} pts)
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -643,8 +642,8 @@ export default function ManageRemarksPage() {
                    </SelectTrigger>
                    <SelectContent className="z-[150]">
                         <SelectItem value="all">All Templates</SelectItem>
-                        {creditTitleOptions.map(option => (
-                            <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                        {dynamicFilters.templates.map(tmpl => (
+                            <SelectItem key={tmpl} value={tmpl}>{tmpl}</SelectItem>
                         ))}
                    </SelectContent>
                </Select>
@@ -666,7 +665,7 @@ export default function ManageRemarksPage() {
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Years</SelectItem>
-                      {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
+                      {dynamicFilters.years.map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                   </SelectContent>
               </Select>
               <Select value={collegeFilter} onValueChange={setCollegeFilter}>
@@ -675,22 +674,17 @@ export default function ManageRemarksPage() {
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Colleges</SelectItem>
-                      {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
+                      {dynamicFilters.colleges.map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
                   </SelectContent>
               </Select>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={!filteredDepartments || Object.keys(filteredDepartments).length === 0}>
+              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0">
                       <SelectValue placeholder="Dept" />
                   </SelectTrigger>
                   <SelectContent className="z-[150]">
                       <SelectItem value="all">All Departments</SelectItem>
-                       {Object.entries(filteredDepartments).map(([group, courses]) => (
-                          <SelectGroup key={group}>
-                              <SelectLabel>{group}</SelectLabel>
-                              {courses.map(course => (
-                                  <SelectItem key={course} value={course}>{course}</SelectItem>
-                              ))}
-                          </SelectGroup>
+                       {dynamicFilters.departments.map(dept => (
+                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
                       ))}
                   </SelectContent>
               </Select>
@@ -806,8 +800,8 @@ export default function ManageRemarksPage() {
                             <SelectValue placeholder="Select a template..." />
                         </SelectTrigger>
                         <SelectContent className="z-[150]">
-                            {creditTitleOptions.map(option => (
-                                <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
+                            {creditTitles.map(ct => (
+                                <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
                             ))}
                         </SelectContent>
                     </Select>

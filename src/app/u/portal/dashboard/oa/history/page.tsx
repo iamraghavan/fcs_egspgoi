@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
+import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
 
@@ -88,8 +89,11 @@ type CreditTitle = {
   type: 'positive' | 'negative';
 };
 
-type Departments = {
-    [key: string]: string[];
+type DynamicFilters = {
+    templates: string[];
+    years: string[];
+    colleges: string[];
+    departments: string[];
 };
 
 const getCurrentAcademicYear = () => {
@@ -105,7 +109,6 @@ const getCurrentAcademicYear = () => {
 const generateYearOptions = () => {
     const currentYearString = getCurrentAcademicYear();
     const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
     const years = [];
     for (let i = 0; i < 5; i++) {
         const startYear = startCurrentYear - i;
@@ -129,10 +132,17 @@ export default function IssuedHistoryPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
+  const [creditTitleFilter, setCreditTitleFilter] = useState("all");
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
+  
+  const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
+      templates: [],
+      years: [],
+      colleges: [],
+      departments: []
+  });
   
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
@@ -166,32 +176,40 @@ export default function IssuedHistoryPage() {
           if (searchTerm) params.append('search', searchTerm);
           if (statusFilter !== 'all') params.append('status', statusFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
+          if (creditTitleFilter !== 'all') params.append('templateId', creditTitleFilter);
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
           if (dateRange?.from) params.append('fromDate', format(dateRange.from, 'yyyy-MM-dd'));
           if (dateRange?.to) params.append('toDate', format(dateRange.to, 'yyyy-MM-dd'));
 
-          const response = await fetch(`${API_BASE_URL}/admin/oa/credits/issued?${params.toString()}`, {
+          const response = await fetch(`${API_BASE_URL}/admin/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
           const resData = await response.json();
           if (resData.success) {
-              const data = resData.data || resData;
-              const items = data.items || [];
+              const items = resData.items || resData.data?.items || [];
               setRemarks(items);
-              setTotal(data.totalFiltered || items.length);
+              setTotal(resData.total || items.length);
+              if (resData.filters) {
+                  setDynamicFilters(resData.filters);
+              }
           } else {
-              throw new Error(resData.message || "Failed to fetch remarks");
+              throw new Error(resData.message || "failed to fetch remarks");
           }
       } catch (error: any) {
-          showAlert("Error fetching remarks", error.message);
+          showAlert("error fetching remarks", error.message);
           setRemarks([]);
           setTotal(0);
       } finally {
           setIsLoadingRemarks(false);
       }
   };
+
+  const debouncedFetch = useMemo(
+    () => _.debounce((p) => fetchRemarks(p), 300),
+    [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange, adminToken]
+  );
 
   useEffect(() => {
     const fetchCreditTitles = async () => {
@@ -205,33 +223,20 @@ export default function IssuedHistoryPage() {
                 setCreditTitles(data.items.filter((ct: any) => ct.type === 'negative'));
             }
         } catch (error) {
-            console.error("Failed to fetch credit titles", error);
+            console.error("failed to fetch credit titles", error);
         }
     };
     fetchCreditTitles();
   }, [adminToken]);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-        if (adminToken) {
-            fetchRemarks(page);
-        }
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [page, adminToken, searchTerm, statusFilter, academicYearFilter, collegeFilter, departmentFilter, dateRange]);
+    debouncedFetch(page);
+    return () => debouncedFetch.cancel();
+  }, [page, debouncedFetch]);
   
   useEffect(() => {
     setPage(1);
-  }, [searchTerm, statusFilter, academicYearFilter, collegeFilter, departmentFilter, dateRange]);
-
-  useEffect(() => {
-    if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
-      setFilteredDepartments(colleges[collegeFilter as keyof typeof colleges]);
-    } else {
-      setFilteredDepartments({});
-    }
-    setDepartmentFilter("all"); 
-  }, [collegeFilter]);
+  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange]);
 
    useEffect(() => {
     if (editingRemark) {
@@ -274,14 +279,14 @@ export default function IssuedHistoryPage() {
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "Failed to update remark.");
+            throw new Error(responseData.message || "failed to update remark.");
         }
 
-        toast({ title: "Remark updated", description: "The remark has been successfully updated." });
+        toast({ title: "remark updated", description: "The remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Update failed", error.message);
+        showAlert("update failed", error.message);
     } finally {
         setIsSubmittingEdit(false);
     }
@@ -289,7 +294,7 @@ export default function IssuedHistoryPage() {
 
   const handleDelete = async (id: string) => {
     if (!adminToken) {
-        showAlert("Authentication error", "Admin token not found.");
+        showAlert("authentication error", "Admin token not found.");
         return;
     }
 
@@ -301,13 +306,13 @@ export default function IssuedHistoryPage() {
 
         const responseData = await response.json();
         if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "Failed to delete remark.");
+            throw new Error(responseData.message || "failed to delete remark.");
         }
 
-        toast({ title: "Remark deleted", description: "The remark has been permanently removed." });
+        toast({ title: "remark deleted", description: "The remark has been permanently removed." });
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Delete failed", error.message);
+        showAlert("delete failed", error.message);
     }
   };
 
@@ -392,7 +397,7 @@ export default function IssuedHistoryPage() {
                     <SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Academic Year" /></SelectTrigger>
                     <SelectContent className="z-[150]">
                         <SelectItem value="all">All Years</SelectItem>
-                        {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
+                        {dynamicFilters.years.map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                     </SelectContent>
                 </Select>
                  <Popover>
@@ -469,7 +474,7 @@ export default function IssuedHistoryPage() {
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} variant="destructive" className="rounded-none px-10">
+                                        <AlertDialogAction onClick={() => handleDelete(remark._id)} className="bg-destructive hover:bg-destructive/90">
                                             Confirm & Delete
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
