@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -27,7 +28,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = '/api/v1';
 
 type CreditActivity = {
   _id: string;
@@ -74,12 +75,11 @@ export default function FacultyDashboard() {
     else setLoading(true);
 
     try {
-      // Corrected paths per Integration Guide V2
       const [sRes, aRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`, { 
+        fetch(`${API_BASE_URL}/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         }),
-        fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${uid}?limit=5`, { 
+        fetch(`${API_BASE_URL}/credits/credits/faculty/${uid}?limit=5`, { 
           headers: { "Authorization": `Bearer ${token}` } 
         })
       ]);

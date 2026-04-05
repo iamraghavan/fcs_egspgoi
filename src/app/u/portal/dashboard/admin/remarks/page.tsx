@@ -55,7 +55,7 @@ import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = '/api/v1';
 
 type User = {
   _id: string;
@@ -153,7 +153,7 @@ export default function ManageRemarksPage() {
   const [remarks, setRemarks] = useState<NegativeRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   
   // Filter States
@@ -176,7 +176,6 @@ export default function ManageRemarksPage() {
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
-  const uid = searchParams.get('uid');
   const totalPages = Math.ceil(total / limit);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
@@ -224,10 +223,10 @@ export default function ManageRemarksPage() {
     }
     try {
       const [facultyResponse, creditTitlesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/api/v1/users?limit=1000`, {
+        fetch(`${API_BASE_URL}/users?limit=1000`, {
           headers: { Authorization: `Bearer ${adminToken}` },
         }),
-        fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+        fetch(`${API_BASE_URL}/admin/credit-title`, {
           headers: { Authorization: `Bearer ${adminToken}` },
         })
       ]);
@@ -267,7 +266,7 @@ export default function ManageRemarksPage() {
           if (collegeFilter !== 'all') params.append('college', collegeFilter);
           if (departmentFilter !== 'all') params.append('department', departmentFilter);
 
-          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative?${params.toString()}`, {
+          const response = await fetch(`${API_BASE_URL}/credits/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
@@ -328,7 +327,7 @@ export default function ManageRemarksPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
@@ -344,7 +343,7 @@ export default function ManageRemarksPage() {
       setShortProofUrl(null);
       shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl))
         .then(setShortProofUrl)
-        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails.proofUrl)));
+        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails!.proofUrl)));
     }
   }, [selectedRemarkDetails]);
 
@@ -372,7 +371,7 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative`, {
+      const response = await fetch(`${API_BASE_URL}/credits/credits/negative`, {
         method: "POST",
         headers: { "Authorization": `Bearer ${adminToken}` },
         body: formData,
@@ -417,7 +416,7 @@ export default function ManageRemarksPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
+        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
             body: formData,
@@ -444,7 +443,7 @@ export default function ManageRemarksPage() {
           return;
       }
       try {
-          const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${creditId}`, {
+          const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${creditId}`, {
               method: "DELETE",
               headers: { "Authorization": `Bearer ${adminToken}` },
           });
@@ -483,6 +482,16 @@ export default function ManageRemarksPage() {
     }
   };
 
+  const displayRemarks = useMemo(() => {
+    if (!searchTerm) return remarks;
+    const term = searchTerm.toLowerCase();
+    return remarks.filter(r => 
+      r.facultySnapshot.name.toLowerCase().includes(term) ||
+      r.facultySnapshot.facultyID.toLowerCase().includes(term) ||
+      r.title.toLowerCase().includes(term)
+    );
+  }, [remarks, searchTerm]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -496,7 +505,7 @@ export default function ManageRemarksPage() {
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
             <DialogTrigger asChild>
-                <Button>
+                <Button className="rounded-none">
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Issue New Remark
                 </Button>
@@ -517,6 +526,7 @@ export default function ManageRemarksPage() {
                               onChange={handleFacultySearch}
                               onFocus={() => setShowSuggestions(true)}
                               autoComplete="off"
+                              className="rounded-none"
                             />
                              {showSuggestions && suggestedFaculty.length > 0 && (
                               <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -536,7 +546,7 @@ export default function ManageRemarksPage() {
                         <div>
                             <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
                              <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                                <SelectTrigger id="creditTitle">
+                                <SelectTrigger id="creditTitle" className="rounded-none">
                                     <SelectValue placeholder="Select a template..." />
                                 </SelectTrigger>
                                 <SelectContent className="z-[150]">
@@ -550,24 +560,24 @@ export default function ManageRemarksPage() {
                         </div>
                         <div>
                             <Label className="mb-1" htmlFor="title">Title <span className="text-destructive">*</span></Label>
-                            <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                            <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required className="rounded-none" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
-                                <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                                <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" />
                             </div>
                             <div>
                             <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
                             <Select value={getCurrentAcademicYear()} disabled>
-                                <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                                <SelectTrigger id="academicYear" className="rounded-none"><SelectValue placeholder="Select Year" /></SelectTrigger>
                                 <SelectContent className="z-[150]">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
                             </Select>
                             </div>
                         </div>
                         <div>
                         <Label className="mb-1" htmlFor="notes">Notes / Rationale</Label>
-                        <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" />
                         </div>
                         <div>
                         <Label className="mb-1">Upload Proof (Optional)</Label>
@@ -591,7 +601,7 @@ export default function ManageRemarksPage() {
                                     <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'n/a'}</p>
                                     <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'n/a'}</span></p>
                                 </CardContent>
-                            </Card>
+                             </Card>
                         ) : (
                             <div className="flex items-center justify-center h-full border border-dashed border-cds-ui-03 bg-cds-ui-01/50 p-6">
                                 <p className="text-muted-foreground text-center text-xs">Search and select a faculty member to see their profile details.</p>
@@ -600,9 +610,9 @@ export default function ManageRemarksPage() {
                     </div>
                      <DialogFooter className="pt-4 md:col-span-3 border-t">
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
+                            <Button type="button" variant="secondary" className="rounded-none">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto rounded-none">
                             {isLoading ? "Submitting..." : "Issue Remark"}
                         </Button>
                     </DialogFooter>
@@ -621,7 +631,7 @@ export default function ManageRemarksPage() {
               <div className="relative border-r lg:col-span-1">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
-                      placeholder="Search title, faculty..." 
+                      placeholder="Search name, ID, title..." 
                       className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
@@ -700,8 +710,8 @@ export default function ManageRemarksPage() {
               <TableBody>
                 {isLoadingRemarks ? (
                    <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
-                ) : remarks.length > 0 ? (
-                  remarks.map((remark) => {
+                ) : displayRemarks.length > 0 ? (
+                  displayRemarks.map((remark) => {
                       const isModifiable = remark.status !== 'deleted';
                       return (
                         <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
@@ -748,7 +758,7 @@ export default function ManageRemarksPage() {
                                                 </AlertDialogDescription>
                                             </AlertDialogHeader>
                                             <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
                                                 <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} variant="destructive" className="rounded-none px-10">
                                                     Delete Remark
                                                 </AlertDialogAction>
@@ -785,12 +795,12 @@ export default function ManageRemarksPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
-                <DialogTitle>Edit Negative Remark</DialogTitle>
-                <DialogDescription>Correct the notes or change the violation type if issued incorrectly.</DialogDescription>
+                <DialogTitle>Update Remark Details</DialogTitle>
+                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div>
-                    <Label htmlFor="edit-creditTitle" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Violation Type</Label>
+                    <Label htmlFor="edit-creditTitle" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Violation Category</Label>
                     <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
                         <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01">
                             <SelectValue placeholder="Select a template..." />

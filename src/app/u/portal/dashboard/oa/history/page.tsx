@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -50,7 +51,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = '/api/v1';
 
 type IssuedRemark = {
     _id: string;
@@ -122,7 +123,7 @@ export default function IssuedHistoryPage() {
   const [remarks, setRemarks] = useState<IssuedRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit] = useState(10);
+  const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
@@ -170,16 +171,18 @@ export default function IssuedHistoryPage() {
           if (dateRange?.from) params.append('fromDate', format(dateRange.from, 'yyyy-MM-dd'));
           if (dateRange?.to) params.append('toDate', format(dateRange.to, 'yyyy-MM-dd'));
 
-          const response = await fetch(`${API_BASE_URL}/api/v1/admin/oa/credits/issued?${params.toString()}`, {
+          const response = await fetch(`${API_BASE_URL}/admin/oa/credits/issued?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
   
-          const data = await response.json();
-          if (data.success) {
-              setRemarks(data.data.items);
-              setTotal(data.data.totalFiltered);
+          const resData = await response.json();
+          if (resData.success) {
+              const data = resData.data || resData;
+              const items = data.items || [];
+              setRemarks(items);
+              setTotal(data.totalFiltered || items.length);
           } else {
-              throw new Error(data.message || "Failed to fetch remarks");
+              throw new Error(resData.message || "Failed to fetch remarks");
           }
       } catch (error: any) {
           showAlert("Error fetching remarks", error.message);
@@ -194,7 +197,7 @@ export default function IssuedHistoryPage() {
     const fetchCreditTitles = async () => {
         if (!adminToken) return;
         try {
-            const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+            const response = await fetch(`${API_BASE_URL}/admin/credit-title`, {
                 headers: { Authorization: `Bearer ${adminToken}` },
             });
             const data = await response.json();
@@ -240,7 +243,7 @@ export default function IssuedHistoryPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `${API_BASE_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
@@ -263,8 +266,7 @@ export default function IssuedHistoryPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        // Corrected to restored API path /credits/credits/negative
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${editingRemark._id}`, {
+        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, {
             method: 'PUT',
             headers: { 'Authorization': `Bearer ${adminToken}` },
             body: formData,
@@ -275,7 +277,7 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "Failed to update remark.");
         }
 
-        toast({ title: "Remark updated", description: "The remark has been successfully updated and faculty balance recalculated." });
+        toast({ title: "Remark updated", description: "The remark has been successfully updated." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
@@ -292,8 +294,7 @@ export default function IssuedHistoryPage() {
     }
 
     try {
-        // Corrected to restored API path /credits/credits/negative
-        const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, {
             method: "DELETE",
             headers: { "Authorization": `Bearer ${adminToken}` },
         });
@@ -303,7 +304,7 @@ export default function IssuedHistoryPage() {
             throw new Error(responseData.message || "Failed to delete remark.");
         }
 
-        toast({ title: "Remark deleted", description: "The remark has been permanently removed and credit balance restored." });
+        toast({ title: "Remark deleted", description: "The remark has been permanently removed." });
         fetchRemarks(page);
     } catch (error: any) {
         showAlert("Delete failed", error.message);
@@ -336,6 +337,16 @@ export default function IssuedHistoryPage() {
     return <Badge variant={variant} className={cn("rounded-none", className)}>{status}</Badge>;
   };
 
+  const displayRemarks = useMemo(() => {
+    if (!searchTerm) return remarks;
+    const term = searchTerm.toLowerCase();
+    return remarks.filter(r => 
+      r.facultySnapshot.name.toLowerCase().includes(term) ||
+      r.facultySnapshot.facultyID.toLowerCase().includes(term) ||
+      r.title.toLowerCase().includes(term)
+    );
+  }, [remarks, searchTerm]);
+
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -360,7 +371,7 @@ export default function IssuedHistoryPage() {
                 <div className="relative col-span-1 lg:col-span-3 border-b mb-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input 
-                        placeholder="Search by title, faculty name, notes..." 
+                        placeholder="Search by name, ID, title, notes..." 
                         className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0"
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
@@ -415,8 +426,8 @@ export default function IssuedHistoryPage() {
               <TableBody>
                 {isLoadingRemarks ? (
                    <TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>
-                ) : remarks.length > 0 ? (
-                  remarks.map((remark) => {
+                ) : displayRemarks.length > 0 ? (
+                  displayRemarks.map((remark) => {
                     const isModifiable = remark.status !== 'deleted';
                     return (
                       <TableRow key={remark._id} className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", remark.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
@@ -457,7 +468,7 @@ export default function IssuedHistoryPage() {
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                        <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
                                         <AlertDialogAction onClick={() => handleDelete(remark._id)} variant="destructive" className="rounded-none px-10">
                                             Confirm & Delete
                                         </AlertDialogAction>
@@ -496,7 +507,7 @@ export default function IssuedHistoryPage() {
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>Update Remark Details</DialogTitle>
-                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
+                <DialogDescription>Correct notes or modify the violation category.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div className="space-y-1.5">
