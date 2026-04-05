@@ -47,7 +47,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Eye, Search, Edit, Trash2, AlertCircle, Clock, CheckCircle2, XCircle } from "lucide-react";
+import { PlusCircle, Eye, Search, Edit, Trash2, AlertCircle, Clock, CheckCircle2, XCircle, RefreshCw } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
@@ -99,9 +99,13 @@ type NegativeRemark = {
     };
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
-    title: string;
     type: 'negative';
     updatedAt: string;
+    appealEligibility?: {
+        canAppeal: boolean;
+        reason: string;
+        expiryDate?: string;
+    };
 };
 
 type DynamicFilters = {
@@ -464,6 +468,36 @@ export default function ManageRemarksPage() {
       } catch (error: any) {
           showAlert("delete failed", error.message);
       }
+  };
+
+  const handleReopenWindow = async (creditId: string) => {
+    const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
+    if (!confirm) return;
+
+    if (!adminToken) {
+        showAlert("authentication error", "Admin token not found.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${creditId}/reopen`, {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${adminToken}` },
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "failed to re-open appeal window.");
+        }
+
+        toast({ title: "window re-opened", description: "The faculty member can now submit a new appeal." });
+        fetchRemarks(page);
+        if (selectedRemarkDetails?._id === creditId) {
+            setSelectedRemarkDetails({ ...selectedRemarkDetails, status: 'pending' });
+        }
+    } catch (error: any) {
+        showAlert("operation failed", error.message);
+    }
   };
   
   const getStatusBadge = (status: NegativeRemark['status']) => {
@@ -886,7 +920,20 @@ export default function ManageRemarksPage() {
                     )}
                 </div>
             )}
-            <DialogFooter className="border-t pt-4">
+            <DialogFooter className="border-t pt-4 flex items-center justify-between">
+                <div className="flex gap-2">
+                    {selectedRemarkDetails && selectedRemarkDetails.status !== 'deleted' && (
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-none gap-2 text-xs" 
+                            onClick={() => handleReopenWindow(selectedRemarkDetails._id)}
+                        >
+                            <RefreshCw className="h-3 w-3" />
+                            Re-open Appeal Window
+                        </Button>
+                    )}
+                </div>
                 <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Details</Button></DialogClose>
             </DialogFooter>
         </DialogContent>

@@ -1,7 +1,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -78,6 +78,11 @@ type NegativeCredit = {
   academicYear: string;
   appealCount?: number;
   appeal?: AppealData;
+  appealEligibility?: {
+    canAppeal: boolean;
+    reason: string;
+    expiryDate?: string;
+  };
 };
 
 export default function NegativeRemarksPage() {
@@ -185,7 +190,6 @@ export default function NegativeRemarksPage() {
       formData.append("proof", appealProof);
     }
     
-    // Updated URL to include nested credits segment for both PUT and POST
     const url = isEdit
         ? `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedRemark._id}`
         : `${API_BASE_URL}/api/v1/credits/credits/${selectedRemark._id}/appeal`;
@@ -222,7 +226,6 @@ export default function NegativeRemarksPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        // Updated URL to include nested credits segment
         const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
             method: 'DELETE',
             headers: { 'Authorization': `Bearer ${token}` }
@@ -260,14 +263,6 @@ export default function NegativeRemarksPage() {
         case 'appealed': variant = 'secondary'; break;
     }
     return <Badge variant={variant} className={remark.status === 'approved' ? 'bg-green-100 text-green-800' : ''}>{remark.status}</Badge>;
-  };
-
-  const isWithinAppealWindow = (createdAt: string) => {
-    if (amnestyActive) return true; // All remarks appealable during Amnesty Mode
-    const createdDate = new Date(createdAt);
-    const diffTime = Math.abs(currentTime.getTime() - createdDate.getTime());
-    const diffDays = diffTime / (1000 * 60 * 60 * 24);
-    return diffDays <= APPEAL_WINDOW_DAYS;
   };
 
   const renderAppealDialog = (isEdit = false) => (
@@ -333,7 +328,7 @@ export default function NegativeRemarksPage() {
                 A log of all negative remarks issued to you. 
                 {amnestyActive 
                     ? " Amnesty mode is active: all remarks are currently appealable." 
-                    : ` Appeals must be filed within ${APPEAL_WINDOW_DAYS} days of issuance.`
+                    : ` Appeals must be filed within ${APPEAL_WINDOW_DAYS} days of issuance unless re-opened by Admin.`
                 }
             </CardDescription>
         </CardHeader>
@@ -354,16 +349,17 @@ export default function NegativeRemarksPage() {
                    <TableRow><TableCell colSpan={5} className="text-center h-24">Loading remarks...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => {
-                    const canAppeal = !remark.appeal && (remark.appealCount || 0) < 1 && isWithinAppealWindow(remark.createdAt);
-                    const windowExpired = !remark.appeal && (remark.appealCount || 0) < 1 && !isWithinAppealWindow(remark.createdAt);
+                    const eligibility = remark.appealEligibility;
+                    const canAppeal = eligibility?.canAppeal ?? false;
+                    const isBlocked = eligibility && !eligibility.canAppeal && remark.status !== 'appealed';
 
                     return (
                       <TableRow key={remark._id}>
                         <TableCell className="font-medium text-foreground">
                           {remark.title}
-                          {windowExpired && (
-                            <span className="ml-2 inline-flex items-center text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                              <Clock className="h-3 w-3 mr-1" /> Window Expired
+                          {isBlocked && (
+                            <span className="ml-2 inline-flex items-center text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded" title={eligibility.reason}>
+                              <Clock className="h-3 w-3 mr-1" /> {eligibility.reason.includes('expired') ? 'Window Expired' : 'Blocked'}
                             </span>
                           )}
                         </TableCell>

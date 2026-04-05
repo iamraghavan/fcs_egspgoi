@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Eye, Calendar as CalendarIcon, Trash2, Edit, AlertCircle } from "lucide-react";
+import { Search, Eye, Calendar as CalendarIcon, Trash2, Edit, AlertCircle, RefreshCw } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -80,6 +80,11 @@ type IssuedRemark = {
     updatedAt: string;
     creditTitle?: string;
     title: string;
+    appealEligibility?: {
+        canAppeal: boolean;
+        reason: string;
+        expiryDate?: string;
+    };
 };
 
 type CreditTitle = {
@@ -316,6 +321,36 @@ export default function IssuedHistoryPage() {
     }
   };
 
+  const handleReopenWindow = async (creditId: string) => {
+    const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
+    if (!confirm) return;
+
+    if (!adminToken) {
+        showAlert("authentication error", "Admin token not found.");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${creditId}/reopen`, {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${adminToken}` },
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+            throw new Error(data.message || "failed to re-open appeal window.");
+        }
+
+        toast({ title: "window re-opened", description: "The faculty member can now submit a new appeal." });
+        fetchRemarks(page);
+        if (selectedRemark?._id === creditId) {
+            setSelectedRemark({ ...selectedRemark, status: 'pending' });
+        }
+    } catch (error: any) {
+        showAlert("operation failed", error.message);
+    }
+  };
+
   const getStatusBadge = (status: IssuedRemark['status']) => {
     let variant: "default" | "secondary" | "destructive" = "secondary";
     let className = "";
@@ -365,6 +400,7 @@ export default function IssuedHistoryPage() {
         </div>
          <Button asChild className="rounded-none font-semibold">
             <Link href={`/u/portal/dashboard/oa?uid=${uid}`}>
+                <PlusCircle className="mr-2 h-4 w-4" />
                 Issue New Remark
             </Link>
         </Button>
@@ -635,7 +671,20 @@ export default function IssuedHistoryPage() {
                 </div>
             </div>
             )}
-            <DialogFooter className="border-t pt-4">
+            <DialogFooter className="border-t pt-4 flex items-center justify-between">
+                <div className="flex gap-2">
+                    {selectedRemark && selectedRemark.status !== 'deleted' && (
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="rounded-none gap-2 text-xs" 
+                            onClick={() => handleReopenWindow(selectedRemark._id)}
+                        >
+                            <RefreshCw className="h-3 w-3" />
+                            Re-open Appeal Window
+                        </Button>
+                    )}
+                </div>
                 <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Audit</Button></DialogClose>
             </DialogFooter>
         </DialogContent>
