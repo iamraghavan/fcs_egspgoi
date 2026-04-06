@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -39,19 +38,17 @@ import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { DateRange } from "react-day-picker";
 import { format } from "date-fns";
-import { colleges } from "@/lib/colleges";
 import { cn } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
 
@@ -68,23 +65,18 @@ type IssuedRemark = {
         profileImage?: string;
     };
     issuedBy: string;
-    issuedBySnapshot: {
-        _id: string;
+    issuedBySnapshot?: {
         name: string;
-        email: string;
     };
     notes?: string;
     points: number;
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
     type: 'negative';
-    updatedAt: string;
-    creditTitle?: string;
     title: string;
     appealEligibility?: {
         canAppeal: boolean;
         reason: string;
-        expiryDate?: string;
     };
 };
 
@@ -110,15 +102,12 @@ export default function IssuedHistoryPage() {
   const [remarks, setRemarks] = useState<IssuedRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
-  const [creditTitleFilter, setCreditTitleFilter] = useState("all");
-  const [collegeFilter, setCollegeFilter] = useState("all");
-  const [departmentFilter, setDepartmentFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   
   const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
@@ -156,9 +145,6 @@ export default function IssuedHistoryPage() {
           if (searchTerm) params.append('search', searchTerm);
           if (statusFilter !== 'all') params.append('status', statusFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
-          if (creditTitleFilter !== 'all') params.append('templateId', creditTitleFilter);
-          if (collegeFilter !== 'all') params.append('college', collegeFilter);
-          if (departmentFilter !== 'all') params.append('department', departmentFilter);
           if (dateRange?.from) params.append('fromDate', format(dateRange.from, 'yyyy-MM-dd'));
           if (dateRange?.to) params.append('toDate', format(dateRange.to, 'yyyy-MM-dd'));
 
@@ -193,16 +179,12 @@ export default function IssuedHistoryPage() {
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (adminToken) {
-        fetchRemarks(page);
-      }
+      if (adminToken) fetchRemarks(page);
     }, 400);
     return () => clearTimeout(timer);
-  }, [page, searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange, adminToken]);
+  }, [page, searchTerm, statusFilter, academicYearFilter, dateRange, adminToken]);
 
-  useEffect(() => { 
-    setPage(1); 
-  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange]);
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, dateRange]);
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
@@ -229,7 +211,7 @@ export default function IssuedHistoryPage() {
         const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
-        toast({ title: "Remark Updated", description: "The transaction log has been corrected." });
+        toast({ title: "Remark Updated", description: "Changes have been successfully synchronized." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
@@ -244,7 +226,7 @@ export default function IssuedHistoryPage() {
         const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
-        toast({ title: "Remark Deleted", description: "The record has been permanently removed." });
+        toast({ title: "Remark Deleted", description: "Record has been permanently removed from logs." });
         fetchRemarks(page);
     } catch (error: any) {
         showAlert("Delete Failed", error.message);
@@ -258,7 +240,7 @@ export default function IssuedHistoryPage() {
         const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen");
-        toast({ title: "Window Re-opened", description: "The faculty member has been granted another appeal window." });
+        toast({ title: "Window Re-opened", description: "The faculty member has been granted appeal access." });
         fetchRemarks(page);
         if (selectedRemark?._id === id) setSelectedRemark({ ...selectedRemark, status: 'pending' });
     } catch (error: any) {
@@ -267,13 +249,11 @@ export default function IssuedHistoryPage() {
   };
 
   const getStatusBadge = (status: IssuedRemark['status']) => {
-    let variant: "default" | "secondary" | "destructive" = "secondary";
-    let cl = "";
-    if (status === 'approved') { variant = 'default'; cl = 'bg-green-100 text-green-800'; }
-    else if (status === 'rejected' || status === 'deleted') { variant = 'destructive'; cl = 'bg-red-100 text-red-800'; }
-    else if (status === 'appealed') { variant = 'default'; cl = 'bg-blue-100 text-blue-800'; }
-    else if (status === 'pending') { cl = 'bg-yellow-100 text-yellow-800'; }
-    return <Badge variant={variant} className={cn("rounded-none", cl)}>{status}</Badge>;
+    let cl = "bg-yellow-100 text-yellow-800";
+    if (status === 'approved') cl = "bg-green-100 text-green-800";
+    else if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800";
+    else if (status === 'appealed') cl = "bg-blue-100 text-blue-800";
+    return <Badge variant="secondary" className={cn("rounded-none", cl)}>{status}</Badge>;
   };
 
   return (
@@ -295,7 +275,7 @@ export default function IssuedHistoryPage() {
         <CardHeader className="bg-cds-ui-01/50 border-b">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
                 <div className="relative col-span-1 lg:col-span-3 border-b mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search name, ID, title..." className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="deleted">Deleted</SelectItem></SelectContent></Select>
+                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent></Select>
                  <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Year" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Years</SelectItem>{dynamicFilters.years.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}</SelectContent></Select>
                  <Popover><PopoverTrigger asChild><Button variant={"outline"} className="h-10 border-0 rounded-none focus:ring-0 bg-transparent text-xs justify-start"><CalendarIcon className="mr-2 h-3 w-3" />{dateRange?.from ? (dateRange.to ? (<>{format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}</>) : (format(dateRange.from, "LLL dd"))) : (<span>Date Range</span>)}</Button></PopoverTrigger><PopoverContent className="z-[150] w-auto p-0 rounded-none" align="start"><Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} /></PopoverContent></Popover>
             </div>
@@ -322,7 +302,25 @@ export default function IssuedHistoryPage() {
                         <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
                         <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemark(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
+                        <TableCell className="text-center">
+                            <div className="flex items-center justify-center gap-1">
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemark(r)}><Eye className="h-4 w-4" /></Button>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button>
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                                    <AlertDialogContent className="rounded-none">
+                                        <AlertDialogHeader>
+                                            <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
+                                            <AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => handleDelete(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+                            </div>
+                        </TableCell>
                     </TableRow>
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24 italic text-muted-foreground">No records matched.</TableCell></TableRow>)}
@@ -337,7 +335,7 @@ export default function IssuedHistoryPage() {
         <DialogContent className="sm:max-w-md rounded-none">
             <DialogHeader><DialogTitle>Update Remark Transaction</DialogTitle></DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select updated template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
+                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Administrative Rationale</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[120px] resize-none focus:ring-0 focus:border-b-2" /></div>
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Proof Replacement</Label><FileUpload onFileSelect={setEditProof} /></div>
                 <DialogFooter className="pt-4 border-t"><DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose><Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">{isSubmittingEdit ? "Updating..." : "Save Transaction"}</Button></DialogFooter>
@@ -353,7 +351,21 @@ export default function IssuedHistoryPage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-cds-ui-01 p-4 border border-cds-ui-03"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Faculty Associate</p><p className="font-bold text-base leading-tight">{selectedRemark.facultySnapshot.name}</p><p className="text-xs font-mono text-muted-foreground uppercase">{selectedRemark.facultySnapshot.facultyID}</p></div><div className="sm:text-right"><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Department</p><p className="font-medium text-cds-text-02">{selectedRemark.facultySnapshot.department}</p></div></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Violation Title</p><p className="font-semibold leading-tight">{selectedRemark.title}</p></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className="text-2xl font-bold text-cds-support-01 tabular-nums">{selectedRemark.points}</p></div></div>
                 <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Administrative Rationale</p><div className="p-4 bg-cds-ui-01 border-l-4 border-cds-support-01 italic text-cds-text-02 leading-relaxed">{selectedRemark.notes || "No rationale provided."}</div></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Issued By</p><div className="flex items-center gap-2 text-xs"><Avatar className="h-6 w-6"><AvatarFallback className="text-[10px]">{selectedRemark.issuedBySnapshot?.name?.charAt(0)}</AvatarFallback></Avatar><span className="font-semibold">{selectedRemark.issuedBySnapshot?.name || 'n/a'}</span></div></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Evidence</p>{selectedRemark.proofUrl ? (<Button asChild variant="link" className="p-0 h-auto font-bold"><a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof</a></Button>) : <span className="text-xs italic">No proof attached.</span>}</div></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Issued By</p>
+                        <div className="flex items-center gap-2 text-xs">
+                            <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-[10px]">{selectedRemark.issuedBySnapshot?.name?.charAt(0)}</AvatarFallback>
+                            </Avatar>
+                            <span className="font-semibold">{selectedRemark.issuedBySnapshot?.name || 'n/a'}</span>
+                        </div>
+                    </div>
+                    <div>
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Evidence</p>
+                        {selectedRemark.proofUrl ? (<Button asChild variant="link" className="p-0 h-auto font-bold"><a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof</a></Button>) : <span className="text-xs italic">No proof attached.</span>}
+                    </div>
+                </div>
             </div>
             )}
             <DialogFooter className="border-t pt-4 flex items-center justify-between"><div className="flex gap-2">{selectedRemark && selectedRemark.status !== 'deleted' && (<Button variant="outline" size="sm" className="rounded-none gap-2 text-xs" onClick={() => handleReopenWindow(selectedRemark._id)}><RefreshCw className="h-3 w-3" /> Re-open Appeal Window</Button>)}</div><DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Audit</Button></DialogClose></DialogFooter>

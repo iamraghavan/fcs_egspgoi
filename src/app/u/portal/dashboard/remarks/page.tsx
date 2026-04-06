@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -19,7 +18,6 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
@@ -32,9 +30,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogClose,
-  DialogTrigger,
 } from "@/components/ui/dialog"
-import { Eye, Badge as BadgeIcon, AlertTriangle, Info, MoreHorizontal, Edit, Trash2, Clock } from "lucide-react";
+import { Eye, Badge as BadgeIcon, MoreHorizontal, Edit, Trash2, Clock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
   AlertDialog,
@@ -56,7 +53,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useAlert } from "@/context/alert-context";
 import { shortenUrl } from "@/lib/url-shortener";
-import { useRemoteConfig } from "@/hooks/use-remote-config";
 import { cn } from "@/lib/utils";
 
 const API_BASE_URL = '/api/v1';
@@ -82,7 +78,6 @@ type NegativeCredit = {
   appealEligibility?: {
     canAppeal: boolean;
     reason: string;
-    expiryDate?: string;
   };
 };
 
@@ -92,8 +87,6 @@ export default function NegativeRemarksPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  const amnestyActive = useRemoteConfig('amnesty_active')?.asBoolean() || false;
-  
   const [remarks, setRemarks] = useState<NegativeCredit[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [selectedRemark, setSelectedRemark] = useState<NegativeCredit | null>(null);
@@ -122,16 +115,11 @@ export default function NegativeRemarksPage() {
               headers: { Authorization: `Bearer ${token}` },
           });
   
-          if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`failed to fetch remarks: ${response.status}`);
-          }
-          
           const data = await response.json();
           if (data.success) {
               setRemarks(data.items || data.data?.items || []);
           } else {
-              throw new Error(data.message || "failed to fetch remarks");
+              throw new Error(data.message || "Failed to fetch remarks");
           }
       } catch (error: any) {
         setRemarks([]);
@@ -141,9 +129,7 @@ export default function NegativeRemarksPage() {
   };
 
   useEffect(() => {
-    if (token && facultyId) {
-        fetchRemarks();
-    }
+    if (token && facultyId) fetchRemarks();
   }, [token, facultyId]);
   
   const getProofUrl = (url: string) => {
@@ -154,26 +140,22 @@ export default function NegativeRemarksPage() {
   useEffect(() => {
     if (selectedRemark?.proofUrl) {
         setShortProofUrl(null);
-        shortenUrl(getProofUrl(selectedRemark.proofUrl))
-            .then(url => setShortProofUrl(url))
-            .catch(() => {
-                if(selectedRemark.proofUrl) setShortProofUrl(getProofUrl(selectedRemark.proofUrl))
-            });
+        shortenUrl(getProofUrl(selectedRemark.proofUrl)).then(setShortProofUrl).catch(() => {
+            if(selectedRemark.proofUrl) setShortProofUrl(getProofUrl(selectedRemark.proofUrl))
+        });
     }
   }, [selectedRemark]);
 
   const handleAppealSubmit = async (isEdit: boolean) => {
     if (!selectedRemark || !appealReason.trim()) {
-        showAlert("incomplete form", "please provide a reason for your appeal.");
+        showAlert("Incomplete Form", "Please provide a reason for your appeal.");
         return;
     }
     setIsSubmittingAppeal(true);
     
     const formData = new FormData();
     formData.append("reason", appealReason);
-    if (appealProof) {
-      formData.append("proof", appealProof);
-    }
+    if (appealProof) formData.append("proof", appealProof);
     
     const url = isEdit
         ? `${API_BASE_URL}/credits/credits/appeals/${selectedRemark._id}`
@@ -181,18 +163,11 @@ export default function NegativeRemarksPage() {
     const method = isEdit ? 'PUT' : 'POST';
 
     try {
-        const response = await fetch(url, {
-            method: method,
-            headers: { "Authorization": `Bearer ${token}` },
-            body: formData,
-        });
-
-        const responseData = await response.json();
-        if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || `failed to submit appeal.`);
-        }
+        const res = await fetch(url, { method, headers: { "Authorization": `Bearer ${token}` }, body: formData });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || `Failed to submit appeal.`);
         
-        toast({ title: `Appeal ${isEdit ? 'Updated' : 'Submitted'}`, description: `Your appeal has been recorded successfully.` });
+        toast({ title: `Appeal ${isEdit ? 'Updated' : 'Submitted'}`, description: `Action recorded successfully.` });
         setIsAppealDialogOpen(false);
         setIsEditAppealDialogOpen(false);
         fetchRemarks();
@@ -206,13 +181,10 @@ export default function NegativeRemarksPage() {
 
   const handleWithdrawAppeal = async (creditId: string) => {
     try {
-        const response = await fetch(`${API_BASE_URL}/credits/credits/appeals/${creditId}`, {
-            method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
-        });
-        const responseData = await response.json();
-        if (!response.ok || !responseData.success) throw new Error(responseData.message || "Failed to withdraw");
-        toast({ title: "Appeal Withdrawn", description: "Your appeal has been removed." });
+        const res = await fetch(`${API_BASE_URL}/credits/credits/appeals/${creditId}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${token}` } });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || "Failed to withdraw");
+        toast({ title: "Appeal Withdrawn", description: "Record has been removed." });
         fetchRemarks();
     } catch(error: any) {
         showAlert("Withdrawal Failed", error.message);
@@ -230,40 +202,6 @@ export default function NegativeRemarksPage() {
     return <Badge variant={remark.status === 'approved' ? 'default' : remark.status === 'rejected' ? 'destructive' : 'secondary'} className={cn("rounded-none", remark.status === 'approved' && 'bg-green-100 text-green-800')}>{remark.status}</Badge>;
   };
 
-  const renderAppealDialog = (isEdit = false) => (
-     <Dialog open={isEdit ? isEditAppealDialogOpen : isAppealDialogOpen} onOpenChange={isEdit ? setIsEditAppealDialogOpen : setIsAppealDialogOpen}>
-        <DialogContent className="sm:max-w-lg rounded-none">
-          <DialogHeader>
-            <DialogTitle>{isEdit ? 'Edit' : 'Submit'} Appeal: {selectedRemark?.title}</DialogTitle>
-            <DialogDescription>Provide a clear rationale for disputing this record.</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-1.5">
-                <label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive">*</span></label>
-                <Textarea 
-                    id="reason" 
-                    placeholder="Enter your justification..."
-                    value={appealReason}
-                    onChange={(e) => setAppealReason(e.target.value)} 
-                    rows={4}
-                    className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"
-                />
-            </div>
-            <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence (Optional)</label>
-                <FileUpload onFileSelect={setAppealProof} />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button type="button" variant="secondary" onClick={() => isEdit ? setIsEditAppealDialogOpen(false) : setIsAppealDialogOpen(false)} className="rounded-none">Cancel</Button>
-            <Button onClick={() => handleAppealSubmit(isEdit)} disabled={isSubmittingAppeal || !appealReason.trim()} className="rounded-none px-8">
-                {isSubmittingAppeal ? 'Processing...' : 'Submit Action'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-  );
-
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header>
@@ -271,13 +209,6 @@ export default function NegativeRemarksPage() {
         <p className="mt-1 text-muted-foreground">Institutional record of performance-related deductions.</p>
       </header>
         
-      {amnestyActive && (
-        <div className="bg-primary/10 border border-primary/20 rounded-none p-4 flex gap-3 items-center">
-            <Info className="h-5 w-5 text-primary" />
-            <p className="text-sm font-medium text-primary">Special Amnesty Active: appeal windows are currently bypassed for all records.</p>
-        </div>
-      )}
-
       <Card className="rounded-none shadow-none border-cds-ui-03">
         <CardHeader className="bg-cds-ui-01/50 border-b">
             <CardTitle className="text-base font-semibold">Remarks History</CardTitle>
@@ -300,9 +231,8 @@ export default function NegativeRemarksPage() {
                    <TableRow><TableCell colSpan={5} className="text-center h-24">Loading records...</TableCell></TableRow>
                 ) : remarks.length > 0 ? (
                   remarks.map((remark) => {
-                    const eligibility = remark.appealEligibility;
-                    const canAppeal = eligibility?.canAppeal ?? false;
-                    const isBlocked = eligibility && !eligibility.canAppeal && remark.status !== 'appealed';
+                    const canAppeal = remark.appealEligibility?.canAppeal ?? false;
+                    const isBlocked = remark.appealEligibility && !remark.appealEligibility.canAppeal && remark.status !== 'appealed';
 
                     return (
                       <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
@@ -311,7 +241,7 @@ export default function NegativeRemarksPage() {
                             <span className="font-medium text-cds-text-01 text-[13px]">{remark.title}</span>
                             {isBlocked && (
                                 <div className="flex items-center gap-1 text-[10px] text-destructive font-bold uppercase tracking-wider">
-                                    <Clock className="h-3 w-3" /> {eligibility.reason}
+                                    <Clock className="h-3 w-3" /> {remark.appealEligibility?.reason}
                                 </div>
                             )}
                           </div>
@@ -349,7 +279,7 @@ export default function NegativeRemarksPage() {
                                                 <AlertDialogContent className="rounded-none">
                                                     <AlertDialogHeader>
                                                         <AlertDialogTitle>Withdraw Pending Appeal?</AlertDialogTitle>
-                                                        <AlertDialogDescription>This will cancel your request. Institutional windows may prevent re-submission.</AlertDialogDescription>
+                                                        <AlertDialogDescription>Institutional windows may prevent re-submission.</AlertDialogDescription>
                                                     </AlertDialogHeader>
                                                     <AlertDialogFooter>
                                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
@@ -358,11 +288,6 @@ export default function NegativeRemarksPage() {
                                                 </AlertDialogContent>
                                             </AlertDialog>
                                             </>
-                                        )}
-                                        {remark.appeal && (
-                                            <DropdownMenuItem onSelect={() => router.push(`/u/portal/dashboard/appeals?uid=${facultyId}`)}>
-                                                Track Resolution
-                                            </DropdownMenuItem>
                                         )}
                                     </DropdownMenuContent>
                                 </DropdownMenu>
@@ -380,15 +305,59 @@ export default function NegativeRemarksPage() {
         </CardContent>
       </Card>
       
-      {renderAppealDialog(false)}
-      {renderAppealDialog(true)}
+      <Dialog open={isAppealDialogOpen} onOpenChange={setIsAppealDialogOpen}>
+        <DialogContent className="sm:max-w-lg rounded-none">
+          <DialogHeader>
+            <DialogTitle>Submit Appeal: {selectedRemark?.title}</DialogTitle>
+            <DialogDescription>Provide a clear rationale for disputing this record.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+                <label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive">*</span></label>
+                <Textarea id="reason" placeholder="Enter justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" />
+            </div>
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence (Optional)</label>
+                <FileUpload onFileSelect={setAppealProof} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsAppealDialogOpen(false)} className="rounded-none">Cancel</Button>
+            <Button onClick={() => handleAppealSubmit(false)} disabled={isSubmittingAppeal || !appealReason.trim()} className="rounded-none px-8">
+                {isSubmittingAppeal ? 'Processing...' : 'Submit Action'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditAppealDialogOpen} onOpenChange={setIsEditAppealDialogOpen}>
+        <DialogContent className="sm:max-w-lg rounded-none">
+          <DialogHeader>
+            <DialogTitle>Edit Appeal: {selectedRemark?.title}</DialogTitle>
+            <DialogDescription>Update your justification rationale.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-1.5">
+                <label htmlFor="edit-reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive">*</span></label>
+                <Textarea id="edit-reason" placeholder="Update justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" />
+            </div>
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence (Optional)</label>
+                <FileUpload onFileSelect={setAppealProof} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button type="button" variant="secondary" onClick={() => setIsEditAppealDialogOpen(false)} className="rounded-none">Cancel</Button>
+            <Button onClick={() => handleAppealSubmit(true)} disabled={isSubmittingAppeal || !appealReason.trim()} className="rounded-none px-8">
+                {isSubmittingAppeal ? 'Updating...' : 'Save Changes'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       
        <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
         <DialogContent className="sm:max-w-lg rounded-none">
-            <DialogHeader>
-                <DialogTitle>Remark Resolution Details</DialogTitle>
-                <DialogDescription>Full institutional record of the deduction.</DialogDescription>
-            </DialogHeader>
+            <DialogHeader><DialogTitle>Remark Audit Audit</DialogTitle></DialogHeader>
             {selectedRemark && (
                 <div className="space-y-6 py-4 text-sm">
                     <div className="grid grid-cols-2 gap-6">
@@ -401,21 +370,19 @@ export default function NegativeRemarksPage() {
                             <p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemark.points}</p>
                         </div>
                     </div>
-
                     <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Administrative Notes</p>
-                        <blockquote className="mt-1 border-l-2 border-cds-interactive-01 pl-4 italic bg-cds-ui-01 p-3 rounded-r-none leading-relaxed text-cds-text-02">
-                            {selectedRemark.notes || "No additional rationale provided by staff."}
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Staff Rationale</p>
+                        <blockquote className="mt-1 border-l-2 border-cds-interactive-01 pl-4 italic bg-cds-ui-01 p-3 text-cds-text-02 leading-relaxed">
+                            {selectedRemark.notes || "No additional notes provided."}
                         </blockquote>
                     </div>
-
                     {selectedRemark.proofUrl && (
                         <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
                              {shortProofUrl ? (
                                 <Button asChild variant="link" className="text-cds-interactive-01 font-bold">
                                     <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">Download Supporting Evidence</a>
                                 </Button>
-                            ) : <span className="text-xs text-muted-foreground italic animate-pulse">authorizing secure access...</span>}
+                            ) : <span className="text-xs text-muted-foreground italic animate-pulse">authorizing access...</span>}
                         </div>
                     )}
                 </div>
