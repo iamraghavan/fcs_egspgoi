@@ -33,7 +33,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Search, Eye, Calendar as CalendarIcon, Trash2, Edit, AlertCircle, RefreshCw } from "lucide-react";
+import { Search, Eye, Calendar as CalendarIcon, Trash2, Edit, AlertCircle, RefreshCw, PlusCircle } from "lucide-react";
 import { useAlert } from "@/context/alert-context";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
@@ -274,7 +274,12 @@ export default function IssuedHistoryPage() {
           <h1 className="text-3xl font-bold text-foreground">Transaction History</h1>
           <p className="mt-1 text-muted-foreground text-sm">OA record of institutional remark issuances.</p>
         </div>
-         <Button asChild className="rounded-none font-semibold"><Link href={`/u/portal/dashboard/oa?uid=${uid}`}><PlusCircle className="mr-2 h-4 w-4" /> Issue New Remark</Link></Button>
+         <Button asChild className="rounded-none font-semibold">
+            <Link href={`/u/portal/dashboard/oa?uid=${uid}`}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Issue New Remark
+            </Link>
+        </Button>
       </header>
         
       <Card className="rounded-none shadow-none border-cds-ui-03">
