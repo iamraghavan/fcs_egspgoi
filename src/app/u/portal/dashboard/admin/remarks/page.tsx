@@ -163,7 +163,6 @@ export default function ManageRemarksPage() {
   const [limit, setLimit] = useState(10);
   const [total, setTotal] = useState(0);
   
-  // Dynamic Filter Options from API
   const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
       templates: [],
       years: [],
@@ -171,7 +170,6 @@ export default function ManageRemarksPage() {
       departments: []
   });
 
-  // Filter States
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
@@ -196,9 +194,7 @@ export default function ManageRemarksPage() {
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
     setSelectedFaculty(null);
-    if (!showSuggestions) {
-      setShowSuggestions(true);
-    }
+    if (!showSuggestions) setShowSuggestions(true);
   };
   
   const handleFacultySelect = (faculty: User) => {
@@ -225,46 +221,28 @@ export default function ManageRemarksPage() {
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const fetchDropdownData = async () => {
-    if (!adminToken) {
-      showAlert("authentication error", "admin token not found.");
-      return;
-    }
+    if (!adminToken) return;
     try {
-      const [facultyResponse, creditTitlesResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/users?limit=1000`, {
-          headers: { Authorization: `Bearer ${adminToken}` },
-        }),
-        fetch(`${API_BASE_URL}/admin/credit-title`, {
-          headers: { Authorization: `Bearer ${adminToken}` },
-        })
+      const [fRes, ctRes] = await Promise.all([
+        fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${adminToken}` } }),
+        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } })
       ]);
-
-      const facultyData = await facultyResponse.json();
-      if (facultyData.success) {
-        setFacultyList(facultyData.items);
-      }
-
-      const creditTitlesData = await creditTitlesResponse.json();
-      if (creditTitlesData.success) {
-        setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'negative'));
-      }
+      const fData = await fRes.json();
+      if (fData.success) setFacultyList(fData.items);
+      const ctData = await ctRes.json();
+      if (ctData.success) setCreditTitles(ctData.items.filter((ct: any) => ct.type === 'negative'));
     } catch (error: any) {
-      showAlert("error fetching initial data", error.message);
+      console.error(error);
     }
   };
 
   const fetchRemarks = async (currentPage: number) => {
       setIsLoadingRemarks(true);
-      if (!adminToken) {
-          setIsLoadingRemarks(false);
-          return;
-      }
+      if (!adminToken) return;
   
       try {
           const params = new URLSearchParams({
@@ -272,7 +250,6 @@ export default function ManageRemarksPage() {
               limit: limit.toString(),
               sort: '-createdAt',
           });
-
           if (searchTerm) params.append('search', searchTerm);
           if (statusFilter !== 'all') params.append('status', statusFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
@@ -286,53 +263,26 @@ export default function ManageRemarksPage() {
   
           const resData = await response.json();
           if (resData.success) {
-              const items = resData.items || resData.data?.items || [];
-              const totalCount = resData.total || resData.data?.total || items.length;
-              setRemarks(items);
-              setTotal(totalCount);
-              
-              if (resData.filters) {
-                  setDynamicFilters(resData.filters);
-              }
-          } else {
-              throw new Error(resData.message || "failed to fetch remarks");
+              setRemarks(resData.items || resData.data?.items || []);
+              setTotal(resData.total || resData.data?.total || 0);
+              if (resData.filters) setDynamicFilters(resData.filters);
           }
       } catch (error: any) {
-          showAlert("error fetching remarks", error.message);
           setRemarks([]);
-          setTotal(0);
       } finally {
           setIsLoadingRemarks(false);
       }
   };
 
-  // Debounced fetch using Lodash
-  const debouncedFetch = useMemo(
-    () => _.debounce((p) => fetchRemarks(p), 300),
-    [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, adminToken]
-  );
+  const debouncedFetch = useMemo(() => _.debounce((p) => fetchRemarks(p), 300), [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, adminToken]);
 
-  useEffect(() => {
-    if (adminToken) {
-      fetchDropdownData();
-    }
-  }, [adminToken]);
-
-  useEffect(() => {
-    debouncedFetch(page);
-    return () => debouncedFetch.cancel();
-  }, [page, debouncedFetch]);
+  useEffect(() => { if (adminToken) fetchDropdownData(); }, [adminToken]);
+  useEffect(() => { debouncedFetch(page); return () => debouncedFetch.cancel(); }, [page, debouncedFetch]);
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
-    setPage(1);
-  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
-  
-  useEffect(() => {
-    const selectedTitle = creditTitles.find(ct => ct._id === creditTitleId);
-    if (selectedTitle) {
-      setTitle(selectedTitle.title);
-      setPoints(selectedTitle.points);
-    }
+    const selected = creditTitles.find(ct => ct._id === creditTitleId);
+    if (selected) { setTitle(selected.title); setPoints(selected.points); }
   }, [creditTitleId, creditTitles]);
 
   const getProofUrl = (url: string) => {
@@ -341,36 +291,16 @@ export default function ManageRemarksPage() {
   };
 
   useEffect(() => {
-    if (editingRemark) {
-        setEditNotes(editingRemark.notes || "");
-        setEditCreditTitleId(editingRemark.creditTitle || "");
-        setEditProof(null);
-    }
-  }, [editingRemark]);
-
-  useEffect(() => {
     if (selectedRemarkDetails?.proofUrl) {
       setShortProofUrl(null);
-      shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl))
-        .then(setShortProofUrl)
-        .catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails!.proofUrl)));
+      shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl)).then(setShortProofUrl).catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails!.proofUrl)));
     }
   }, [selectedRemarkDetails]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedFaculty || !points || !title || !creditTitleId) {
-      showAlert("incomplete form", "please ensure a faculty member and a valid remark template are selected.");
-      return;
-    }
+    if (!selectedFaculty || !points || !title || !creditTitleId) return showAlert("incomplete form", "please fill all required fields.");
     setIsLoading(true);
-
-    if (!adminToken) {
-      showAlert("authentication error", "admin token not found.");
-      setIsLoading(false);
-      return;
-    }
-
     const formData = new FormData();
     formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
@@ -381,35 +311,14 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/credits/credits/negative`, {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${adminToken}` },
-        body: formData,
-      });
-
-      const responseData = await response.json();
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || "failed to issue remark.");
-      }
-
-      toast({
-        title: "remark issued",
-        description: "the negative remark has been successfully recorded.",
-      });
-
-      setSelectedFaculty(null);
-      setFacultySearch("");
-      setCreditTitleId("");
-      setTitle("");
-      setPoints("");
-      setNotes("");
-      setProof(null);
-      fetchRemarks(1);
-      setPage(1);
+      const res = await fetch(`${API_BASE_URL}/credits/credits/negative`, { method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to issue");
+      toast({ title: "Remark Issued", description: "Record has been successfully saved." });
       setIsFormOpen(false);
-
+      fetchRemarks(1);
     } catch (error: any) {
-      showAlert("submission failed", error.message);
+      showAlert("Submission Failed", error.message);
     } finally {
       setIsLoading(false);
     }
@@ -419,158 +328,82 @@ export default function ManageRemarksPage() {
     e.preventDefault();
     if (!editingRemark) return;
     setIsSubmittingEdit(true);
-
     const formData = new FormData();
     formData.append("notes", editNotes);
     if (editCreditTitleId) formData.append("creditTitleId", editCreditTitleId);
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, {
-            method: 'PUT',
-            headers: { 'Authorization': `Bearer ${adminToken}` },
-            body: formData,
-        });
-
-        const responseData = await response.json();
-        if (!response.ok || !responseData.success) {
-            throw new Error(responseData.message || "failed to update remark.");
-        }
-
-        toast({ title: "remark updated", description: "the remark has been successfully updated." });
+        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
+        toast({ title: "Remark Updated", description: "Changes saved successfully." });
         setIsEditDialogOpen(false);
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("update failed", error.message);
+        showAlert("Update Failed", error.message);
     } finally {
         setIsSubmittingEdit(false);
     }
   };
 
-  const handleDeleteRemark = async (creditId: string) => {
-      if (!adminToken) {
-          showAlert("authentication error", "admin token not found.");
-          return;
-      }
+  const handleDeleteRemark = async (id: string) => {
       try {
-          const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${creditId}`, {
-              method: "DELETE",
-              headers: { "Authorization": `Bearer ${adminToken}` },
-          });
-
-          const responseData = await response.json();
-          if (!response.ok || !responseData.success) {
-              throw new Error(responseData.message || "failed to delete remark.");
-          }
-
-          toast({ title: "remark deleted", description: "the remark has been permanently deleted and credit balance restored." });
+          const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
+          toast({ title: "Remark Deleted", description: "Record has been permanently removed." });
           fetchRemarks(page);
       } catch (error: any) {
-          showAlert("delete failed", error.message);
+          showAlert("Delete Failed", error.message);
       }
   };
 
-  const handleReopenWindow = async (creditId: string) => {
+  const handleReopenWindow = async (id: string) => {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
-
-    if (!adminToken) {
-        showAlert("authentication error", "admin token not found.");
-        return;
-    }
-
     try {
-        const response = await fetch(`${API_BASE_URL}/credits/credits/negative/${creditId}/reopen`, {
-            method: "PATCH",
-            headers: { "Authorization": `Bearer ${adminToken}` },
-        });
-
-        const data = await response.json();
-        if (!response.ok || !data.success) {
-            throw new Error(data.message || "failed to re-open appeal window.");
-        }
-
-        toast({ title: "window re-opened", description: "the faculty member can now submit a new appeal." });
+        const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen window");
+        toast({ title: "Window Re-opened", description: "The faculty member can now submit a new appeal." });
         fetchRemarks(page);
-        if (selectedRemarkDetails?._id === creditId) {
-            setSelectedRemarkDetails({ ...selectedRemarkDetails, status: 'pending' });
-        }
+        if (selectedRemarkDetails?._id === id) setSelectedRemarkDetails({ ...selectedRemarkDetails, status: 'pending' });
     } catch (error: any) {
-        showAlert("operation failed", error.message);
+        showAlert("Operation Failed", error.message);
     }
   };
   
   const getStatusBadge = (status: NegativeRemark['status']) => {
-    switch (status) {
-        case 'approved':
-            return <Badge className="bg-green-100 text-green-800 border-green-200 rounded-none"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
-        case 'rejected':
-        case 'deleted':
-            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200 rounded-none"><XCircle className="w-3 h-3 mr-1" /> {status}</Badge>;
-        case 'appealed':
-            return <Badge variant="default" className="bg-blue-100 text-blue-800 border-blue-200 rounded-none"><AlertCircle className="w-3 h-3 mr-1" /> Appealed</Badge>;
-        case 'pending':
-        default:
-            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200 rounded-none"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
-    }
+    let cl = "bg-yellow-100 text-yellow-800 border-yellow-200";
+    if (status === 'approved') cl = "bg-green-100 text-green-800 border-green-200";
+    if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800 border-red-200";
+    if (status === 'appealed') cl = "bg-blue-100 text-blue-800 border-blue-200";
+    return <Badge variant="secondary" className={cn("rounded-none", cl)}>{status}</Badge>;
   };
-
-  const displayRemarks = useMemo(() => {
-    if (!searchTerm) return remarks;
-    const term = searchTerm.toLowerCase();
-    return remarks.filter(r => 
-      r.facultySnapshot.name.toLowerCase().includes(term) ||
-      r.facultySnapshot.facultyID.toLowerCase().includes(term) ||
-      r.title.toLowerCase().includes(term)
-    );
-  }, [remarks, searchTerm]);
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Manage Negative Remarks
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Issue and monitor negative credit adjustments for faculty members.
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">Manage Negative Remarks</h1>
+          <p className="mt-1 text-muted-foreground">Administer institutional deductions and dispute resolutions.</p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild>
-                <Button className="rounded-none">
-                    <PlusCircle className="mr-2 h-4 w-4" />
-                    Issue New Remark
-                </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl">
-                 <DialogHeader>
-                    <DialogTitle>Issue New Remark</DialogTitle>
-                    <DialogDescription>Fill out the details below to issue a negative credit to a faculty member.</DialogDescription>
-                </DialogHeader>
+            <DialogTrigger asChild><Button className="rounded-none"><PlusCircle className="mr-2 h-4 w-4" /> Issue New Remark</Button></DialogTrigger>
+            <DialogContent className="sm:max-w-4xl rounded-none">
+                 <DialogHeader><DialogTitle>Issue New Remark</DialogTitle></DialogHeader>
                 <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
                     <div className="md:col-span-2 space-y-4">
                         <div ref={suggestionRef} className="relative">
                             <Label className="mb-1" htmlFor="faculty">Faculty Member <span className="text-destructive">*</span></Label>
-                            <Input 
-                              id="faculty"
-                              placeholder="Type to search for faculty..."
-                              value={facultySearch}
-                              onChange={handleFacultySearch}
-                              onFocus={() => setShowSuggestions(true)}
-                              autoComplete="off"
-                              className="rounded-none"
-                            />
+                            <Input id="faculty" placeholder="Search name or ID..." value={facultySearch} onChange={handleFacultySearch} onFocus={() => setShowSuggestions(true)} autoComplete="off" className="rounded-none" />
                              {showSuggestions && suggestedFaculty.length > 0 && (
                               <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                {suggestedFaculty.map(faculty => (
-                                  <div
-                                    key={faculty._id}
-                                    className="cursor-pointer p-3 hover:bg-accent"
-                                    onClick={() => handleFacultySelect(faculty)}
-                                  >
-                                    <p className="font-semibold text-sm">{faculty.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{faculty.department || 'n/a'} - {faculty.college || 'n/a'}</p>
+                                {suggestedFaculty.map(f => (
+                                  <div key={f._id} className="cursor-pointer p-3 hover:bg-accent" onClick={() => handleFacultySelect(f)}>
+                                    <p className="font-semibold text-sm">{f.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{f.department || 'n/a'} - {f.college || 'n/a'}</p>
                                   </div>
                                 ))}
                               </div>
@@ -579,16 +412,8 @@ export default function ManageRemarksPage() {
                         <div>
                             <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
                              <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                                <SelectTrigger id="creditTitle" className="rounded-none">
-                                    <SelectValue placeholder="Select a template..." />
-                                </SelectTrigger>
-                                <SelectContent className="z-[150]">
-                                    {creditTitles.map(ct => (
-                                        <SelectItem key={ct._id} value={ct._id}>
-                                            {ct.title} ({ct.points} pts)
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
+                                <SelectTrigger id="creditTitle" className="rounded-none"><SelectValue placeholder="Select a template..." /></SelectTrigger>
+                                <SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent>
                             </Select>
                         </div>
                         <div>
@@ -598,347 +423,118 @@ export default function ManageRemarksPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
-                                <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" />
+                                <Input id="points" type="number" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" />
                             </div>
                             <div>
-                            <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
-                            <Select value={getCurrentAcademicYear()} disabled>
-                                <SelectTrigger id="academicYear" className="rounded-none"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                                <SelectContent className="z-[150]">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
-                            </Select>
+                                <Label className="mb-1">Academic Year</Label>
+                                <Input value={getCurrentAcademicYear()} readOnly className="bg-muted cursor-not-allowed rounded-none" />
                             </div>
                         </div>
                         <div>
-                        <Label className="mb-1" htmlFor="notes">Notes / Rationale</Label>
-                        <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" />
+                            <Label className="mb-1" htmlFor="notes">Rationale</Label>
+                            <Textarea id="notes" placeholder="Enter detailed notes..." rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" />
                         </div>
                         <div>
-                        <Label className="mb-1">Upload Proof (Optional)</Label>
-                        <FileUpload onFileSelect={setProof} />
+                            <Label className="mb-1">Upload Proof (Optional)</Label>
+                            <FileUpload onFileSelect={setProof} />
                         </div>
                     </div>
                     <div className="md:col-span-1">
                         {selectedFaculty ? (
                              <Card className="rounded-none border-cds-ui-03">
                                 <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                    <Avatar className="h-10 w-10">
-                                        <AvatarImage src={selectedFaculty.profileImage} />
-                                        <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div>
-                                        <CardTitle className="text-sm font-semibold">{selectedFaculty.name}</CardTitle>
-                                        <CardDescription className="text-[10px] uppercase font-mono">{selectedFaculty.facultyID}</CardDescription>
-                                    </div>
+                                    <Avatar className="h-10 w-10"><AvatarImage src={selectedFaculty.profileImage} /><AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback></Avatar>
+                                    <div><CardTitle className="text-sm font-semibold">{selectedFaculty.name}</CardTitle><CardDescription className="text-[10px] font-mono uppercase">{selectedFaculty.facultyID}</CardDescription></div>
                                 </CardHeader>
                                 <CardContent className="text-xs space-y-2 p-4 pt-0">
-                                    <p><strong className="font-medium text-muted-foreground">Department:</strong> {selectedFaculty.department || 'n/a'}</p>
-                                    <p><strong className="font-medium text-muted-foreground">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'n/a'}</span></p>
+                                    <p><strong className="text-muted-foreground">Department:</strong> {selectedFaculty.department || 'n/a'}</p>
+                                    <p><strong className="text-muted-foreground">College:</strong> {selectedFaculty.college || 'n/a'}</p>
                                 </CardContent>
                              </Card>
-                        ) : (
-                            <div className="flex items-center justify-center h-full border border-dashed border-cds-ui-03 bg-cds-ui-01/50 p-6">
-                                <p className="text-muted-foreground text-center text-xs">Search and select a faculty member to see their profile details.</p>
-                            </div>
-                        )}
+                        ) : (<div className="flex items-center justify-center h-full border border-dashed border-cds-ui-03 bg-cds-ui-01/50 p-6"><p className="text-muted-foreground text-center text-xs">Select a faculty member to see their profile details.</p></div>)}
                     </div>
                      <DialogFooter className="pt-4 md:col-span-3 border-t">
-                        <DialogClose asChild>
-                            <Button type="button" variant="secondary" className="rounded-none">Cancel</Button>
-                        </DialogClose>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto rounded-none">
-                            {isLoading ? "Submitting..." : "Issue Remark"}
-                        </Button>
+                        <DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose>
+                        <Button type="submit" disabled={isLoading} className="rounded-none px-8">{isLoading ? "Submitting..." : "Issue Remark"}</Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
         </Dialog>
       </header>
         
-      <Card className="rounded-none shadow-none">
+      <Card className="rounded-none shadow-none border-cds-ui-03">
         <CardHeader className="bg-cds-ui-01/50 border-b">
-            <CardTitle className="text-base font-semibold">Issued Remarks History</CardTitle>
-            <CardDescription className="text-xs">A log of all negative remarks that have been issued across the institution.</CardDescription>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 border-b">
+                <div className="relative border-r lg:col-span-1"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search..." className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Template" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Templates</SelectItem>{dynamicFilters.templates.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent></Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent></Select>
+                <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Year" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Years</SelectItem>{dynamicFilters.years.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}</SelectContent></Select>
+                <Select value={collegeFilter} onValueChange={setCollegeFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="College" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Colleges</SelectItem>{dynamicFilters.colleges.map(c => (<SelectItem key={c} value={c}>{c}</SelectItem>))}</SelectContent></Select>
+                <Select value={departmentFilter} onValueChange={setDepartmentFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0"><SelectValue placeholder="Dept" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Depts</SelectItem>{dynamicFilters.departments.map(d => (<SelectItem key={d} value={d}>{d}</SelectItem>))}</SelectContent></Select>
+            </div>
         </CardHeader>
         <CardContent className="p-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-0 border-b">
-              <div className="relative border-r lg:col-span-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                      placeholder="Search name, ID, title..." 
-                      className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-              </div>
-               <Select value={creditTitleFilter} onValueChange={setCreditTitleFilter}>
-                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                        <SelectValue placeholder="Template" />
-                   </SelectTrigger>
-                   <SelectContent className="z-[150]">
-                        <SelectItem value="all">All Templates</SelectItem>
-                        {dynamicFilters.templates.map(tmpl => (
-                            <SelectItem key={tmpl} value={tmpl}>{tmpl}</SelectItem>
-                        ))}
-                   </SelectContent>
-               </Select>
-               <Select value={statusFilter} onValueChange={setStatusFilter}>
-                   <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                        <SelectValue placeholder="Status" />
-                   </SelectTrigger>
-                   <SelectContent className="z-[150]">
-                        <SelectItem value="all">All Statuses</SelectItem>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="approved">Approved</SelectItem>
-                        <SelectItem value="appealed">Appealed</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                   </SelectContent>
-               </Select>
-              <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
-                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                      <SelectValue placeholder="Year" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[150]">
-                      <SelectItem value="all">All Years</SelectItem>
-                      {dynamicFilters.years.map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
-                  </SelectContent>
-              </Select>
-              <Select value={collegeFilter} onValueChange={setCollegeFilter}>
-                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0">
-                      <SelectValue placeholder="College" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[150]">
-                      <SelectItem value="all">All Colleges</SelectItem>
-                      {dynamicFilters.colleges.map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
-                  </SelectContent>
-              </Select>
-              <Select value={departmentFilter} onValueChange={setDepartmentFilter}>
-                  <SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0">
-                      <SelectValue placeholder="Dept" />
-                  </SelectTrigger>
-                  <SelectContent className="z-[150]">
-                      <SelectItem value="all">All Departments</SelectItem>
-                       {dynamicFilters.departments.map(dept => (
-                          <SelectItem key={dept} value={dept}>{dept}</SelectItem>
-                      ))}
-                  </SelectContent>
-              </Select>
-          </div>
           <div className="overflow-x-auto">
             <Table>
               <TableHeader className="bg-cds-ui-01">
                 <TableRow>
-                  <TableHead className="text-xs font-bold text-cds-text-05">Faculty</TableHead>
-                  <TableHead className="text-xs font-bold text-cds-text-05">Department</TableHead>
-                  <TableHead className="text-xs font-bold text-cds-text-05">Status</TableHead>
-                  <TableHead className="text-xs font-bold text-cds-text-05">Date</TableHead>
-                  <TableHead className="text-right text-xs font-bold text-cds-text-05">Points</TableHead>
-                  <TableHead className="text-center text-xs font-bold text-cds-text-05">Actions</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Faculty</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Remark Title</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05 text-center">Status</TableHead>
+                  <TableHead className="text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Date</TableHead>
+                  <TableHead className="text-right text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Points</TableHead>
+                  <TableHead className="text-center text-[11px] font-bold uppercase tracking-widest text-cds-text-05">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingRemarks ? (
-                   <TableRow><TableCell colSpan={6} className="text-center h-24">Loading remarks...</TableCell></TableRow>
-                ) : displayRemarks.length > 0 ? (
-                  displayRemarks.map((remark) => {
-                      const isModifiable = remark.status !== 'deleted';
-                      return (
-                        <TableRow key={remark._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
-                            <TableCell>
-                                <div className="flex items-center gap-3">
-                                    <Avatar className="h-8 w-8">
-                                        <AvatarImage src={remark.facultySnapshot.profileImage} />
-                                        <AvatarFallback>{remark.facultySnapshot.name.charAt(0)}</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex flex-col">
-                                        <span className="font-medium text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
-                                        <span className="text-[10px] text-muted-foreground uppercase font-mono">{remark.facultySnapshot.facultyID}</span>
-                                    </div>
-                                </div>
-                            </TableCell>
-                            <TableCell className="text-[12px] text-cds-text-02">{remark.facultySnapshot.department}</TableCell>
-                            <TableCell className="text-[12px]">{getStatusBadge(remark.status)}</TableCell>
-                            <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
-                            <TableCell className="text-center">
-                                <div className="flex justify-center items-center gap-1">
-                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(remark)}>
-                                        <Eye className="h-4 w-4 text-cds-text-05" />
-                                    </Button>
-
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-cds-text-05" onClick={() => { setEditingRemark(remark); setIsEditDialogOpen(true); }} disabled={!isModifiable}>
-                                        <Edit className="h-4 w-4 text-cds-text-05" />
-                                    </Button>
-
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" disabled={!isModifiable}>
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <div className="flex items-center gap-3 text-destructive mb-2">
-                                                    <AlertCircle className="h-6 w-6" />
-                                                    <AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle>
-                                                </div>
-                                                <AlertDialogDescription>
-                                                    This action cannot be undone. the faculty's credit balance will be restored automatically upon removal of this remark.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteRemark(remark._id)} variant="destructive" className="rounded-none px-10">
-                                                    Delete Remark
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </div>
-                            </TableCell>
-                        </TableRow>
-                      )
-                    })
-                ) : (
-                    <TableRow><TableCell colSpan={6} className="text-center h-24">No remarks found.</TableCell></TableRow>
-                )}
+                {isLoadingRemarks ? (<TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>) : remarks.length > 0 ? (
+                  remarks.map((r) => (
+                    <TableRow key={r._id} className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", r.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
+                        <TableCell><div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarImage src={r.facultySnapshot.profileImage} /><AvatarFallback>{r.facultySnapshot.name.charAt(0)}</AvatarFallback></Avatar><div className="flex flex-col"><span className="font-medium text-cds-text-01 text-[13px]">{r.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground uppercase font-mono">{r.facultySnapshot.facultyID}</span></div></div></TableCell>
+                        <TableCell className="text-[12px] max-w-[200px] truncate">{r.title}</TableCell>
+                        <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
+                        <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
+                        <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
+                        <TableCell className="text-center"><div className="flex justify-center items-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle></div><AlertDialogDescription>Institutional balances will be restored immediately.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} variant="destructive" className="rounded-none">Confirm Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></TableCell>
+                    </TableRow>
+                  ))
+                ) : (<TableRow><TableCell colSpan={6} className="text-center h-24">No records found.</TableCell></TableRow>)}
               </TableBody>
             </Table>
           </div>
         </CardContent>
         <CardFooter className="flex items-center justify-between border-t py-3 bg-cds-ui-01/30">
-            <div className="text-[11px] text-muted-foreground uppercase tracking-widest font-bold">
-                Page {page} of {totalPages || 1}
-            </div>
-            <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs font-semibold" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
-                    Previous
-                </Button>
-                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs font-semibold" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
-                    Next
-                </Button>
-            </div>
+            <div className="text-[11px] text-muted-foreground uppercase tracking-widest font-bold">Page {page} of {totalPages || 1}</div>
+            <div className="flex items-center gap-2"><Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>Previous</Button><Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>Next</Button></div>
         </CardFooter>
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>Update Remark Details</DialogTitle>
-                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
-            </DialogHeader>
+        <DialogContent className="sm:max-w-md rounded-none">
+            <DialogHeader><DialogTitle>Update Remark Details</DialogTitle></DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                <div>
-                    <Label htmlFor="edit-creditTitle" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Violation Category</Label>
-                    <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
-                        <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01">
-                            <SelectValue placeholder="Select a template..." />
-                        </SelectTrigger>
-                        <SelectContent className="z-[150]">
-                            {creditTitles.map(ct => (
-                                <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div>
-                    <Label htmlFor="edit-notes" className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Notes / Reason</Label>
-                    <Textarea 
-                        id="edit-notes" 
-                        value={editNotes} 
-                        onChange={(e) => setEditNotes(e.target.value)} 
-                        placeholder="Update the reason for this remark..."
-                        className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2 focus:border-primary"
-                    />
-                </div>
-                <div>
-                    <Label className="text-xs uppercase tracking-wider font-bold text-muted-foreground mb-1 block">Proof Replacement (Optional)</Label>
-                    <FileUpload onFileSelect={setEditProof} description="Upload a new document to replace existing proof" />
-                </div>
-                <DialogFooter className="pt-4 border-t">
-                    <DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose>
-                    <Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">
-                        {isSubmittingEdit ? "Updating..." : "Save Changes"}
-                    </Button>
-                </DialogFooter>
+                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
+                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Administrative Notes</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2" /></div>
+                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Proof Replacement (Optional)</Label><FileUpload onFileSelect={setEditProof} /></div>
+                <DialogFooter className="pt-4 border-t"><DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose><Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">{isSubmittingEdit ? "Updating..." : "Save Changes"}</Button></DialogFooter>
             </form>
         </DialogContent>
       </Dialog>
       
-       <Dialog open={!!selectedRemarkDetails} onOpenChange={(open) => !open && setSelectedRemarkDetails(null)}>
-        <DialogContent className="sm:max-w-lg">
-            <DialogHeader>
-                <DialogTitle>Remark Details</DialogTitle>
-                <DialogDescription>A comprehensive overview of the recorded negative remark.</DialogDescription>
-            </DialogHeader>
+       <Dialog open={!!selectedRemarkDetails} onOpenChange={(o) => !o && setSelectedRemarkDetails(null)}>
+        <DialogContent className="sm:max-w-lg rounded-none">
+            <DialogHeader><DialogTitle>Remark Resolution Audit</DialogTitle></DialogHeader>
             {selectedRemarkDetails && (
                 <div className="space-y-6 py-4 text-sm">
-                    <div className="flex items-center gap-4 p-4 bg-cds-ui-01 border border-cds-ui-03">
-                        <Avatar className="h-12 w-12 border">
-                            <AvatarImage src={selectedRemarkDetails.facultySnapshot.profileImage} />
-                            <AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <p className="font-bold text-base">{selectedRemarkDetails.facultySnapshot.name}</p>
-                            <p className="text-xs text-muted-foreground font-mono uppercase tracking-widest">{selectedRemarkDetails.facultySnapshot.facultyID}</p>
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-6">
-                        <div>
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Title</p>
-                            <p className="font-semibold leading-tight">{selectedRemarkDetails.title}</p>
-                        </div>
-                        <div className="text-right">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Deduction</p>
-                            <p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemarkDetails.points}</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Institutional Context</p>
-                        <div className="grid grid-cols-2 gap-4 text-xs">
-                            <p><span className="text-muted-foreground">Department:</span> {selectedRemarkDetails.facultySnapshot.department}</p>
-                            <p><span className="text-muted-foreground">Academic Year:</span> {selectedRemarkDetails.academicYear}</p>
-                            <p><span className="text-muted-foreground">Status:</span> <span className="capitalize">{selectedRemarkDetails.status}</span></p>
-                            <p><span className="text-muted-foreground">Date Issued:</span> {new Date(selectedRemarkDetails.createdAt).toLocaleString()}</p>
-                        </div>
-                    </div>
-
-                    <div>
-                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Notes / Rationale</p>
-                        <blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 rounded-r-sm leading-relaxed text-cds-text-02">
-                            {selectedRemarkDetails.notes || "No additional notes were provided at issuance."}
-                        </blockquote>
-                    </div>
-
-                    {selectedRemarkDetails.proofUrl && (
-                        <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
-                             <Button asChild variant="link" className="text-primary font-bold">
-                                <a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof Attachment</a>
-                            </Button>
-                        </div>
-                    )}
+                    <div className="flex items-center gap-4 p-4 bg-cds-ui-01 border border-cds-ui-03"><Avatar className="h-12 w-12 border"><AvatarImage src={selectedRemarkDetails.facultySnapshot.profileImage} /><AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback></Avatar><div><p className="font-bold text-base">{selectedRemarkDetails.facultySnapshot.name}</p><p className="text-xs text-muted-foreground font-mono uppercase">{selectedRemarkDetails.facultySnapshot.facultyID}</p></div></div>
+                    <div className="grid grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Deduction</p><p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemarkDetails.points}</p></div><div className="text-right"><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Status</p><div>{getStatusBadge(selectedRemarkDetails.status)}</div></div></div>
+                    <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Staff Rationale</p><blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 text-cds-text-02 leading-relaxed">{selectedRemarkDetails.notes || "No notes provided."}</blockquote></div>
+                    {selectedRemarkDetails.proofUrl && (<div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center"><Button asChild variant="link" className="text-primary font-bold"><a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof Attachment</a></Button></div>)}
                 </div>
             )}
-            <DialogFooter className="border-t pt-4 flex items-center justify-between">
-                <div className="flex gap-2">
-                    {selectedRemarkDetails && selectedRemarkDetails.status !== 'deleted' && (
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="rounded-none gap-2 text-xs" 
-                            onClick={() => handleReopenWindow(selectedRemarkDetails._id)}
-                        >
-                            <RefreshCw className="h-3 w-3" />
-                            Re-open Appeal Window
-                        </Button>
-                    )}
-                </div>
-                <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Details</Button></DialogClose>
-            </DialogFooter>
+            <DialogFooter className="border-t pt-4 flex items-center justify-between"><div className="flex gap-2">{selectedRemarkDetails && selectedRemarkDetails.status !== 'deleted' && (<Button variant="outline" size="sm" className="rounded-none gap-2 text-xs" onClick={() => handleReopenWindow(selectedRemarkDetails._id)}><RefreshCw className="h-3 w-3" /> Re-open Appeal Window</Button>)}</div><DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Details</Button></DialogClose></DialogFooter>
         </DialogContent>
     </Dialog>
-
     </div>
   )
 }
