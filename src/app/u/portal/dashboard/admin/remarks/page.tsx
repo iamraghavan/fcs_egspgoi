@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/hooks/use-toast"
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -125,18 +125,6 @@ const getCurrentAcademicYear = () => {
     return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
 };
 
-const generateYearOptions = () => {
-    const currentYearString = getCurrentAcademicYear();
-    const [startCurrentYear] = currentYearString.split('-').map(Number);
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-        const startYear = startCurrentYear - i;
-        const endYear = (startYear + 1).toString().slice(-2);
-        years.push(`${startYear}-${endYear}`);
-    }
-    return years;
-};
-
 export default function ManageRemarksPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
@@ -160,7 +148,7 @@ export default function ManageRemarksPage() {
   const [remarks, setRemarks] = useState<NegativeRemark[]>([]);
   const [isLoadingRemarks, setIsLoadingRemarks] = useState(true);
   const [page, setPage] = useState(1);
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [total, setTotal] = useState(0);
   
   const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
@@ -274,11 +262,22 @@ export default function ManageRemarksPage() {
       }
   };
 
-  const debouncedFetch = useMemo(() => _.debounce((p) => fetchRemarks(p), 300), [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, adminToken]);
+  useEffect(() => {
+    if (adminToken) fetchDropdownData();
+  }, [adminToken]);
 
-  useEffect(() => { if (adminToken) fetchDropdownData(); }, [adminToken]);
-  useEffect(() => { debouncedFetch(page); return () => debouncedFetch.cancel(); }, [page, debouncedFetch]);
-  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (adminToken) {
+        fetchRemarks(page);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [page, searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, adminToken]);
+
+  useEffect(() => { 
+    setPage(1); 
+  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     const selected = creditTitles.find(ct => ct._id === creditTitleId);
@@ -495,7 +494,7 @@ export default function ManageRemarksPage() {
                         <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
                         <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center"><div className="flex justify-center items-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle></div><AlertDialogDescription>Institutional balances will be restored immediately.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} variant="destructive" className="rounded-none">Confirm Delete</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></TableCell>
+                        <TableCell className="text-center"><div className="flex justify-center items-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Negative Credit?</AlertDialogTitle></div><AlertDialogDescription>Institutional balances will be restored immediately.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} variant="destructive" className="rounded-none">Confirm Delete</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
                     </TableRow>
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24">No records found.</TableCell></TableRow>)}

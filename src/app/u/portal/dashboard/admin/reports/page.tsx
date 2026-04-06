@@ -57,7 +57,7 @@ import { cn } from "@/lib/utils"
 import _ from "lodash"
 import * as R from "ramda"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = '/api/v1';
 
 type Faculty = {
   _id: string;
@@ -127,7 +127,7 @@ export default function DynamicReportsPage() {
         if (!token) return;
         setIsUsersLoading(true);
         try {
-            const res = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
+            const res = await fetch(`${API_BASE_URL}/users?limit=1000&sort=name`, {
                 headers: { Authorization: `Bearer ${token}` }
             });
             const data = await res.json();
@@ -175,7 +175,7 @@ export default function DynamicReportsPage() {
     });
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/reports?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/reports?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await response.json();
@@ -197,15 +197,12 @@ export default function DynamicReportsPage() {
     }
   }, [view, sortBy, order, level, levelId, academicYear, creditType, status, startDate, endDate, token, showAlert]);
 
-  const debouncedFetch = useMemo(
-    () => _.debounce(fetchReportPreview, 500),
-    [fetchReportPreview]
-  );
-
   useEffect(() => {
-    debouncedFetch();
-    return () => debouncedFetch.cancel();
-  }, [debouncedFetch]);
+    const timer = setTimeout(() => {
+      fetchReportPreview();
+    }, 500);
+    return () => clearTimeout(timer);
+  }, [fetchReportPreview]);
 
   const computedSummary = useMemo((): ReportSummary | null => {
     if (view !== 'transactions' || !reportData?.data || !Array.isArray(reportData.data)) return null;
@@ -255,7 +252,7 @@ export default function DynamicReportsPage() {
       ...(endDate && { endDate }),
       format
     });
-    window.open(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}&token=${token}`, '_blank');
+    window.open(`${API_BASE_URL}/reports/download?${params.toString()}&token=${token}`, '_blank');
     toast({ title: "Report Generation", description: `Your ${format.toUpperCase()} report is being prepared.` });
   };
 
@@ -276,7 +273,7 @@ export default function DynamicReportsPage() {
     });
 
     try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/reports/download?${params.toString()}`, {
+      const res = await fetch(`${API_BASE_URL}/reports/download?${params.toString()}`, {
         headers: { "Authorization": `Bearer ${token}` }
       });
       const data = await res.json();

@@ -50,6 +50,7 @@ import { Label } from "@/components/ui/label";
 import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
@@ -178,8 +179,6 @@ export default function IssuedHistoryPage() {
       }
   };
 
-  const debouncedFetch = useMemo(() => _.debounce((p) => fetchRemarks(p), 300), [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange, adminToken]);
-
   useEffect(() => {
     const fetchTitles = async () => {
         if (!adminToken) return;
@@ -192,8 +191,18 @@ export default function IssuedHistoryPage() {
     fetchTitles();
   }, [adminToken]);
 
-  useEffect(() => { debouncedFetch(page); return () => debouncedFetch.cancel(); }, [page, debouncedFetch]);
-  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange]);
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (adminToken) {
+        fetchRemarks(page);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [page, searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange, adminToken]);
+
+  useEffect(() => { 
+    setPage(1); 
+  }, [searchTerm, statusFilter, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter, dateRange]);
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
@@ -313,7 +322,7 @@ export default function IssuedHistoryPage() {
                         <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
                         <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemark(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialogContent></AlertDialog></div></TableCell>
+                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemark(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDelete(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
                     </TableRow>
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24 italic text-muted-foreground">No records matched.</TableCell></TableRow>)}
