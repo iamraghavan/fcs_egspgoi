@@ -1,6 +1,7 @@
+
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useState, useEffect, useMemo, useRef, memo } from "react";
 import {
   Table,
   TableBody,
@@ -93,6 +94,58 @@ type DynamicFilters = {
     colleges: string[];
     departments: string[];
 };
+
+// Optimization: Memoized row component for high-volume list rendering
+const RemarkRow = memo(({ 
+    remark, 
+    onView, 
+    onEdit, 
+    onDelete 
+}: { 
+    remark: IssuedRemark, 
+    onView: (r: IssuedRemark) => void, 
+    onEdit: (r: IssuedRemark) => void, 
+    onDelete: (id: string) => void 
+}) => {
+    const getStatusBadge = (status: IssuedRemark['status']) => {
+        let cl = "bg-yellow-100 text-yellow-800";
+        if (status === 'approved') cl = "bg-green-100 text-green-800";
+        else if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800";
+        else if (status === 'appealed') cl = "bg-blue-100 text-blue-800";
+        return <Badge variant="secondary" className={cn("rounded-none", cl)} aria-label={`Status: ${status}`}>{status}</Badge>;
+    };
+
+    return (
+        <TableRow className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", remark.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
+            <TableCell><div className="flex flex-col gap-0.5"><span className="font-bold text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground font-mono uppercase">{remark.facultySnapshot.facultyID}</span></div></TableCell>
+            <TableCell className="text-[12px] max-w-[200px] truncate">{remark.title}</TableCell>
+            <TableCell className="text-center">{getStatusBadge(remark.status)}</TableCell>
+            <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
+            <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
+            <TableCell className="text-center">
+                <div className="flex items-center justify-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Resolution Audit"><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record"><Edit className="h-4 w-4" /></Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                        <AlertDialogContent className="rounded-none border-cds-ui-03">
+                            <AlertDialogHeader>
+                                <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
+                                <AlertDialogDescription>Institutional record will be voided. This action cannot be undone.</AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => onDelete(remark._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm Deletion</AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
+                </div>
+            </TableCell>
+        </TableRow>
+    );
+});
+
+RemarkRow.displayName = "RemarkRow";
 
 export default function IssuedHistoryPage() {
   const { showAlert } = useAlert();
@@ -248,14 +301,6 @@ export default function IssuedHistoryPage() {
     }
   };
 
-  const getStatusBadge = (status: IssuedRemark['status']) => {
-    let cl = "bg-yellow-100 text-yellow-800";
-    if (status === 'approved') cl = "bg-green-100 text-green-800";
-    else if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800";
-    else if (status === 'appealed') cl = "bg-blue-100 text-blue-800";
-    return <Badge variant="secondary" className={cn("rounded-none", cl)}>{status}</Badge>;
-  };
-
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -296,32 +341,13 @@ export default function IssuedHistoryPage() {
               <TableBody>
                 {isLoadingRemarks ? (<TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>) : remarks.length > 0 ? (
                   remarks.map((r) => (
-                    <TableRow key={r._id} className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", r.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
-                        <TableCell><div className="flex flex-col gap-0.5"><span className="font-bold text-cds-text-01 text-[13px]">{r.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground font-mono uppercase">{r.facultySnapshot.facultyID}</span></div></TableCell>
-                        <TableCell className="text-[12px] max-w-[200px] truncate">{r.title}</TableCell>
-                        <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
-                        <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
-                        <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center">
-                            <div className="flex items-center justify-center gap-1">
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemark(r)}><Eye className="h-4 w-4" /></Button>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button>
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                    <AlertDialogContent className="rounded-none">
-                                        <AlertDialogHeader>
-                                            <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
-                                            <AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                            <AlertDialogAction onClick={() => handleDelete(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-                            </div>
-                        </TableCell>
-                    </TableRow>
+                    <RemarkRow 
+                        key={r._id} 
+                        remark={r} 
+                        onView={setSelectedRemark} 
+                        onEdit={(remark) => { setEditingRemark(remark); setEditNotes(remark.notes || ""); setIsEditDialogOpen(true); }}
+                        onDelete={handleDelete}
+                    />
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24 italic text-muted-foreground">No records matched.</TableCell></TableRow>)}
               </TableBody>
@@ -332,7 +358,7 @@ export default function IssuedHistoryPage() {
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-none">
+        <DialogContent className="sm:max-w-md rounded-none border-cds-ui-03">
             <DialogHeader><DialogTitle>Update Remark Transaction</DialogTitle></DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
@@ -344,7 +370,7 @@ export default function IssuedHistoryPage() {
       </Dialog>
 
        <Dialog open={!!selectedRemark} onOpenChange={(o) => !o && setSelectedRemark(null)}>
-        <DialogContent className="sm:max-w-2xl rounded-none">
+        <DialogContent className="sm:max-w-2xl rounded-none border-cds-ui-03">
             <DialogHeader><DialogTitle>Remark Audit Details</DialogTitle></DialogHeader>
             {selectedRemark && (
             <div className="space-y-6 py-4 text-sm">

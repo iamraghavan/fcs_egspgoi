@@ -27,6 +27,17 @@ import { useAlert } from "@/context/alert-context";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const API_BASE_URL = '/api/v1';
 
@@ -133,21 +144,41 @@ export default function FacultyDashboard() {
             <p className="text-sm text-cds-text-05">Institutional metrics for Academic Year {academicYear}</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className="rounded-none h-10 px-4" 
-            onClick={() => fetchData(true)}
-            disabled={isSyncing}
-          >
-            <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
-            {isSyncing ? "Syncing..." : "Sync Credits"}
-          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="rounded-none h-10 px-4" 
+                disabled={isSyncing}
+              >
+                <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
+                {isSyncing ? "Syncing..." : "Sync Credits"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-none border-cds-ui-03">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Institutional Sync Required?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                <AlertDialogAction 
+                  className="rounded-none bg-primary text-primary-foreground"
+                  onClick={() => fetchData(true)}
+                >
+                  Confirm Sync
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Select value={academicYear} onValueChange={setAcademicYear}>
             <SelectTrigger className="w-full sm:w-[180px] bg-cds-ui-01 border-none rounded-none shadow-none">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent>
+            <SelectContent className="rounded-none">
               <SelectItem value="2025-26">AY 2025-26</SelectItem>
               <SelectItem value="2024-25">AY 2024-25</SelectItem>
             </SelectContent>

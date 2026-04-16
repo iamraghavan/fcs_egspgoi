@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -198,8 +199,8 @@ export default function ManageRemarksPage() {
     if (!adminToken) return;
     try {
       const [fRes, ctRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${adminToken}` } }),
-        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } })
+        fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${token}` } })
       ]);
       const fData = await fRes.json();
       if (fData.success) setFacultyList(fData.items);
@@ -351,7 +352,7 @@ export default function ManageRemarksPage() {
     if (status === 'approved') cl = "bg-green-100 text-green-800";
     else if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800";
     else if (status === 'appealed') cl = "bg-blue-100 text-blue-800";
-    return <Badge variant="secondary" className={cn("rounded-none", cl)}>{status}</Badge>;
+    return <Badge variant="secondary" className={cn("rounded-none", cl)} aria-label={`Status: ${status}`}>{status}</Badge>;
   };
 
   return (
@@ -464,7 +465,7 @@ export default function ManageRemarksPage() {
                         <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
                         <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)}><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'}><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'}><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
+                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'} aria-label="Edit Remark"><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'} aria-label="Delete Remark"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
                     </TableRow>
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24">No records found.</TableCell></TableRow>)}

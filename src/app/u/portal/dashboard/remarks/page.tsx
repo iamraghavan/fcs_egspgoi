@@ -1,3 +1,4 @@
+
 "use client"
 
 import { useState, useEffect, useMemo } from "react";
@@ -194,12 +195,12 @@ export default function NegativeRemarksPage() {
   const getStatusBadge = (remark: NegativeCredit) => {
     if (remark.status === 'appealed' && remark.appeal) {
       switch (remark.appeal.status) {
-        case 'pending': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 rounded-none">Appeal Pending</Badge>;
-        case 'accepted': return <Badge variant="default" className="bg-green-100 text-green-800 rounded-none">Appeal Accepted</Badge>;
-        case 'rejected': return <Badge variant="destructive" className="rounded-none">Appeal Rejected</Badge>;
+        case 'pending': return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 rounded-none" aria-label="Status: Appeal Pending">Appeal Pending</Badge>;
+        case 'accepted': return <Badge variant="default" className="bg-green-100 text-green-800 rounded-none" aria-label="Status: Appeal Accepted">Appeal Accepted</Badge>;
+        case 'rejected': return <Badge variant="destructive" className="rounded-none" aria-label="Status: Appeal Rejected">Appeal Rejected</Badge>;
       }
     }
-    return <Badge variant={remark.status === 'approved' ? 'default' : remark.status === 'rejected' ? 'destructive' : 'secondary'} className={cn("rounded-none", remark.status === 'approved' && 'bg-green-100 text-green-800')}>{remark.status}</Badge>;
+    return <Badge variant={remark.status === 'approved' ? 'default' : remark.status === 'rejected' ? 'destructive' : 'secondary'} className={cn("rounded-none", remark.status === 'approved' && 'bg-green-100 text-green-800')} aria-label={`Status: ${remark.status}`}>{remark.status}</Badge>;
   };
 
   return (
@@ -240,8 +241,8 @@ export default function NegativeRemarksPage() {
                           <div className="flex flex-col gap-1">
                             <span className="font-medium text-cds-text-01 text-[13px]">{remark.title}</span>
                             {isBlocked && (
-                                <div className="flex items-center gap-1 text-[10px] text-destructive font-bold uppercase tracking-wider">
-                                    <Clock className="h-3 w-3" /> {remark.appealEligibility?.reason}
+                                <div className="flex items-center gap-1 text-[10px] text-destructive font-bold uppercase tracking-wider" aria-live="polite">
+                                    <Clock className="h-3 w-3" aria-hidden="true" /> {remark.appealEligibility?.reason}
                                 </div>
                             )}
                           </div>
@@ -256,12 +257,13 @@ export default function NegativeRemarksPage() {
                                         size="sm" 
                                         className="h-7 rounded-none px-3 text-[10px] font-bold uppercase tracking-widest bg-cds-interactive-01 text-white hover:bg-cds-interactive-01/90"
                                         onClick={() => { setSelectedRemark(remark); setIsAppealDialogOpen(true); setAppealReason(""); setAppealProof(null); }}
+                                        aria-label={`Appeal remark: ${remark.title}`}
                                     >
                                         Appeal
                                     </Button>
                                 )}
                                 <DropdownMenu>
-                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 rounded-none"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
+                                    <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 rounded-none" aria-label="Action Menu"><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
                                     <DropdownMenuContent align="end" className="rounded-none">
                                         <DropdownMenuItem onSelect={() => { setSelectedRemark(remark); setIsDetailsDialogOpen(true); }}>View Details</DropdownMenuItem>
                                         {remark.appeal?.status === 'pending' && (
@@ -313,8 +315,8 @@ export default function NegativeRemarksPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-1.5">
-                <label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive">*</span></label>
-                <Textarea id="reason" placeholder="Enter justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" />
+                <label htmlFor="reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive" aria-hidden="true">*</span></label>
+                <Textarea id="reason" placeholder="Enter justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" required />
             </div>
             <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence (Optional)</label>
@@ -338,8 +340,8 @@ export default function NegativeRemarksPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-1.5">
-                <label htmlFor="edit-reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive">*</span></label>
-                <Textarea id="edit-reason" placeholder="Update justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" />
+                <label htmlFor="edit-reason" className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Rationale <span className="text-destructive" aria-hidden="true">*</span></label>
+                <Textarea id="edit-reason" placeholder="Update justification..." value={appealReason} onChange={(e) => setAppealReason(e.target.value)} rows={4} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01" required />
             </div>
             <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence (Optional)</label>

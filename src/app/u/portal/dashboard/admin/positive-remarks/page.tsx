@@ -496,12 +496,12 @@ export default function ManagePositiveCreditsPage() {
 const getStatusBadge = (status: PositiveCredit['status']) => {
     switch (status) {
         case 'approved':
-            return <Badge className="bg-green-100 text-green-800 border-green-200"><CheckCircle2 className="w-3 h-3 mr-1" /> Approved</Badge>;
+            return <Badge className="bg-green-100 text-green-800 border-green-200" aria-label="Status: Approved"><CheckCircle2 className="w-3 h-3 mr-1" aria-hidden="true" /> Approved</Badge>;
         case 'rejected':
-            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200"><XCircle className="w-3 h-3 mr-1" /> Rejected</Badge>;
+            return <Badge variant="destructive" className="bg-red-100 text-red-800 border-red-200" aria-label="Status: Rejected"><XCircle className="w-3 h-3 mr-1" aria-hidden="true" /> Rejected</Badge>;
         case 'pending':
         default:
-            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200"><Clock className="w-3 h-3 mr-1" /> Pending</Badge>;
+            return <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 border-yellow-200" aria-label="Status: Pending"><Clock className="w-3 h-3 mr-1" aria-hidden="true" /> Pending</Badge>;
     }
 };
 
@@ -524,7 +524,7 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                     Issue New Credit
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-4xl">
+            <DialogContent className="sm:max-w-4xl border-cds-ui-03 rounded-none">
                  <DialogHeader>
                     <DialogTitle>Issue New Positive Credit</DialogTitle>
                     <DialogDescription>Fill out the details below to award a positive credit to a faculty member.</DialogDescription>
@@ -532,7 +532,7 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                 <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
                     <div className="md:col-span-2 space-y-4">
                         <div ref={suggestionRef} className="relative">
-                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</label>
+                            <Label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</Label>
                             <Input 
                               id="faculty"
                               placeholder="Type to search for faculty..."
@@ -540,6 +540,7 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                               onChange={handleFacultySearch}
                               onFocus={() => setShowSuggestions(true)}
                               autoComplete="off"
+                              className="rounded-none"
                             />
                              {showSuggestions && suggestedFaculty.length > 0 && (
                               <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
@@ -558,12 +559,12 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                             )}
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Credit Template (Optional)</label>
+                            <Label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="creditTitle">Credit Template (Optional)</Label>
                              <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                                <SelectTrigger id="creditTitle">
+                                <SelectTrigger id="creditTitle" className="rounded-none">
                                     <SelectValue placeholder="Select a template..." />
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="rounded-none">
                                     {creditTitles.map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })).map(option => (
                                         <SelectItem key={option.value} value={option.value}>
                                             {option.label}
@@ -573,25 +574,25 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                             </Select>
                         </div>
                         <div>
-                            <label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</label>
-                            <Input id="title" placeholder="e.g., 'Best Paper Award at Conference'" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                            <Label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</Label>
+                            <Input id="title" placeholder="e.g., 'Best Paper Award at Conference'" value={title} onChange={(e) => setTitle(e.target.value)} required className="rounded-none" />
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div>
-                                <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
-                                <Input id="points" type="number" placeholder="e.g., 10" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                                <Label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</Label>
+                                <Input id="points" type="number" placeholder="e.g., 10" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" />
                             </div>
                             <div>
                             <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>
                             <Select value={getCurrentAcademicYear()} disabled>
-                                <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                                <SelectContent>{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
+                                <SelectTrigger id="academicYear" className="rounded-none"><SelectValue placeholder="Select Year" /></SelectTrigger>
+                                <SelectContent className="rounded-none">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
                             </Select>
                             </div>
                         </div>
                         <div>
                         <label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes / Rationale</label>
-                        <Textarea id="notes" placeholder="Enter detailed notes about the activity" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
+                        <Textarea id="notes" placeholder="Enter detailed notes about the activity" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" />
                         </div>
                         <div>
                         <label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</label>
@@ -600,7 +601,7 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                     </div>
                     <div className="md:col-span-1">
                         {selectedFaculty ? (
-                             <Card>
+                             <Card className="rounded-none shadow-none">
                                 <CardHeader className="flex flex-row items-center gap-4">
                                     <Avatar className="h-12 w-12">
                                         <AvatarImage src={selectedFaculty.profileImage} />
@@ -618,16 +619,16 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                                 </CardContent>
                             </Card>
                         ) : (
-                            <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50">
+                            <div className="flex items-center justify-center h-full border-2 border-dashed rounded-none bg-muted/50">
                                 <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
                             </div>
                         )}
                     </div>
                      <DialogFooter className="pt-4 md:col-span-3">
                         <DialogClose asChild>
-                            <Button type="button" variant="secondary">Cancel</Button>
+                            <Button type="button" variant="secondary" className="rounded-none">Cancel</Button>
                         </DialogClose>
-                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
+                        <Button type="submit" disabled={isLoading} className="w-full sm:w-auto rounded-none">
                             {isLoading ? "Submitting..." : "Issue Credit"}
                         </Button>
                     </DialogFooter>
@@ -636,27 +637,27 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
         </Dialog>
       </header>
         
-      <Card>
-        <CardHeader>
+      <Card className="rounded-none shadow-none border-cds-ui-03">
+        <CardHeader className="bg-cds-ui-01/50 border-b">
             <CardTitle>Issued Credits History</CardTitle>
             <CardDescription>A log of all positive credits that have been issued by administrators.</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="pt-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
               <div className="relative lg:col-span-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                   <Input 
-                      placeholder="Search by title, faculty..." 
-                      className="pl-10"
+                      placeholder="Search title, faculty..." 
+                      className="pl-10 rounded-none"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                   />
               </div>
                <Select value={creditTitleFilter} onValueChange={(value) => setCreditTitleFilter(value === "all" ? "all" : value)}>
-                   <SelectTrigger>
-                        <SelectValue placeholder="Filter by template..." />
+                   <SelectTrigger className="rounded-none">
+                        <SelectValue placeholder="Filter template..." />
                    </SelectTrigger>
-                   <SelectContent>
+                   <SelectContent className="rounded-none">
                         {creditTitleOptions.map(option => (
                             <SelectItem key={option.value} value={option.value}>
                                 {option.label}
@@ -665,28 +666,28 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                    </SelectContent>
                </Select>
               <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                       <SelectValue placeholder="Select Year" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-none">
                       <SelectItem value="all">All Years</SelectItem>
                       {generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}
                   </SelectContent>
               </Select>
               <Select value={collegeFilter} onValueChange={setCollegeFilter}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                       <SelectValue placeholder="Select College" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-none">
                       <SelectItem value="all">All Colleges</SelectItem>
                       {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
                   </SelectContent>
               </Select>
               <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={!filteredDepartments || Object.keys(filteredDepartments).length === 0}>
-                  <SelectTrigger>
+                  <SelectTrigger className="rounded-none">
                       <SelectValue placeholder="Select Department" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="rounded-none">
                       <SelectItem value="all">All Departments</SelectItem>
                        {Object.entries(filteredDepartments).map(([group, courses]) => (
                           <SelectGroup key={group}>
@@ -699,14 +700,14 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                   </SelectContent>
               </Select>
           </div>
-          <div className="overflow-x-auto border rounded-lg">
+          <div className="overflow-x-auto border rounded-none">
             <Table>
-              <TableHeader>
+              <TableHeader className="bg-cds-ui-01">
                 <TableRow>
                   <TableHead>Faculty</TableHead>
                   <TableHead>Department</TableHead>
                   <TableHead>Credit Title</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead className="text-center">Status</TableHead>
                   <TableHead>Date</TableHead>
                   <TableHead className="text-right">Points</TableHead>
                   <TableHead className="text-center">Actions</TableHead>
@@ -717,7 +718,7 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                    <TableRow><TableCell colSpan={7} className="text-center h-24">Loading credits...</TableCell></TableRow>
                 ) : credits.length > 0 ? (
                   credits.map((credit) => (
-                  <TableRow key={credit._id}>
+                  <TableRow key={credit._id} className="hover:bg-cds-ui-01/50 transition-colors">
                     <TableCell>
                         <div className="flex flex-col">
                             <span className="font-medium text-foreground">{credit.facultySnapshot?.name || 'N/A'}</span>
@@ -726,86 +727,82 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                     </TableCell>
                     <TableCell className="text-xs">{credit.facultySnapshot?.department || 'N/A'}</TableCell>
                     <TableCell className="max-w-[200px] truncate" title={credit.title}>{credit.title}</TableCell>
-                    <TableCell>{getStatusBadge(credit.status)}</TableCell>
-                    <TableCell className="text-xs">{new Date(credit.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right font-semibold text-green-600">+{credit.points}</TableCell>
+                    <TableCell className="text-center">{getStatusBadge(credit.status)}</TableCell>
+                    <TableCell className="text-xs text-muted-foreground tabular-nums">{new Date(credit.createdAt).toLocaleDateString()}</TableCell>
+                    <TableCell className="text-right font-bold text-cds-support-02 tabular-nums">+{credit.points}</TableCell>
                     <TableCell className="text-center">
-                        <div className="flex justify-center items-center">
+                        <div className="flex justify-center items-center gap-1">
                             <Dialog open={isDetailsOpen && selectedCreditDetails?._id === credit._id} onOpenChange={setIsDetailsOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => setSelectedCreditDetails(credit)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreditDetails(credit)} aria-label="View Details">
                                         <Eye className="h-4 w-4" />
                                     </Button>
                                 </DialogTrigger>
-                                 <DialogContent className="max-w-3xl">
+                                 <DialogContent className="max-w-3xl rounded-none border-cds-ui-03">
                                     <DialogHeader>
-                                    <DialogTitle>Credit Details</DialogTitle>
-                                    <DialogDescription>A complete overview of the recorded credit.</DialogDescription>
+                                    <DialogTitle>Credit Transaction Audit</DialogTitle>
+                                    <DialogDescription>A complete overview of the recorded credit adjustment.</DialogDescription>
                                     </DialogHeader>
                                     {selectedCreditDetails && (
                                     <div className="space-y-6 py-4 max-h-[70vh] overflow-y-auto pr-4 text-sm">
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-lg">{selectedCreditDetails.facultySnapshot?.name}</CardTitle>
-                                                <CardDescription>{selectedCreditDetails.facultySnapshot?.facultyID}</CardDescription>
-                                            </CardHeader>
-                                            <CardContent>
-                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">Department:</strong> {selectedCreditDetails.facultySnapshot?.department}</p>
-                                                <p><strong className="font-medium text-muted-foreground w-24 inline-block">College:</strong> {selectedCreditDetails.facultySnapshot?.college}</p>
-                                            </CardContent>
-                                        </Card>
+                                        <div className="bg-cds-ui-01 p-4 border border-cds-ui-03">
+                                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Faculty Associate</p>
+                                            <p className="font-bold text-base">{selectedCreditDetails.facultySnapshot?.name}</p>
+                                            <p className="text-xs font-mono text-muted-foreground uppercase">{selectedCreditDetails.facultySnapshot?.facultyID}</p>
+                                        </div>
                                 
-                                        <Card>
-                                            <CardHeader>
-                                                <CardTitle className="text-base">Credit Details</CardTitle>
-                                            </CardHeader>
-                                            <CardContent className="space-y-3">
-                                                 <p><strong className="font-medium text-muted-foreground block">Credit Title:</strong> {selectedCreditDetails.title}</p>
-                                                <p><strong className="font-medium text-muted-foreground block">Points:</strong> <span className="font-bold text-green-600">+{selectedCreditDetails.points}</span></p>
-                                                <p><strong className="font-medium text-muted-foreground block">Status:</strong> {selectedCreditDetails.status}</p>
-                                                <p><strong className="font-medium text-muted-foreground block">Date Issued:</strong> {new Date(selectedCreditDetails.createdAt).toLocaleString()}</p>
-                                                <div>
-                                                    <strong className="font-medium text-muted-foreground block">Notes / Rationale:</strong>
-                                                    <p className="mt-1 pl-2 border-l-4 border-muted italic bg-muted/50 p-2 rounded-r-md">{selectedCreditDetails.notes || 'N/A'}</p>
-                                                </div>
-                                                 <div>
-                                                    <strong className="font-medium text-muted-foreground block">Proof Document:</strong>
-                                                    {selectedCreditDetails.proofUrl ? (
-                                                        shortProofUrl ? (
-                                                            <Button asChild variant="link" className="p-0 h-auto">
-                                                                <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">View Document</a>
-                                                            </Button>
-                                                        ) : <span className="text-xs text-muted-foreground">Generating secure link...</span>
-                                                    ) : "Not Provided"}
-                                                </div>
-                                            </CardContent>
-                                        </Card>
-                                        <p className="border-t pt-4 mt-4"><strong className="font-medium text-muted-foreground block">Credit ID:</strong> <span className="font-mono text-xs">{selectedCreditDetails._id}</span></p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div>
+                                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p>
+                                                <p className="text-2xl font-bold text-cds-support-02 tabular-nums">+{selectedCreditDetails.points}</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Status</p>
+                                                <div>{getStatusBadge(selectedCreditDetails.status)}</div>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Staff Rationale</p>
+                                            <blockquote className="mt-1 border-l-4 border-cds-support-02 pl-4 italic bg-cds-ui-01 p-3 text-cds-text-02 leading-relaxed">
+                                                {selectedCreditDetails.notes || 'No notes provided.'}
+                                            </blockquote>
+                                        </div>
+
+                                        {selectedCreditDetails.proofUrl && (
+                                            <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
+                                                {shortProofUrl ? (
+                                                    <Button asChild variant="link" className="text-primary font-bold">
+                                                        <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">Download Supporting Evidence</a>
+                                                    </Button>
+                                                ) : <span className="text-xs text-muted-foreground italic animate-pulse">authorizing access...</span>}
+                                            </div>
+                                        )}
                                     </div>
                                     )}
                                     <DialogFooter>
-                                        <DialogClose asChild><Button variant="secondary">Close</Button></DialogClose>
+                                        <DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Audit</Button></DialogClose>
                                     </DialogFooter>
                                 </DialogContent>
                             </Dialog>
 
                             <Dialog open={isEditDialogOpen && editingCredit?._id === credit._id} onOpenChange={setIsEditDialogOpen}>
                                 <DialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" onClick={() => setEditingCredit(credit)}>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCredit(credit)} aria-label="Edit Record">
                                         <Edit className="h-4 w-4" />
                                     </Button>
                                 </DialogTrigger>
-                                <DialogContent>
+                                <DialogContent className="rounded-none border-cds-ui-03">
                                     <DialogHeader>
-                                        <DialogTitle>Edit Positive Credit</DialogTitle>
-                                        <DialogDescription>Update the details for this credit.</DialogDescription>
+                                        <DialogTitle>Update Credit Record</DialogTitle>
+                                        <DialogDescription>Modify the administrative details for this credit adjustment.</DialogDescription>
                                     </DialogHeader>
                                     <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                                         <div>
-                                            <Label htmlFor="edit-creditTitle">Credit Template (Optional)</Label>
+                                            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block" htmlFor="edit-creditTitle">Activity Category</Label>
                                             <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
-                                                <SelectTrigger><SelectValue placeholder="Select a template..." /></SelectTrigger>
-                                                <SelectContent>
+                                                <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger>
+                                                <SelectContent className="rounded-none">
                                                     {creditTitleOptions.filter(o => o.value !== 'all').map(option => (
                                                         <SelectItem key={option.value} value={option.value}>{option.label}</SelectItem>
                                                     ))}
@@ -813,20 +810,20 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                                             </Select>
                                         </div>
                                         <div>
-                                            <Label htmlFor="edit-notes">Notes / Rationale</Label>
-                                            <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} />
+                                            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block" htmlFor="edit-notes">Administrative Rationale</Label>
+                                            <Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2" />
                                         </div>
                                         <div>
-                                            <Label>Proof Document (Optional)</Label>
+                                            <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Evidence Replacement</Label>
                                             {editingCredit?.proofUrl && !editProof && (
-                                                <p className="text-xs text-muted-foreground">Current file: <a href={getProofUrl(editingCredit.proofUrl)} target="_blank" rel="noopener noreferrer" className="text-primary underline">View</a>. Upload to replace.</p>
+                                                <p className="text-xs text-muted-foreground mb-2">Current file exists. Upload to replace.</p>
                                             )}
                                             <FileUpload onFileSelect={setEditProof} />
                                         </div>
-                                        <DialogFooter>
-                                            <DialogClose asChild><Button type="button" variant="secondary">Cancel</Button></DialogClose>
-                                            <Button type="submit" disabled={isSubmittingEdit}>
-                                                {isSubmittingEdit ? "Saving..." : "Save Changes"}
+                                        <DialogFooter className="pt-4 border-t">
+                                            <DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose>
+                                            <Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">
+                                                {isSubmittingEdit ? "Updating..." : "Save Changes"}
                                             </Button>
                                         </DialogFooter>
                                     </form>
@@ -835,18 +832,18 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
 
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="text-destructive hover:text-destructive">
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" aria-label="Delete Record">
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
                                 </AlertDialogTrigger>
-                                <AlertDialogContent>
+                                <AlertDialogContent className="rounded-none border-cds-ui-03">
                                     <AlertDialogHeader>
-                                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                        <AlertDialogDescription>This will permanently delete the credit. This action cannot be undone.</AlertDialogDescription>
+                                        <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" aria-hidden="true" /><AlertDialogTitle>Delete Credit Adjustment?</AlertDialogTitle></div>
+                                        <AlertDialogDescription>This transaction will be voided and the faculty associate's balance will be adjusted accordingly. This action cannot be undone.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteCredit(credit._id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                        <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteCredit(credit._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm Deletion</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>
@@ -855,21 +852,21 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                   </TableRow>
                 ))
                 ) : (
-                    <TableRow><TableCell colSpan={7} className="text-center h-24">No credits found for the selected filters.</TableCell></TableRow>
+                    <TableRow><TableCell colSpan={7} className="text-center h-24 italic text-muted-foreground">No records matched your criteria.</TableCell></TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
         </CardContent>
-        <CardFooter className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+        <CardFooter className="flex items-center justify-between border-t py-3 bg-cds-ui-01/30">
+            <div className="text-[11px] text-muted-foreground font-bold uppercase tracking-widest">
                 Page {page} of {totalPages || 1}
             </div>
             <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
                     Previous
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                <Button variant="outline" size="sm" className="h-8 rounded-none px-4 text-xs" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
                     Next
                 </Button>
             </div>
