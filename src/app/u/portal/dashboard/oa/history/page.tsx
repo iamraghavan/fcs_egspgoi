@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef, memo } from "react";
@@ -73,7 +72,7 @@ type IssuedRemark = {
     points: number;
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
-    type: 'negative';
+    type: 'positive' | 'negative';
     title: string;
     appealEligibility?: {
         canAppeal: boolean;
@@ -124,7 +123,7 @@ const RemarkRow = memo(({
             <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
             <TableCell className="text-center">
                 <div className="flex items-center justify-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Resolution Audit"><Eye className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record"><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
                         <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
@@ -224,7 +223,7 @@ export default function IssuedHistoryPage() {
         try {
             const res = await fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } });
             const data = await res.json();
-            if(data.success) setCreditTitles(data.items.filter((ct: any) => ct.type === 'negative'));
+            if(data.success) setCreditTitles(data.items);
         } catch (error) { console.error(error); }
     };
     fetchTitles();
@@ -261,7 +260,11 @@ export default function IssuedHistoryPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
+        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { 
+            method: 'PUT', 
+            headers: { 'Authorization': `Bearer ${adminToken}` }, 
+            body: formData 
+        });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
         toast({ title: "Remark Updated", description: "Changes have been successfully synchronized." });
@@ -276,7 +279,10 @@ export default function IssuedHistoryPage() {
 
   const handleDelete = async (id: string) => {
     try {
-        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
+        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { 
+            method: "DELETE", 
+            headers: { "Authorization": `Bearer ${adminToken}` } 
+        });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
         toast({ title: "Remark Deleted", description: "Record has been permanently removed from logs." });
@@ -290,7 +296,10 @@ export default function IssuedHistoryPage() {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
+        const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { 
+            method: "PATCH", 
+            headers: { "Authorization": `Bearer ${adminToken}` } 
+        });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen");
         toast({ title: "Window Re-opened", description: "The faculty member has been granted appeal access." });
@@ -345,7 +354,7 @@ export default function IssuedHistoryPage() {
                         key={r._id} 
                         remark={r} 
                         onView={setSelectedRemark} 
-                        onEdit={(remark) => { setEditingRemark(remark); setEditNotes(remark.notes || ""); setIsEditDialogOpen(true); }}
+                        onEdit={(remark) => { setEditingRemark(remark); setEditNotes(remark.notes || ""); setEditCreditTitleId(remark.creditTitle || ""); setIsEditDialogOpen(true); }}
                         onDelete={handleDelete}
                     />
                   ))
@@ -359,11 +368,28 @@ export default function IssuedHistoryPage() {
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md rounded-none border-cds-ui-03">
-            <DialogHeader><DialogTitle>Update Remark Transaction</DialogTitle></DialogHeader>
+            <DialogHeader>
+                <DialogTitle>Update Remark Details</DialogTitle>
+                <DialogDescription>Correct notes or modify the category. This is enabled for all non-deleted records.</DialogDescription>
+            </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
+                <div>
+                    <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">
+                        {editingRemark?.type === 'positive' ? 'Achievement Category' : 'Violation Category'}
+                    </Label>
+                    <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                        <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select category..." /></SelectTrigger>
+                        <SelectContent className="z-[150] rounded-none">
+                            {creditTitles
+                                .filter(ct => ct.type === editingRemark?.type)
+                                .map(ct => (
+                                    <SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>
+                                ))}
+                        </SelectContent>
+                    </Select>
+                </div>
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Administrative Rationale</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[120px] resize-none focus:ring-0 focus:border-b-2" /></div>
-                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Proof Replacement</Label><FileUpload onFileSelect={setEditProof} /></div>
+                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Proof Replacement (Optional)</Label><FileUpload onFileSelect={setEditProof} description="Upload a new supporting document" /></div>
                 <DialogFooter className="pt-4 border-t"><DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose><Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">{isSubmittingEdit ? "Updating..." : "Save Transaction"}</Button></DialogFooter>
             </form>
         </DialogContent>
@@ -374,8 +400,24 @@ export default function IssuedHistoryPage() {
             <DialogHeader><DialogTitle>Remark Audit Details</DialogTitle></DialogHeader>
             {selectedRemark && (
             <div className="space-y-6 py-4 text-sm">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-cds-ui-01 p-4 border border-cds-ui-03"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Faculty Associate</p><p className="font-bold text-base leading-tight">{selectedRemark.facultySnapshot.name}</p><p className="text-xs font-mono text-muted-foreground uppercase">{selectedRemark.facultySnapshot.facultyID}</p></div><div className="sm:text-right"><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Department</p><p className="font-medium text-cds-text-02">{selectedRemark.facultySnapshot.department}</p></div></div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Violation Title</p><p className="font-semibold leading-tight">{selectedRemark.title}</p></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className="text-2xl font-bold text-cds-support-01 tabular-nums">{selectedRemark.points}</p></div></div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-cds-ui-01 p-4 border border-cds-ui-03">
+                    <div className="flex items-center gap-3">
+                        <Avatar className="h-10 w-10">
+                            <AvatarImage src={selectedRemark.facultySnapshot.profileImage} />
+                            <AvatarFallback>{selectedRemark.facultySnapshot.name.charAt(0)}</AvatarFallback>
+                        </Avatar>
+                        <div>
+                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Faculty Associate</p>
+                            <p className="font-bold text-base leading-tight">{selectedRemark.facultySnapshot.name}</p>
+                            <p className="text-xs font-mono text-muted-foreground uppercase">{selectedRemark.facultySnapshot.facultyID}</p>
+                        </div>
+                    </div>
+                    <div className="sm:text-right">
+                        <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Department</p>
+                        <p className="font-medium text-cds-text-02">{selectedRemark.facultySnapshot.department}</p>
+                    </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Violation Title</p><p className="font-semibold leading-tight">{selectedRemark.title}</p></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className={cn("text-2xl font-bold tabular-nums", selectedRemark.type === 'positive' ? "text-cds-support-02" : "text-cds-support-01")}>{selectedRemark.type === 'positive' ? '+' : ''}{selectedRemark.points}</p></div></div>
                 <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Administrative Rationale</p><div className="p-4 bg-cds-ui-01 border-l-4 border-cds-support-01 italic text-cds-text-02 leading-relaxed">{selectedRemark.notes || "No rationale provided."}</div></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>

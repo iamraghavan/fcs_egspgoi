@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -661,7 +660,7 @@ export default function FacultyAccountsPage() {
                             <Label>Profile Image</Label>
                             <div className="flex items-center gap-4 mb-2">
                                 <Avatar className="h-16 w-16 border">
-                                    <AvatarImage src={editProfileImage ? URL.createObjectURL(editProfileImage) : (editingFaculty ? getAvatarUrl(editingFaculty) : '')} />
+                                    <AvatarImage src={editProfileImage ? URL.createObjectURL(editProfileImage) : (editingFaculty ? getAvatarUrl(editingFaculty) : undefined)} />
                                     <AvatarFallback><Camera className="h-6 w-6 text-muted-foreground" /></AvatarFallback>
                                 </Avatar>
                                 <div className="flex-1">
@@ -736,7 +735,7 @@ export default function FacultyAccountsPage() {
 
                 <DialogFooter className="pt-4 border-t">
                     <DialogClose asChild>
-                        <Button type="button" variant="secondary">Cancel</Button>
+                        <Button type="button" variant="secondary" className="rounded-none">Cancel</Button>
                     </DialogClose>
                     <Button type="submit" disabled={isLoading}>
                         {isLoading ? "Saving Profile..." : "Update Profile"}
