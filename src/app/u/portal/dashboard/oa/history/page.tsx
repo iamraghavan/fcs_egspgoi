@@ -126,7 +126,11 @@ const RemarkRow = memo(({
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record"><Edit className="h-4 w-4" /></Button>
                     <AlertDialog>
-                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record">
+                                <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
                         <AlertDialogContent className="rounded-none border-cds-ui-03">
                             <AlertDialogHeader>
                                 <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
@@ -370,7 +374,7 @@ export default function IssuedHistoryPage() {
         <DialogContent className="sm:max-w-md rounded-none border-cds-ui-03">
             <DialogHeader>
                 <DialogTitle>Update Remark Details</DialogTitle>
-                <DialogDescription>Correct notes or modify the category. This is enabled for all non-deleted records.</DialogDescription>
+                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div>

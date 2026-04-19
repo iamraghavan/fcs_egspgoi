@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -36,8 +35,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { format, startOfMonth } from "date-fns";
+import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
 
@@ -47,6 +47,7 @@ type CreditActivity = {
   points: number;
   status: 'approved' | 'pending' | 'rejected' | 'appealed';
   createdAt: string;
+  academicYear: string;
   type: 'positive' | 'negative';
   appeal?: { status: 'pending' | 'accepted' | 'rejected'; }
 };
@@ -77,6 +78,46 @@ export default function FacultyDashboard() {
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
 
+  const calculateStatsFromItems = (items: CreditActivity[]) => {
+      const approved = items.filter(it => it.status === 'approved');
+      const currentYear = academicYear;
+      
+      const currentCredit = approved.reduce((acc, it) => acc + (it.points || 0), 0);
+      
+      const yearApproved = approved.filter(it => it.academicYear === currentYear);
+      const yearPos = yearApproved.filter(it => it.type === 'positive').reduce((acc, it) => acc + (it.points || 0), 0);
+      const yearNeg = yearApproved.filter(it => it.type === 'negative').reduce((acc, it) => acc + (it.points || 0), 0);
+
+      // Create time series
+      const grouped = _.groupBy(approved, it => format(startOfMonth(new Date(it.createdAt)), 'yyyy-MM'));
+      const series = Object.entries(grouped).map(([period, mItems]) => {
+          const pos = mItems.filter(it => it.type === 'positive').reduce((acc, it) => acc + (it.points || 0), 0);
+          const neg = mItems.filter(it => it.type === 'negative').reduce((acc, it) => acc + (it.points || 0), 0);
+          return {
+              period,
+              positivePoints: pos,
+              negativePoints: neg,
+              net: pos + neg
+          };
+      }).sort((a, b) => a.period.localeCompare(b.period));
+
+      return {
+          currentCredit,
+          stats: {
+              totalCreditsCount: approved.length,
+              totalPositiveCount: approved.filter(it => it.type === 'positive').length,
+              totalNegativeCount: approved.filter(it => it.type === 'negative').length,
+              currentYearStats: {
+                  academicYear: currentYear,
+                  positivePoints: yearPos,
+                  negativePoints: yearNeg,
+                  netForYear: yearPos + yearNeg
+              },
+              series
+          }
+      } as UserProfileStats;
+  };
+
   const fetchData = useCallback(async (forceRecalc = false) => {
     const token = localStorage.getItem("token");
     const uid = searchParams.get('uid');
@@ -86,26 +127,27 @@ export default function FacultyDashboard() {
     else setLoading(true);
 
     try {
-      const [sRes, aRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`, { 
-          headers: { "Authorization": `Bearer ${token}` } 
-        }),
-        fetch(`${API_BASE_URL}/credits/credits/faculty/${uid}?limit=5`, { 
-          headers: { "Authorization": `Bearer ${token}` } 
-        })
-      ]);
+      // Path standardized to restored redundant path
+      const url = `${API_BASE_URL}/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`;
+      const response = await fetch(url, { 
+        headers: { "Authorization": `Bearer ${token}` } 
+      });
       
-      const sData = await sRes.json();
-      const aData = await aRes.json();
+      const resData = await response.json();
       
-      if (sData.success) {
-        setStats(sData.data || sData);
+      if (resData.success) {
+        // Handle both aggregated stats object and flat list response
+        if (resData.data && resData.data.stats) {
+            setStats(resData.data);
+        } else if (resData.items) {
+            const computed = calculateStatsFromItems(resData.items);
+            setStats(computed);
+            setRecentActivities(resData.items.slice(0, 5));
+        }
+
         if (forceRecalc) {
           toast({ title: "Credits Synced", description: "Your balance has been recalculated from the transaction log." });
         }
-      }
-      if (aData.success) {
-        setRecentActivities(aData.items);
       }
     } catch (e: any) {
       showAlert("Sync Error", e.message);
@@ -113,14 +155,14 @@ export default function FacultyDashboard() {
       setLoading(false);
       setIsSyncing(false);
     }
-  }, [searchParams, showAlert, toast]);
+  }, [searchParams, academicYear, showAlert, toast]);
 
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
   const chartData = (stats?.stats?.series || []).map(s => ({
-      name: new Date(s.period).toLocaleString('en-us', { month: 'short' }),
+      name: new Date(s.period + '-01').toLocaleString('en-us', { month: 'short' }),
       net: s.net,
       pos: s.positivePoints,
       neg: Math.abs(s.negativePoints),
@@ -128,11 +170,11 @@ export default function FacultyDashboard() {
 
   if (loading) return (
     <div className="space-y-8 animate-pulse">
-        <Skeleton className="h-10 w-64" />
+        <Skeleton className="h-10 w-64 rounded-none bg-cds-ui-01" />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" /><Skeleton className="h-32" />
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-32 rounded-none bg-cds-ui-01" />)}
         </div>
-        <Skeleton className="h-96 w-full" />
+        <Skeleton className="h-96 w-full rounded-none bg-cds-ui-01" />
     </div>
   );
 
@@ -145,24 +187,19 @@ export default function FacultyDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="rounded-none h-10 px-4" 
-                disabled={isSyncing}
-              >
-                <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
-                {isSyncing ? "Syncing..." : "Sync Credits"}
-              </Button>
-            </AlertDialogTrigger>
+            <Button asChild variant="outline" size="sm" className="rounded-none h-10 px-4 cursor-pointer" disabled={isSyncing}>
+                <div className="flex items-center">
+                    <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
+                    <AlertDialogAction asChild className="bg-transparent text-foreground hover:bg-transparent shadow-none border-none p-0 h-auto">
+                        <button onClick={() => fetchData(true)}>{isSyncing ? "Syncing..." : "Sync Credits"}</button>
+                    </AlertDialogAction>
+                </div>
+            </Button>
             <AlertDialogContent className="rounded-none border-cds-ui-03">
-              <AlertDialogHeader>
-                <AlertDialogTitle>Institutional Sync Required?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?
-                </AlertDialogDescription>
-              </AlertDialogHeader>
+              <CardHeader className="p-0 mb-4">
+                <CardTitle className="text-lg font-bold">Institutional Sync Required?</CardTitle>
+                <CardDescription>This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?</CardDescription>
+              </CardHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
                 <AlertDialogAction 
@@ -181,6 +218,7 @@ export default function FacultyDashboard() {
             <SelectContent className="rounded-none">
               <SelectItem value="2025-26">AY 2025-26</SelectItem>
               <SelectItem value="2024-25">AY 2024-25</SelectItem>
+              <SelectItem value="2023-24">AY 2023-24</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -193,7 +231,7 @@ export default function FacultyDashboard() {
             <Star className="h-4 w-4 opacity-80" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats?.currentCredit?.toLocaleString() || 0}</div>
+            <div className="text-3xl font-bold">{(stats?.currentCredit ?? 0).toLocaleString()}</div>
             <p className="text-[10px] mt-1 opacity-70 italic">Overall institutional standing</p>
           </CardContent>
         </Card>
@@ -203,7 +241,7 @@ export default function FacultyDashboard() {
             <Activity className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold">{stats?.stats?.currentYearStats?.netForYear?.toLocaleString() || 0}</div>
+            <div className="text-3xl font-bold">{(stats?.stats?.currentYearStats?.netForYear ?? 0).toLocaleString()}</div>
             <p className="text-[10px] mt-1 text-cds-text-05 italic">Current performance cycle</p>
           </CardContent>
         </Card>
@@ -213,7 +251,7 @@ export default function FacultyDashboard() {
             <Award className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">+{stats?.stats?.currentYearStats?.positivePoints?.toLocaleString() || 0}</div>
+            <div className="text-3xl font-bold text-green-600">+{(stats?.stats?.currentYearStats?.positivePoints ?? 0).toLocaleString()}</div>
             <p className="text-[10px] mt-1 text-cds-text-05 italic">Positive credits earned</p>
           </CardContent>
         </Card>
@@ -223,7 +261,7 @@ export default function FacultyDashboard() {
             <AlertCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">{stats?.stats?.currentYearStats?.negativePoints?.toLocaleString() || 0}</div>
+            <div className="text-3xl font-bold text-red-600">{(stats?.stats?.currentYearStats?.negativePoints ?? 0).toLocaleString()}</div>
             <p className="text-[10px] mt-1 text-cds-text-05 italic">Credit deductions received</p>
           </CardContent>
         </Card>
@@ -242,15 +280,15 @@ export default function FacultyDashboard() {
                     <AreaChart data={chartData}>
                         <defs>
                             <linearGradient id="colorNet" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.1}/>
-                                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                                <stop offset="5%" stopColor="var(--cds-interactive-01)" stopOpacity={0.1}/>
+                                <stop offset="95%" stopColor="var(--cds-interactive-01)" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
                         <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sidebar-border)" />
                         <XAxis dataKey="name" fontSize={10} tickLine={false} axisLine={false} />
                         <YAxis fontSize={10} tickLine={false} axisLine={false} />
                         <Tooltip contentStyle={{ borderRadius: '0', border: 'none', backgroundColor: 'var(--cds-ui-05)', color: '#fff' }} />
-                        <Area type="monotone" dataKey="net" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorNet)" strokeWidth={2} name="Net Credits" />
+                        <Area type="monotone" dataKey="net" stroke="var(--cds-interactive-01)" fillOpacity={1} fill="url(#colorNet)" strokeWidth={2} name="Net Credits" />
                     </AreaChart>
                 </ResponsiveContainer>
             </div>
