@@ -36,7 +36,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { format, startOfMonth } from "date-fns";
+import { format, startOfMonth, parseISO, isValid } from "date-fns";
 import _ from "lodash";
 
 const API_BASE_URL = '/api/v1';
@@ -79,34 +79,42 @@ export default function FacultyDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const calculateStatsFromItems = (items: CreditActivity[]) => {
+      // Balance only includes approved items
       const approved = items.filter(it => it.status === 'approved');
       const currentYear = academicYear;
       
-      const currentCredit = approved.reduce((acc, it) => acc + (it.points || 0), 0);
+      const currentCredit = _.sumBy(approved, it => it.points || 0);
       
       const yearApproved = approved.filter(it => it.academicYear === currentYear);
-      const yearPos = yearApproved.filter(it => it.type === 'positive').reduce((acc, it) => acc + (it.points || 0), 0);
-      const yearNeg = yearApproved.filter(it => it.type === 'negative').reduce((acc, it) => acc + (it.points || 0), 0);
+      const yearPos = _.sumBy(yearApproved.filter(it => it.type === 'positive' || (it.points && it.points > 0)), it => it.points || 0);
+      const yearNeg = _.sumBy(yearApproved.filter(it => it.type === 'negative' || (it.points && it.points < 0)), it => it.points || 0);
 
-      // Create time series
-      const grouped = _.groupBy(approved, it => format(startOfMonth(new Date(it.createdAt)), 'yyyy-MM'));
-      const series = Object.entries(grouped).map(([period, mItems]) => {
-          const pos = mItems.filter(it => it.type === 'positive').reduce((acc, it) => acc + (it.points || 0), 0);
-          const neg = mItems.filter(it => it.type === 'negative').reduce((acc, it) => acc + (it.points || 0), 0);
-          return {
-              period,
-              positivePoints: pos,
-              negativePoints: neg,
-              net: pos + neg
-          };
-      }).sort((a, b) => a.period.localeCompare(b.period));
+      // Create time series from all history to show trend
+      const grouped = _.groupBy(approved, it => {
+          const d = parseISO(it.createdAt);
+          return isValid(d) ? format(startOfMonth(d), 'yyyy-MM') : 'unknown';
+      });
+
+      const series = Object.entries(grouped)
+          .filter(([period]) => period !== 'unknown')
+          .map(([period, mItems]) => {
+            const pos = _.sumBy(mItems.filter(it => it.type === 'positive' || (it.points && it.points > 0)), it => it.points || 0);
+            const neg = _.sumBy(mItems.filter(it => it.type === 'negative' || (it.points && it.points < 0)), it => it.points || 0);
+            return {
+                period,
+                positivePoints: pos,
+                negativePoints: neg,
+                net: pos + neg
+            };
+          })
+          .sort((a, b) => a.period.localeCompare(b.period));
 
       return {
           currentCredit,
           stats: {
               totalCreditsCount: approved.length,
-              totalPositiveCount: approved.filter(it => it.type === 'positive').length,
-              totalNegativeCount: approved.filter(it => it.type === 'negative').length,
+              totalPositiveCount: items.filter(it => it.type === 'positive' || (it.points && it.points > 0)).length,
+              totalNegativeCount: items.filter(it => it.type === 'negative' || (it.points && it.points < 0)).length,
               currentYearStats: {
                   academicYear: currentYear,
                   positivePoints: yearPos,
@@ -127,7 +135,6 @@ export default function FacultyDashboard() {
     else setLoading(true);
 
     try {
-      // Path standardized to restored redundant path
       const url = `${API_BASE_URL}/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`;
       const response = await fetch(url, { 
         headers: { "Authorization": `Bearer ${token}` } 
@@ -136,13 +143,13 @@ export default function FacultyDashboard() {
       const resData = await response.json();
       
       if (resData.success) {
-        // Handle both aggregated stats object and flat list response
         if (resData.data && resData.data.stats) {
             setStats(resData.data);
+            setRecentActivities(resData.data.recentActivities || []);
         } else if (resData.items) {
             const computed = calculateStatsFromItems(resData.items);
             setStats(computed);
-            setRecentActivities(resData.items.slice(0, 5));
+            setRecentActivities(resData.items.slice(0, 8));
         }
 
         if (forceRecalc) {
@@ -162,7 +169,7 @@ export default function FacultyDashboard() {
   }, [fetchData]);
 
   const chartData = (stats?.stats?.series || []).map(s => ({
-      name: new Date(s.period + '-01').toLocaleString('en-us', { month: 'short' }),
+      name: format(parseISO(s.period + '-01'), 'MMM'),
       net: s.net,
       pos: s.positivePoints,
       neg: Math.abs(s.negativePoints),
@@ -190,16 +197,15 @@ export default function FacultyDashboard() {
             <Button asChild variant="outline" size="sm" className="rounded-none h-10 px-4 cursor-pointer" disabled={isSyncing}>
                 <div className="flex items-center">
                     <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
-                    <AlertDialogAction asChild className="bg-transparent text-foreground hover:bg-transparent shadow-none border-none p-0 h-auto">
-                        <button onClick={() => fetchData(true)}>{isSyncing ? "Syncing..." : "Sync Credits"}</button>
-                    </AlertDialogAction>
+                    <span>{isSyncing ? "Syncing..." : "Sync Credits"}</span>
+                    <AlertDialogAction asChild className="hidden"><button onClick={() => fetchData(true)}>Sync</button></AlertDialogAction>
                 </div>
             </Button>
             <AlertDialogContent className="rounded-none border-cds-ui-03">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg font-bold">Institutional Sync Required?</CardTitle>
-                <CardDescription>This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?</CardDescription>
-              </CardHeader>
+              <AlertDialogHeader>
+                <AlertDialogTitle className="text-lg font-bold">Institutional Sync Required?</AlertDialogTitle>
+                <AlertDialogDescription>This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?</AlertDialogDescription>
+              </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
                 <AlertDialogAction 
@@ -338,13 +344,13 @@ export default function FacultyDashboard() {
                   <TableRow key={act._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
                     <TableCell className="font-medium text-[13px] text-cds-text-01">{act.title}</TableCell>
                     <TableCell>
-                       <Badge variant={act.type === 'positive' ? 'default' : 'destructive'} className="rounded-none text-[10px] h-5 uppercase tracking-wider font-bold">
-                          {act.type}
+                       <Badge variant={(act.type === 'positive' || (act.points && act.points > 0)) ? 'default' : 'destructive'} className="rounded-none text-[10px] h-5 uppercase tracking-wider font-bold">
+                          {act.type || (act.points > 0 ? 'positive' : 'negative')}
                         </Badge>
                     </TableCell>
                     <TableCell className="capitalize text-[12px] text-cds-text-02 font-medium">{act.status}</TableCell>
-                    <TableCell className={cn("text-right font-bold tabular-nums", act.type === 'positive' ? "text-cds-support-02" : "text-cds-support-01")}>
-                       {act.type === 'positive' ? `+${act.points}` : act.points}
+                    <TableCell className={cn("text-right font-bold tabular-nums", (act.type === 'positive' || (act.points && act.points > 0)) ? "text-cds-support-02" : "text-cds-support-01")}>
+                       {(act.type === 'positive' || act.points > 0) ? `+${act.points}` : act.points}
                     </TableCell>
                     <TableCell className="text-right text-[11px] text-cds-text-05 tabular-nums font-medium">
                       {new Date(act.createdAt).toLocaleDateString()}

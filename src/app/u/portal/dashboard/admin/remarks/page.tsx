@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -92,7 +91,7 @@ type NegativeRemark = {
     points: number;
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
-    type: 'negative';
+    type: 'negative' | 'positive';
     title: string;
 };
 
@@ -147,6 +146,7 @@ export default function ManageRemarksPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
+  const [templateFilter, setTemplateFilter] = useState("all");
   
   const [selectedRemarkDetails, setSelectedRemarkDetails] = useState<NegativeRemark | null>(null);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
@@ -199,13 +199,13 @@ export default function ManageRemarksPage() {
     if (!adminToken) return;
     try {
       const [fRes, ctRes] = await Promise.all([
-        fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${token}` } })
+        fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${adminToken}` } }),
+        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } })
       ]);
       const fData = await fRes.json();
       if (fData.success) setFacultyList(fData.items);
       const ctData = await ctRes.json();
-      if (ctData.success) setCreditTitles(ctData.items.filter((ct: any) => ct.type === 'negative'));
+      if (ctData.success) setCreditTitles(ctData.items);
     } catch (error: any) {}
   };
 
@@ -222,6 +222,7 @@ export default function ManageRemarksPage() {
           if (searchTerm) params.append('search', searchTerm);
           if (statusFilter !== 'all') params.append('status', statusFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
+          if (templateFilter !== 'all') params.append('templateId', templateFilter);
 
           const response = await fetch(`${API_BASE_URL}/admin/credits/negative?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
@@ -249,9 +250,9 @@ export default function ManageRemarksPage() {
       if (adminToken) fetchRemarks(page);
     }, 400);
     return () => clearTimeout(timer);
-  }, [page, searchTerm, statusFilter, academicYearFilter, adminToken]);
+  }, [page, searchTerm, statusFilter, academicYearFilter, templateFilter, adminToken]);
 
-  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter]);
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, templateFilter]);
   
   useEffect(() => {
     const selected = creditTitles.find(ct => ct._id === creditTitleId);
@@ -386,7 +387,7 @@ export default function ManageRemarksPage() {
                             <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
                              <Select value={creditTitleId} onValueChange={setCreditTitleId}>
                                 <SelectTrigger id="creditTitle" className="rounded-none"><SelectValue placeholder="Select a template..." /></SelectTrigger>
-                                <SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent>
+                                <SelectContent className="z-[150] rounded-none">{creditTitles.filter(c => c.type === 'negative').map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent>
                             </Select>
                         </div>
                         <div>
@@ -440,7 +441,8 @@ export default function ManageRemarksPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 border-b">
                 <div className="relative border-r"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search..." className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent></Select>
-                <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Year" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Years</SelectItem>{dynamicFilters.years.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}</SelectContent></Select>
+                <Select value={templateFilter} onValueChange={setTemplateFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent border-r focus:ring-0"><SelectValue placeholder="Category" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Categories</SelectItem>{dynamicFilters.templates.map(t => (<SelectItem key={t} value={t}>{t}</SelectItem>))}</SelectContent></Select>
+                <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}><SelectTrigger className="h-12 border-0 rounded-none bg-transparent focus:ring-0"><SelectValue placeholder="Year" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Years</SelectItem>{dynamicFilters.years.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}</SelectContent></Select>
             </div>
         </CardHeader>
         <CardContent className="p-0">
@@ -460,12 +462,37 @@ export default function ManageRemarksPage() {
                 {isLoadingRemarks ? (<TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>) : remarks.length > 0 ? (
                   remarks.map((r) => (
                     <TableRow key={r._id} className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", r.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
-                        <TableCell><div className="flex items-center gap-3"><Avatar className="h-8 w-8"><AvatarImage src={r.facultySnapshot.profileImage} /><AvatarFallback>{r.facultySnapshot.name.charAt(0)}</AvatarFallback></Avatar><div className="flex flex-col"><span className="font-medium text-cds-text-01 text-[13px]">{r.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground uppercase font-mono">{r.facultySnapshot.facultyID}</span></div></div></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <Avatar className="h-8 w-8"><AvatarImage src={r.facultySnapshot.profileImage} /><AvatarFallback>{r.facultySnapshot.name.charAt(0)}</AvatarFallback></Avatar>
+                            <div className="flex flex-col"><span className="font-medium text-cds-text-01 text-[13px]">{r.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground uppercase font-mono">{r.facultySnapshot.facultyID}</span></div>
+                          </div>
+                        </TableCell>
                         <TableCell className="text-[12px] max-w-[200px] truncate">{r.title}</TableCell>
                         <TableCell className="text-center">{getStatusBadge(r.status)}</TableCell>
                         <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(r.createdAt).toLocaleDateString()}</TableCell>
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
-                        <TableCell className="text-center"><div className="flex items-center justify-center gap-1"><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button><Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'} aria-label="Edit Remark"><Edit className="h-4 w-4" /></Button><AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'} aria-label="Delete Remark"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger><AlertDialogContent className="rounded-none"><AlertDialogHeader><div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div><AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription></AlertDialogHeader><AlertDialogFooter><AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel><AlertDialogAction onClick={() => handleDeleteRemark(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction></AlertDialogFooter></AlertDialog></div></TableCell>
+                        <TableCell className="text-center">
+                          <div className="flex items-center justify-center gap-1">
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setEditNotes(r.notes || ""); setEditCreditTitleId(r.creditTitle || ""); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'} aria-label="Edit Remark"><Edit className="h-4 w-4" /></Button>
+                            <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'} aria-label="Delete Remark"><Trash2 className="h-4 w-4" /></Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent className="rounded-none border-cds-ui-03">
+                                    <AlertDialogHeader>
+                                        <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
+                                        <AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                        <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
+                                        <AlertDialogAction onClick={() => handleDeleteRemark(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                          </div>
+                        </TableCell>
                     </TableRow>
                   ))
                 ) : (<TableRow><TableCell colSpan={6} className="text-center h-24">No records found.</TableCell></TableRow>)}
@@ -480,19 +507,27 @@ export default function ManageRemarksPage() {
       </Card>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-md rounded-none">
+        <DialogContent className="sm:max-w-md rounded-none border-cds-ui-03">
             <DialogHeader><DialogTitle>Update Remark Details</DialogTitle></DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
-                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Violation Category</Label><Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}><SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger><SelectContent className="z-[150] rounded-none">{creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}</SelectContent></Select></div>
-                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Administrative Notes</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2" /></div>
-                <div><Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1 block">Proof Replacement</Label><FileUpload onFileSelect={setEditProof} /></div>
+                <div>
+                  <Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Violation Category</Label>
+                  <Select value={editCreditTitleId} onValueChange={setEditCreditTitleId}>
+                      <SelectTrigger className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01"><SelectValue placeholder="Select template..." /></SelectTrigger>
+                      <SelectContent className="z-[150] rounded-none">
+                        {creditTitles.filter(c => c.type === (editingRemark?.type || 'negative')).map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}
+                      </SelectContent>
+                  </Select>
+                </div>
+                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Administrative Notes</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[100px] resize-none focus:ring-0 focus:border-b-2" /></div>
+                <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Proof Replacement</Label><FileUpload onFileSelect={setEditProof} /></div>
                 <DialogFooter className="pt-4 border-t"><DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose><Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">{isSubmittingEdit ? "Updating..." : "Save Changes"}</Button></DialogFooter>
             </form>
         </DialogContent>
       </Dialog>
       
        <Dialog open={!!selectedRemarkDetails} onOpenChange={(o) => !o && setSelectedRemarkDetails(null)}>
-        <DialogContent className="sm:max-w-lg rounded-none">
+        <DialogContent className="sm:max-w-lg rounded-none border-cds-ui-03">
             <DialogHeader><DialogTitle>Remark Resolution Audit</DialogTitle></DialogHeader>
             {selectedRemarkDetails && (
                 <div className="space-y-6 py-4 text-sm">

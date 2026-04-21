@@ -94,7 +94,6 @@ type DynamicFilters = {
     departments: string[];
 };
 
-// Optimization: Memoized row component for high-volume list rendering
 const RemarkRow = memo(({ 
     remark, 
     onView, 
@@ -116,7 +115,12 @@ const RemarkRow = memo(({
 
     return (
         <TableRow className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", remark.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
-            <TableCell><div className="flex flex-col gap-0.5"><span className="font-bold text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span><span className="text-[10px] text-muted-foreground font-mono uppercase">{remark.facultySnapshot.facultyID}</span></div></TableCell>
+            <TableCell>
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
+                <span className="text-[10px] text-muted-foreground font-mono uppercase">{remark.facultySnapshot.facultyID}</span>
+              </div>
+            </TableCell>
             <TableCell className="text-[12px] max-w-[200px] truncate">{remark.title}</TableCell>
             <TableCell className="text-center">{getStatusBadge(remark.status)}</TableCell>
             <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
