@@ -474,23 +474,55 @@ export default function ManageRemarksPage() {
                         <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{r.points}</TableCell>
                         <TableCell className="text-center">
                           <div className="flex items-center justify-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedRemarkDetails(r)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditingRemark(r); setEditNotes(r.notes || ""); setEditCreditTitleId(r.creditTitle || ""); setIsEditDialogOpen(true); }} disabled={r.status === 'deleted'} aria-label="Edit Remark"><Edit className="h-4 w-4" /></Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => setSelectedRemarkDetails(r)}
+                              aria-label="View Audit"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => { setEditingRemark(r); setEditNotes(r.notes || ""); setEditCreditTitleId(r.creditTitle || ""); setIsEditDialogOpen(true); }}
+                              disabled={r.status === 'deleted'}
+                              aria-label="Edit Remark"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={r.status === 'deleted'} aria-label="Delete Remark"><Trash2 className="h-4 w-4" /></Button>
+                                    <Button
+                                      variant="ghost"
+                                      size="icon"
+                                      className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                                      disabled={r.status === 'deleted'}
+                                      aria-label="Delete Remark"
+                                    >
+                                      <Trash2 className="h-4 w-4" />
+                                    </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent className="rounded-none border-cds-ui-03">
                                     <AlertDialogHeader>
-                                        <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
+                                        <div className="flex items-center gap-3 text-destructive mb-2">
+                                          <AlertCircle className="h-6 w-6" />
+                                          <AlertDialogTitle>Delete Remark?</AlertDialogTitle>
+                                        </div>
                                         <AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteRemark(r._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction>
+                                        <AlertDialogAction
+                                          onClick={() => handleDeleteRemark(r._id)}
+                                          className="bg-destructive hover:bg-destructive/90 rounded-none"
+                                        >
+                                          Confirm
+                                        </AlertDialogAction>
                                     </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                                </AlertDialog>
                           </div>
                         </TableCell>
                     </TableRow>
@@ -533,7 +565,7 @@ export default function ManageRemarksPage() {
                 <div className="space-y-6 py-4 text-sm">
                     <div className="flex items-center gap-4 p-4 bg-cds-ui-01 border border-cds-ui-03"><Avatar className="h-12 w-12 border"><AvatarImage src={selectedRemarkDetails.facultySnapshot.profileImage} /><AvatarFallback>{selectedRemarkDetails.facultySnapshot.name.charAt(0)}</AvatarFallback></Avatar><div><p className="font-bold text-base">{selectedRemarkDetails.facultySnapshot.name}</p><p className="text-xs text-muted-foreground font-mono uppercase">{selectedRemarkDetails.facultySnapshot.facultyID}</p></div></div>
                     <div className="grid grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Deduction</p><p className="text-xl font-bold text-cds-support-01 tabular-nums">{selectedRemarkDetails.points}</p></div><div className="text-right"><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Status</p><div>{getStatusBadge(selectedRemarkDetails.status)}</div></div></div>
-                    <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Staff Rationale</p><blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 text-cds-text-02 leading-relaxed">{selectedRemarkDetails.notes || "No notes provided."}</blockquote></div>
+                    <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Staff Rationale</p><blockquote className="mt-1 border-l-2 border-primary/20 pl-4 italic bg-cds-ui-01 p-3 text-cds-text-02 leading-relaxed">{selectedRemarkDetails.notes || "No rationale provided."}</blockquote></div>
                     {selectedRemarkDetails.proofUrl && (<div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center"><Button asChild variant="link" className="text-primary font-bold"><a href={getProofUrl(selectedRemarkDetails.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof</a></Button></div>)}
                 </div>
             )}

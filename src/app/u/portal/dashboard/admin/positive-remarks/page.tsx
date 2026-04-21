@@ -1,4 +1,3 @@
-
 "use client"
 
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -47,7 +46,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Eye, Search, Edit, Trash2, CheckCircle2, Clock, XCircle } from "lucide-react";
+import { PlusCircle, Eye, Search, Edit, Trash2, CheckCircle2, Clock, XCircle, AlertCircle } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { colleges } from "@/lib/colleges";
 import { useAlert } from "@/context/alert-context";
@@ -287,7 +286,6 @@ export default function ManagePositiveCreditsPage() {
               throw new Error(resData.message || "Failed to fetch credits");
           }
       } catch (error: any) {
-          showAlert("Error fetching credits", error.message);
           setCredits([]);
           setTotal(0);
       } finally {
@@ -838,7 +836,10 @@ const getStatusBadge = (status: PositiveCredit['status']) => {
                                 </AlertDialogTrigger>
                                 <AlertDialogContent className="rounded-none border-cds-ui-03">
                                     <AlertDialogHeader>
-                                        <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" aria-hidden="true" /><AlertDialogTitle>Delete Credit Adjustment?</AlertDialogTitle></div>
+                                        <div className="flex items-center gap-3 text-destructive mb-2">
+                                            <AlertCircle className="h-6 w-6" aria-hidden="true" />
+                                            <AlertDialogTitle>Delete Credit Adjustment?</AlertDialogTitle>
+                                        </div>
                                         <AlertDialogDescription>This transaction will be voided and the faculty associate's balance will be adjusted accordingly. This action cannot be undone.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>

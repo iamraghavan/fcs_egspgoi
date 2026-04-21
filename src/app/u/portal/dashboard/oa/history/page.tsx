@@ -127,8 +127,12 @@ const RemarkRow = memo(({
             <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
             <TableCell className="text-center">
                 <div className="flex items-center justify-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record"><Edit className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Audit">
+                      <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record">
+                      <Edit className="h-4 w-4" />
+                    </Button>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record">
@@ -137,7 +141,10 @@ const RemarkRow = memo(({
                         </AlertDialogTrigger>
                         <AlertDialogContent className="rounded-none border-cds-ui-03">
                             <AlertDialogHeader>
-                                <div className="flex items-center gap-3 text-destructive mb-2"><AlertCircle className="h-6 w-6" /><AlertDialogTitle>Delete Remark?</AlertDialogTitle></div>
+                                <div className="flex items-center gap-3 text-destructive mb-2">
+                                  <AlertCircle className="h-6 w-6" />
+                                  <AlertDialogTitle>Delete Remark?</AlertDialogTitle>
+                                </div>
                                 <AlertDialogDescription>Institutional record will be voided. This action cannot be undone.</AlertDialogDescription>
                             </AlertDialogHeader>
                             <AlertDialogFooter>

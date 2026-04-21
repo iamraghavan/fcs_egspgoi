@@ -45,7 +45,7 @@ type CreditActivity = {
   _id: string;
   title: string;
   points: number;
-  status: 'approved' | 'pending' | 'rejected' | 'appealed';
+  status: 'approved' | 'pending' | 'rejected' | 'appealed' | 'deleted';
   createdAt: string;
   academicYear: string;
   type: 'positive' | 'negative';
@@ -79,15 +79,18 @@ export default function FacultyDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const calculateStatsFromItems = (items: CreditActivity[]) => {
+      // Filter out deleted items
+      const validItems = items.filter(it => it.status !== 'deleted');
+      
       // Balance only includes approved items
-      const approved = items.filter(it => it.status === 'approved');
+      const approved = validItems.filter(it => it.status === 'approved');
       const currentYear = academicYear;
       
-      const currentCredit = _.sumBy(approved, it => it.points || 0);
+      const currentCredit = _.sumBy(approved, it => Number(it.points) || 0);
       
       const yearApproved = approved.filter(it => it.academicYear === currentYear);
-      const yearPos = _.sumBy(yearApproved.filter(it => it.type === 'positive' || (it.points && it.points > 0)), it => it.points || 0);
-      const yearNeg = _.sumBy(yearApproved.filter(it => it.type === 'negative' || (it.points && it.points < 0)), it => it.points || 0);
+      const yearPos = _.sumBy(yearApproved.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Number(it.points) || 0);
+      const yearNeg = _.sumBy(yearApproved.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Number(it.points) || 0);
 
       // Create time series from all history to show trend
       const grouped = _.groupBy(approved, it => {
@@ -98,8 +101,8 @@ export default function FacultyDashboard() {
       const series = Object.entries(grouped)
           .filter(([period]) => period !== 'unknown')
           .map(([period, mItems]) => {
-            const pos = _.sumBy(mItems.filter(it => it.type === 'positive' || (it.points && it.points > 0)), it => it.points || 0);
-            const neg = _.sumBy(mItems.filter(it => it.type === 'negative' || (it.points && it.points < 0)), it => it.points || 0);
+            const pos = _.sumBy(mItems.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Number(it.points) || 0);
+            const neg = _.sumBy(mItems.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Number(it.points) || 0);
             return {
                 period,
                 positivePoints: pos,
@@ -113,8 +116,8 @@ export default function FacultyDashboard() {
           currentCredit,
           stats: {
               totalCreditsCount: approved.length,
-              totalPositiveCount: items.filter(it => it.type === 'positive' || (it.points && it.points > 0)).length,
-              totalNegativeCount: items.filter(it => it.type === 'negative' || (it.points && it.points < 0)).length,
+              totalPositiveCount: validItems.filter(it => it.type === 'positive' || (Number(it.points) > 0)).length,
+              totalNegativeCount: validItems.filter(it => it.type === 'negative' || (Number(it.points) < 0)).length,
               currentYearStats: {
                   academicYear: currentYear,
                   positivePoints: yearPos,
@@ -149,6 +152,7 @@ export default function FacultyDashboard() {
         } else if (resData.items) {
             const computed = calculateStatsFromItems(resData.items);
             setStats(computed);
+            // Display all status types in activities for user feedback
             setRecentActivities(resData.items.slice(0, 8));
         }
 
@@ -194,17 +198,16 @@ export default function FacultyDashboard() {
         </div>
         <div className="flex items-center gap-2">
           <AlertDialog>
-            <Button asChild variant="outline" size="sm" className="rounded-none h-10 px-4 cursor-pointer" disabled={isSyncing}>
-                <div className="flex items-center">
+            <AlertDialogTrigger asChild>
+                <Button variant="outline" size="sm" className="rounded-none h-10 px-4 cursor-pointer" disabled={isSyncing}>
                     <RefreshCw className={cn("mr-2 h-4 w-4", isSyncing && "animate-spin")} />
                     <span>{isSyncing ? "Syncing..." : "Sync Credits"}</span>
-                    <AlertDialogAction asChild className="hidden"><button onClick={() => fetchData(true)}>Sync</button></AlertDialogAction>
-                </div>
-            </Button>
+                </Button>
+            </AlertDialogTrigger>
             <AlertDialogContent className="rounded-none border-cds-ui-03">
               <AlertDialogHeader>
                 <AlertDialogTitle className="text-lg font-bold">Institutional Sync Required?</AlertDialogTitle>
-                <AlertDialogDescription>This action will recalculate your entire credit balance based on the official transaction log. This is an intensive operation. Continue?</AlertDialogDescription>
+                <AlertDialogDescription>This action will recalculate your entire credit balance based on the official transaction log. Continue?</AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
@@ -344,13 +347,13 @@ export default function FacultyDashboard() {
                   <TableRow key={act._id} className="hover:bg-cds-ui-01/50 transition-colors border-b last:border-0">
                     <TableCell className="font-medium text-[13px] text-cds-text-01">{act.title}</TableCell>
                     <TableCell>
-                       <Badge variant={(act.type === 'positive' || (act.points && act.points > 0)) ? 'default' : 'destructive'} className="rounded-none text-[10px] h-5 uppercase tracking-wider font-bold">
-                          {act.type || (act.points > 0 ? 'positive' : 'negative')}
+                       <Badge variant={(act.type === 'positive' || (Number(act.points) > 0)) ? 'default' : 'destructive'} className="rounded-none text-[10px] h-5 uppercase tracking-wider font-bold">
+                          {act.type || (Number(act.points) > 0 ? 'positive' : 'negative')}
                         </Badge>
                     </TableCell>
                     <TableCell className="capitalize text-[12px] text-cds-text-02 font-medium">{act.status}</TableCell>
-                    <TableCell className={cn("text-right font-bold tabular-nums", (act.type === 'positive' || (act.points && act.points > 0)) ? "text-cds-support-02" : "text-cds-support-01")}>
-                       {(act.type === 'positive' || act.points > 0) ? `+${act.points}` : act.points}
+                    <TableCell className={cn("text-right font-bold tabular-nums", (act.type === 'positive' || (Number(act.points) > 0)) ? "text-cds-support-02" : "text-cds-support-01")}>
+                       {(act.type === 'positive' || Number(act.points) > 0) ? `+${act.points}` : act.points}
                     </TableCell>
                     <TableCell className="text-right text-[11px] text-cds-text-05 tabular-nums font-medium">
                       {new Date(act.createdAt).toLocaleDateString()}
