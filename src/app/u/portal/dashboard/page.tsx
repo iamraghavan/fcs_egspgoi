@@ -150,13 +150,14 @@ export default function FacultyDashboard() {
       if (response.status === 403) {
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
-        router.push('/u/portal/auth?faculty_login&reason=session_denied');
+        localStorage.removeItem("sessionId");
+        router.push('/u/portal/auth?faculty_login&reason=session_expired');
         return;
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText || `Server error: ${response.status}`);
+        throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : errorText);
       }
 
       const resData = await response.json();
@@ -177,7 +178,7 @@ export default function FacultyDashboard() {
         }
       }
     } catch (e: any) {
-      showAlert("Sync Error", e.message);
+      showAlert("Sync Error", e.message || "Failed to connect to the performance engine.");
     } finally {
       setLoading(false);
       setIsSyncing(false);
