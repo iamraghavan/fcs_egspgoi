@@ -1,7 +1,8 @@
+
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip, Area, AreaChart, Legend, CartesianGrid, Bar, BarChart } from "recharts";
 import {
   Card,
@@ -73,6 +74,7 @@ export default function FacultyDashboard() {
   const { showAlert } = useAlert();
   const { toast } = useToast();
   const searchParams = useSearchParams();
+  const router = useRouter();
   const [academicYear, setAcademicYear] = useState("2025-26");
   const [stats, setStats] = useState<UserProfileStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<CreditActivity[]>([]);
@@ -144,6 +146,19 @@ export default function FacultyDashboard() {
         headers: { "Authorization": `Bearer ${token}` } 
       });
       
+      // Handle 403 Forbidden (JWT Mismatch/Expired)
+      if (response.status === 403) {
+        localStorage.removeItem("token");
+        localStorage.removeItem("userRole");
+        router.push('/u/portal/auth?faculty_login&reason=session_denied');
+        return;
+      }
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(errorText || `Server error: ${response.status}`);
+      }
+
       const resData = await response.json();
       
       if (resData.success) {
@@ -167,7 +182,7 @@ export default function FacultyDashboard() {
       setLoading(false);
       setIsSyncing(false);
     }
-  }, [searchParams, academicYear, showAlert, toast]);
+  }, [searchParams, academicYear, showAlert, toast, router]);
 
   useEffect(() => {
     fetchData();
