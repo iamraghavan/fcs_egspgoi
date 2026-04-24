@@ -52,7 +52,7 @@ import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
 
 type User = {
   _id: string;
@@ -159,7 +159,6 @@ export default function ManageRemarksPage() {
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
   const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
-  const uid = searchParams.get('uid');
   const totalPages = Math.ceil(total / limit);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
@@ -261,7 +260,7 @@ export default function ManageRemarksPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `https://faculty-credit-system.vercel.app/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
@@ -285,7 +284,7 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const res = await fetch(`${API_BASE_URL}/credits/credits/negative`, { method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData });
+      const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative`, { method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to issue");
       toast({ title: "Remark Issued", description: "Record has been successfully saved." });
@@ -308,7 +307,7 @@ export default function ManageRemarksPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
+        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
         toast({ title: "Remark Updated", description: "Changes saved successfully." });
@@ -323,7 +322,7 @@ export default function ManageRemarksPage() {
 
   const handleDeleteRemark = async (id: string) => {
       try {
-          const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
+          const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
           const data = await res.json();
           if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
           toast({ title: "Remark Deleted", description: "Record has been permanently removed." });
@@ -337,7 +336,7 @@ export default function ManageRemarksPage() {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
+        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen");
         toast({ title: "Window Re-opened", description: "Faculty can now submit a new appeal." });
@@ -487,7 +486,12 @@ export default function ManageRemarksPage() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8"
-                              onClick={() => { setEditingRemark(r); setEditNotes(r.notes || ""); setEditCreditTitleId(r.creditTitle || ""); setIsEditDialogOpen(true); }}
+                              onClick={() => { 
+                                setEditingRemark(r); 
+                                setEditNotes(r.notes || ""); 
+                                setEditCreditTitleId(r.creditTitle || ""); 
+                                setIsEditDialogOpen(true); 
+                              }}
                               disabled={r.status === 'deleted'}
                               aria-label="Edit Remark"
                             >
@@ -522,7 +526,8 @@ export default function ManageRemarksPage() {
                                           Confirm
                                         </AlertDialogAction>
                                     </AlertDialogFooter>
-                                </AlertDialog>
+                                </AlertDialogContent>
+                            </AlertDialog>
                           </div>
                         </TableCell>
                     </TableRow>

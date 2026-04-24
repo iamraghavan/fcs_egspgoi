@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Header } from "@/components/header";
@@ -20,7 +19,7 @@ const WhatsAppVerificationModal = dynamic(() =>
   import("@/components/whatsapp-verification-modal").then((mod) => mod.WhatsAppVerificationModal)
 );
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
 
 type User = {
   id: string;
@@ -100,7 +99,6 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           headers: { "Authorization": `Bearer ${token}` }
         });
 
-        // 401 or 403 means the token is invalid (e.g. secret changed)
         if (response.status === 401 || response.status === 403) {
           localStorage.clear();
           router.replace("/u/portal/auth?faculty_login&reason=unauthorized");
@@ -108,8 +106,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         }
 
         if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText.includes('Forbidden') ? 'Session expired. Please log in again.' : `Server error: ${response.status}`);
+            throw new Error(`Server error: ${response.status}`);
         }
 
         const responseData = await response.json();

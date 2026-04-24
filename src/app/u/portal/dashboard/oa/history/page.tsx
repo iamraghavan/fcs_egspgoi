@@ -50,7 +50,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
 
 type IssuedRemark = {
     _id: string;
@@ -74,10 +74,6 @@ type IssuedRemark = {
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
     type: 'positive' | 'negative';
     title: string;
-    appealEligibility?: {
-        canAppeal: boolean;
-        reason: string;
-    };
 };
 
 type CreditTitle = {
@@ -255,7 +251,7 @@ export default function IssuedHistoryPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `https://faculty-credit-system.vercel.app/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
@@ -275,7 +271,7 @@ export default function IssuedHistoryPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${editingRemark._id}`, { 
+        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${editingRemark._id}`, { 
             method: 'PUT', 
             headers: { 'Authorization': `Bearer ${adminToken}` }, 
             body: formData 
@@ -294,7 +290,7 @@ export default function IssuedHistoryPage() {
 
   const handleDelete = async (id: string) => {
     try {
-        const res = await fetch(`${API_BASE_URL}/credits/credits/negative/${id}`, { 
+        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${id}`, { 
             method: "DELETE", 
             headers: { "Authorization": `Bearer ${adminToken}` } 
         });
@@ -311,7 +307,7 @@ export default function IssuedHistoryPage() {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
     try {
-        const res = await fetch(`${API_BASE_URL}/admin/credits/credits/negative/${id}/reopen`, { 
+        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/admin/credits/credits/negative/${id}/reopen`, { 
             method: "PATCH", 
             headers: { "Authorization": `Bearer ${adminToken}` } 
         });

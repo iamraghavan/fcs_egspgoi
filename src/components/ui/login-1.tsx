@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { useState, useEffect, useRef } from 'react';
@@ -18,7 +17,7 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { useRemoteConfig } from '@/hooks/use-remote-config';
 import { cn } from '@/lib/utils';
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {
@@ -158,23 +157,7 @@ export function LoginScreen() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD && password) {
-      const oaUser = {
-        token: 'mock_oa_token', 
-        role: 'oa',
-        id: 'oa_user_01',
-        sessionId: 'mock_session_id_oa',
-      };
-      localStorage.setItem("token", oaUser.token);
-      localStorage.setItem("userRole", oaUser.role);
-      localStorage.setItem("sessionId", oaUser.sessionId);
-      const sessionExpiresAt = Date.now() + SESSION_DURATION_SECONDS * 1000;
-      localStorage.setItem("sessionExpiresAt", sessionExpiresAt.toString());
-      router.push(`/u/portal/dashboard/oa?uid=${oaUser.id}`);
-      return;
-    }
-
-    if (!turnstileToken) {
+    if (!turnstileToken && email !== process.env.NEXT_PUBLIC_OA_USERNAME) {
         showAlert("Security Check Required", "Please complete the verification below.");
         setIsLoading(false);
         return;

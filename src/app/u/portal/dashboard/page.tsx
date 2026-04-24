@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -41,7 +40,7 @@ import {
 import { format, startOfMonth, parseISO, isValid } from "date-fns";
 import _ from "lodash";
 
-const API_BASE_URL = '/api/v1';
+const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
 
 type CreditActivity = {
   _id: string;
@@ -82,10 +81,7 @@ export default function FacultyDashboard() {
   const [isSyncing, setIsSyncing] = useState(false);
 
   const calculateStatsFromItems = (items: CreditActivity[]) => {
-      // Filter out deleted items
       const validItems = items.filter(it => it.status !== 'deleted');
-      
-      // Balance only includes approved items
       const approved = validItems.filter(it => it.status === 'approved');
       const currentYear = academicYear;
       
@@ -95,7 +91,6 @@ export default function FacultyDashboard() {
       const yearPos = _.sumBy(yearApproved.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Math.abs(Number(it.points) || 0));
       const yearNeg = _.sumBy(yearApproved.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Math.abs(Number(it.points) || 0));
 
-      // Create time series from all history to show trend
       const grouped = _.groupBy(approved, it => {
           const d = parseISO(it.createdAt);
           return isValid(d) ? format(startOfMonth(d), 'yyyy-MM') : 'unknown';
@@ -146,7 +141,6 @@ export default function FacultyDashboard() {
         headers: { "Authorization": `Bearer ${token}` } 
       });
       
-      // Handle Unauthorized/Forbidden due to JWT secret change
       if (response.status === 403 || response.status === 401) {
         localStorage.clear();
         router.replace('/u/portal/auth?faculty_login&reason=session_expired');
@@ -154,8 +148,7 @@ export default function FacultyDashboard() {
       }
 
       if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(errorText.includes('Forbidden') ? 'Session access denied. Please re-authenticate.' : 'System synchronization error.');
+        throw new Error('System synchronization error.');
       }
 
       const resData = await response.json();
