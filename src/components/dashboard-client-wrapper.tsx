@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Header } from "@/components/header";
@@ -100,15 +101,22 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
           headers: { "Authorization": `Bearer ${token}` }
         });
 
-        if (response.status === 401) {
+        // 401 or 403 means the token is invalid (e.g. secret changed)
+        if (response.status === 401 || response.status === 403) {
           localStorage.removeItem("token");
           localStorage.removeItem("userRole");
-          router.push("/u/portal/auth?faculty_login");
+          localStorage.removeItem("sessionId");
+          router.push("/u/portal/auth?faculty_login&reason=unauthorized");
           return;
         }
 
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : (errorText || `Server error: ${response.status}`));
+        }
+
         const responseData = await response.json();
-        if (!response.ok || !responseData.success) throw new Error(responseData.message || "Session expired");
+        if (!responseData.success) throw new Error(responseData.message || "Session expired");
 
         const userData = responseData.user || responseData.data;
         const getAvatarUrl = (u: any) => {

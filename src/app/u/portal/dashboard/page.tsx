@@ -146,8 +146,8 @@ export default function FacultyDashboard() {
         headers: { "Authorization": `Bearer ${token}` } 
       });
       
-      // Handle 403 Forbidden (JWT Mismatch/Expired)
-      if (response.status === 403) {
+      // Handle 403 Forbidden or 401 Unauthorized (JWT Mismatch/Expired/Invalid Secret)
+      if (response.status === 403 || response.status === 401) {
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
         localStorage.removeItem("sessionId");
@@ -157,7 +157,7 @@ export default function FacultyDashboard() {
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : errorText);
+        throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : (errorText || `Error ${response.status}`));
       }
 
       const resData = await response.json();
