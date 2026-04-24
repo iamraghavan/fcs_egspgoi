@@ -12,7 +12,6 @@ import dynamic from "next/dynamic";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "./ui/button";
-import { BellRing } from "lucide-react";
 
 const CookiePreferencesDialog = dynamic(() =>
   import("@/components/cookie-preferences-dialog").then((mod) => mod.CookiePreferencesDialog)
@@ -21,7 +20,7 @@ const WhatsAppVerificationModal = dynamic(() =>
   import("@/components/whatsapp-verification-modal").then((mod) => mod.WhatsAppVerificationModal)
 );
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = '/api/v1';
 
 type User = {
   id: string;
@@ -97,22 +96,20 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         return;
     }
       try {
-        const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
           headers: { "Authorization": `Bearer ${token}` }
         });
 
         // 401 or 403 means the token is invalid (e.g. secret changed)
         if (response.status === 401 || response.status === 403) {
-          localStorage.removeItem("token");
-          localStorage.removeItem("userRole");
-          localStorage.removeItem("sessionId");
-          router.push("/u/portal/auth?faculty_login&reason=unauthorized");
+          localStorage.clear();
+          router.replace("/u/portal/auth?faculty_login&reason=unauthorized");
           return;
         }
 
         if (!response.ok) {
             const errorText = await response.text();
-            throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : (errorText || `Server error: ${response.status}`));
+            throw new Error(errorText.includes('Forbidden') ? 'Session expired. Please log in again.' : `Server error: ${response.status}`);
         }
 
         const responseData = await response.json();
@@ -121,7 +118,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         const userData = responseData.user || responseData.data;
         const getAvatarUrl = (u: any) => {
             if (u.profileImage) {
-                return u.profileImage.startsWith('http') ? u.profileImage : `${API_BASE_URL}${u.profileImage.startsWith('/') ? '' : '/'}${u.profileImage}`;
+                return u.profileImage.startsWith('http') ? u.profileImage : `https://faculty-credit-system.vercel.app${u.profileImage.startsWith('/') ? '' : '/'}${u.profileImage}`;
             }
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`;
         };
@@ -150,7 +147,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         }
       } catch (error: any) {
         showAlert("Session Error", error.message);
-        localStorage.removeItem("token");
+        localStorage.clear();
         router.push("/u/portal/auth?faculty_login");
       } finally {
         setLoading(false);

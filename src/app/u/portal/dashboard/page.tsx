@@ -92,8 +92,8 @@ export default function FacultyDashboard() {
       const currentCredit = _.sumBy(approved, it => Number(it.points) || 0);
       
       const yearApproved = approved.filter(it => it.academicYear === currentYear);
-      const yearPos = _.sumBy(yearApproved.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Number(it.points) || 0);
-      const yearNeg = _.sumBy(yearApproved.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Number(it.points) || 0);
+      const yearPos = _.sumBy(yearApproved.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Math.abs(Number(it.points) || 0));
+      const yearNeg = _.sumBy(yearApproved.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Math.abs(Number(it.points) || 0));
 
       // Create time series from all history to show trend
       const grouped = _.groupBy(approved, it => {
@@ -104,13 +104,13 @@ export default function FacultyDashboard() {
       const series = Object.entries(grouped)
           .filter(([period]) => period !== 'unknown')
           .map(([period, mItems]) => {
-            const pos = _.sumBy(mItems.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Number(it.points) || 0);
-            const neg = _.sumBy(mItems.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Number(it.points) || 0);
+            const pos = _.sumBy(mItems.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Math.abs(Number(it.points) || 0));
+            const neg = _.sumBy(mItems.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Math.abs(Number(it.points) || 0));
             return {
                 period,
                 positivePoints: pos,
                 negativePoints: neg,
-                net: pos + neg
+                net: pos - neg
             };
           })
           .sort((a, b) => a.period.localeCompare(b.period));
@@ -125,7 +125,7 @@ export default function FacultyDashboard() {
                   academicYear: currentYear,
                   positivePoints: yearPos,
                   negativePoints: yearNeg,
-                  netForYear: yearPos + yearNeg
+                  netForYear: yearPos - yearNeg
               },
               series
           }
@@ -146,18 +146,16 @@ export default function FacultyDashboard() {
         headers: { "Authorization": `Bearer ${token}` } 
       });
       
-      // Handle 403 Forbidden or 401 Unauthorized (JWT Mismatch/Expired/Invalid Secret)
+      // Handle Unauthorized/Forbidden due to JWT secret change
       if (response.status === 403 || response.status === 401) {
-        localStorage.removeItem("token");
-        localStorage.removeItem("userRole");
-        localStorage.removeItem("sessionId");
-        router.push('/u/portal/auth?faculty_login&reason=session_expired');
+        localStorage.clear();
+        router.replace('/u/portal/auth?faculty_login&reason=session_expired');
         return;
       }
 
       if (!response.ok) {
         const errorText = await response.text();
-        throw new Error(errorText.includes('<!DOCTYPE') ? 'Server authorization error' : (errorText || `Error ${response.status}`));
+        throw new Error(errorText.includes('Forbidden') ? 'Session access denied. Please re-authenticate.' : 'System synchronization error.');
       }
 
       const resData = await response.json();
@@ -169,12 +167,11 @@ export default function FacultyDashboard() {
         } else if (resData.items) {
             const computed = calculateStatsFromItems(resData.items);
             setStats(computed);
-            // Display all status types in activities for user feedback
             setRecentActivities(resData.items.slice(0, 8));
         }
 
         if (forceRecalc) {
-          toast({ title: "Credits Synced", description: "Your balance has been recalculated from the transaction log." });
+          toast({ title: "Credits Synced", description: "Balance updated successfully." });
         }
       }
     } catch (e: any) {
@@ -370,7 +367,7 @@ export default function FacultyDashboard() {
                     </TableCell>
                     <TableCell className="capitalize text-[12px] text-cds-text-02 font-medium">{act.status}</TableCell>
                     <TableCell className={cn("text-right font-bold tabular-nums", (act.type === 'positive' || (Number(act.points) > 0)) ? "text-cds-support-02" : "text-cds-support-01")}>
-                       {(act.type === 'positive' || Number(act.points) > 0) ? `+${act.points}` : act.points}
+                       {(act.type === 'positive' || Number(act.points) > 0) ? `+${Math.abs(act.points)}` : `-${Math.abs(act.points)}`}
                     </TableCell>
                     <TableCell className="text-right text-[11px] text-cds-text-05 tabular-nums font-medium">
                       {new Date(act.createdAt).toLocaleDateString()}

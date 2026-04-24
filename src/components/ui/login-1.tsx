@@ -18,7 +18,7 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { useRemoteConfig } from '@/hooks/use-remote-config';
 import { cn } from '@/lib/utils';
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = '/api/v1';
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {
@@ -125,8 +125,8 @@ export function LoginScreen() {
     }
 
     const decodedToken = parseJwt(token);
-    const userId = userData.id || decodedToken?.id;
-    const userRole = userData.role || decodedToken?.role;
+    const userId = userData.id || decodedToken?.id || userData.user?._id;
+    const userRole = userData.role || decodedToken?.role || userData.user?.role;
     
     if (!userId || !userRole) {
        showAlert("Login Error", "Session profile could not be identified.");
@@ -158,7 +158,7 @@ export function LoginScreen() {
     e.preventDefault();
     setIsLoading(true);
 
-    if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD) {
+    if (email === process.env.NEXT_PUBLIC_OA_USERNAME && password === process.env.NEXT_PUBLIC_OA_PASSWORD && password) {
       const oaUser = {
         token: 'mock_oa_token', 
         role: 'oa',
@@ -183,17 +183,18 @@ export function LoginScreen() {
     try {
       const body = { email, password };
 
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json", 'Cache-Control': 'no-cache' },
         body: JSON.stringify(body),
       });
       
-      const responseData = await response.json();
-
       if (!response.ok) {
-        throw new Error(responseData.message || "Invalid credentials provided.");
+          const errData = await response.json().catch(() => ({ message: 'Invalid credentials provided.' }));
+          throw new Error(errData.message || "Access denied.");
       }
+
+      const responseData = await response.json();
       
       if (responseData.success && responseData.mfaRequired) {
         setTempAuthData({
@@ -231,7 +232,7 @@ export function LoginScreen() {
             type: tempAuthData.mfaType,
           };
 
-          const response = await fetch(`${API_BASE_URL}/api/v1/auth/verify-mfa`, {
+          const response = await fetch(`${API_BASE_URL}/auth/verify-mfa`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(body),
