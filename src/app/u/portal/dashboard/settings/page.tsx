@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { Button } from"@/components/ui/button"
 import { Input } from"@/components/ui/input"
@@ -19,7 +20,7 @@ import { SessionManager } from"@/components/session-manager"
 import { PushNotificationManager } from"@/components/push-notification-manager"
 import { Switch } from"@/components/ui/switch"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type UserProfile = {
  name: string;
@@ -66,7 +67,7 @@ export default function SettingsPage() {
  return;
  }
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+ const response = await fetch(`${API_BASE_URL}/auth/profile`, {
  headers: {"Authorization": `Bearer ${token}` }
  });
  const responseData = await response.json();
@@ -170,7 +171,7 @@ export default function SettingsPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/users/me`, {
+ const response = await fetch(`${API_BASE_URL}/users/me`, {
  method: 'PUT',
  headers: { 'Authorization': `Bearer ${token}` },
  body: formData,
@@ -204,7 +205,7 @@ export default function SettingsPage() {
  const token = localStorage.getItem("token");
  
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/users/me/password`, {
+ const response = await fetch(`${API_BASE_URL}/users/me/password`, {
  method: 'PUT',
  headers: {
 "Authorization": `Bearer ${token}`,

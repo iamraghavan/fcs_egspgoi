@@ -58,7 +58,7 @@ export function SessionManager() {
  return;
  }
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/auth/sessions`, {
+ const response = await fetch(`${API_BASE_URL}/auth/sessions`, {
  headers: { Authorization: `Bearer ${token}` }
  });
  const data = await response.json();
@@ -81,7 +81,7 @@ export function SessionManager() {
  const handleRevoke = async (id: string) => {
  const token = localStorage.getItem('token');
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/auth/sessions/${id}`, {
+ const response = await fetch(`${API_BASE_URL}/auth/sessions/${id}`, {
  method: 'DELETE',
  headers: { Authorization: `Bearer ${token}` }
  });
@@ -99,7 +99,7 @@ export function SessionManager() {
  const handleRevokeOthers = async () => {
  const token = localStorage.getItem('token');
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/auth/sessions/others`, {
+ const response = await fetch(`${API_BASE_URL}/auth/sessions/others`, {
  method: 'DELETE',
  headers: { Authorization: `Bearer ${token}` }
  });

@@ -134,10 +134,10 @@ export default function OAPositiveCreditPage() {
  }
  try {
  const [facultyResponse, creditTitlesResponse] = await Promise.all([
- fetch(`${API_BASE_URL}/api/v1/users?limit=1000`, {
+ fetch(`${API_BASE_URL}/users?limit=1000`, {
  headers: { Authorization: `Bearer ${adminToken}` },
  }),
- fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+ fetch(`${API_BASE_URL}/admin/credit-title`, {
  headers: { Authorization: `Bearer ${adminToken}` },
  })
  ]);
@@ -203,7 +203,7 @@ export default function OAPositiveCreditPage() {
  if (proof) formData.append("proof", proof);
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/positive`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credits/positive`, {
  method:"POST",
  headers: {"Authorization": `Bearer ${adminToken}` },
  body: formData,

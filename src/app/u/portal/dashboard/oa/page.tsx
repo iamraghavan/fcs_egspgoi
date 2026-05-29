@@ -134,10 +134,10 @@ export default function OADashboardPage() {
  }
  try {
  const [facultyResponse, creditTitlesResponse] = await Promise.all([
- fetch(`${API_BASE_URL}/api/v1/users?limit=1000`, {
+ fetch(`${API_BASE_URL}/users?limit=1000`, {
  headers: { Authorization: `Bearer ${adminToken}` },
  }),
- fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+ fetch(`${API_BASE_URL}/admin/credit-title`, {
  headers: { Authorization: `Bearer ${adminToken}` },
  })
  ]);
@@ -197,7 +197,7 @@ export default function OADashboardPage() {
 
  try {
  // Corrected to restored API path /credits/credits/negative
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/negative`, {
  method:"POST",
  headers: {"Authorization": `Bearer ${adminToken}` },
  body: formData,
@@ -222,7 +222,7 @@ export default function OADashboardPage() {
  setProof(null);
 
  // notify server
- fetch(`${API_BASE_URL}/api/v1/notifications/remark`, {
+ fetch(`${API_BASE_URL}/notifications/remark`, {
  method: 'POST',
  headers: {
  'Authorization': `Bearer ${adminToken}`,

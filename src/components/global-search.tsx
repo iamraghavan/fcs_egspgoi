@@ -59,7 +59,7 @@ export function GlobalSearch() {
  setLoading(true)
  const token = localStorage.getItem("token")
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/search?q=${encodeURIComponent(query)}`, {
+ const response = await fetch(`${API_BASE_URL}/search?q=${encodeURIComponent(query)}`, {
  headers: { Authorization: `Bearer ${token}` }
  })
  const data = await response.json()

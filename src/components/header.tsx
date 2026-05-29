@@ -49,7 +49,7 @@ export function Header({ user }: { user: User }) {
  if (!token || !facultyId || user.role === 'admin' || user.role === 'oa') return;
 
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}`, {
+ const res = await fetch(`${API_BASE_URL}/credits/credits/faculty/${facultyId}`, {
  headers: {"Authorization": `Bearer ${token}` }
  });
  if (res.ok) {

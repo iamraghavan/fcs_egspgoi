@@ -26,12 +26,13 @@ import { Popover, PopoverContent, PopoverTrigger } from"@/components/ui/popover"
 import { Calendar } from"@/components/ui/calendar"
 import { format } from"date-fns"
 import * as XLSX from 'xlsx';
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 import { Switch } from"@/components/ui/switch"
 import { Label } from"@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from"@/components/ui/collapsible"
 import { Skeleton } from"@/components/ui/skeleton"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type Submission = {
  _id: string;
@@ -139,7 +140,7 @@ export default function ReviewSubmissionsPage() {
  const queryString = buildQueryString(queryFilters);
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?${queryString}`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credits/positive?${queryString}`, {
  headers: {"Authorization": `Bearer ${token}` },
  cache: 'no-store'
  });
@@ -186,7 +187,7 @@ export default function ReviewSubmissionsPage() {
  const token = localStorage.getItem("token");
  
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/positive/${selectedSubmission._id}/status`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credits/positive/${selectedSubmission._id}/status`, {
  method: 'PUT',
  headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
  body: JSON.stringify({

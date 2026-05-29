@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect, useMemo } from"react";
 import {
@@ -46,7 +47,7 @@ import { useAlert } from"@/context/alert-context";
 import { cn } from"@/lib/utils";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type CreditTitle = {
  _id: string;
@@ -89,7 +90,7 @@ export default function ManageCreditTitlesPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credit-title`, {
  headers: { Authorization: `Bearer ${adminToken}` },
  });
  const data = await response.json();
@@ -129,7 +130,7 @@ export default function ManageCreditTitlesPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credit-title`, {
  method:"POST",
  headers: {
 "Authorization": `Bearer ${adminToken}`,
@@ -183,7 +184,7 @@ export default function ManageCreditTitlesPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title/${editingTitle._id}`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credit-title/${editingTitle._id}`, {
  method:"PUT",
  headers: {
 "Authorization": `Bearer ${adminToken}`,
@@ -221,7 +222,7 @@ export default function ManageCreditTitlesPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title/${id}`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credit-title/${id}`, {
  method:"DELETE",
  headers: {"Authorization": `Bearer ${adminToken}` },
  });

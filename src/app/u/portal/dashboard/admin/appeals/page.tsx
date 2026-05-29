@@ -104,7 +104,7 @@ export default function AppealReviewPage() {
  params.append('department', departmentFilter);
  }
  
- const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/all?${params.toString()}`;
+ const url = `${API_BASE_URL}/admin/credits/negative/appeals/all?${params.toString()}`;
 
  const response = await fetch(url, {
  headers: { Authorization: `Bearer ${token}` }
@@ -200,7 +200,7 @@ export default function AppealReviewPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal.creditId}/appeal`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credits/negative/${selectedAppeal.creditId}/appeal`, {
  method: 'PUT',
  headers: {
  'Authorization': `Bearer ${token}`,

@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect, useMemo, useRef, memo } from"react";
 import {
@@ -50,7 +51,7 @@ import { Textarea } from"@/components/ui/textarea";
 import { shortenUrl } from"@/lib/url-shortener";
 import { Avatar, AvatarFallback, AvatarImage } from"@/components/ui/avatar";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1` : 'https://faculty-credit-system.vercel.app/api/v1';
+
 
 type IssuedRemark = {
  _id: string;
@@ -251,8 +252,8 @@ export default function IssuedHistoryPage() {
 
  const getProofUrl = (url: string) => {
  if (!url) return '';
- const baseDomain = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
- return url.startsWith('http') ? url : `${baseDomain}/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+ 
+ return url.startsWith('http') ? url : `${BASE_DOMAIN}/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
  };
 
  useEffect(() => {

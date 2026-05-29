@@ -58,7 +58,7 @@ export default function NotificationsPage() {
  }
  
  try {
- const url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}`;
+ const url = `${API_BASE_URL}/credits/credits/faculty/${facultyId}`;
  const response = await fetch(url, { headers: {"Authorization": `Bearer ${token}` } });
 
  const responseData = await response.json();

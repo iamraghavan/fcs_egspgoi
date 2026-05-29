@@ -35,7 +35,7 @@ export function useSubmitAchievement() {
  }
  
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/positive`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/positive`, {
  method:"POST",
  headers: {
 "Authorization": `Bearer ${token}`,

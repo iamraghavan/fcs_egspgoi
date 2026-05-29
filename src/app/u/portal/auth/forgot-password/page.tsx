@@ -24,7 +24,7 @@ export default function ForgotPasswordPage() {
  setIsLoading(true);
 
  try {
- await fetch(`${API_BASE_URL}/api/v1/auth/forgot-password`, {
+ await fetch(`${API_BASE_URL}/auth/forgot-password`, {
  method:"POST",
  headers: {"Content-Type":"application/json"},
  body: JSON.stringify({ email }),

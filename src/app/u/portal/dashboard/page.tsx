@@ -1,4 +1,5 @@
 "use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect, useCallback } from"react";
 import { useSearchParams, useRouter } from"next/navigation";
@@ -40,7 +41,7 @@ import {
 import { format, startOfMonth, parseISO, isValid } from"date-fns";
 import _ from"lodash";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1` : 'https://faculty-credit-system.vercel.app/api/v1';
+
 
 type CreditActivity = {
  _id: string;

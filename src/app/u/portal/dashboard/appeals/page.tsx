@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect, useMemo } from"react";
 import { useSearchParams, useRouter } from"next/navigation";
@@ -43,7 +44,7 @@ import { FileUpload } from"@/components/file-upload";
 import { Edit, Trash2, Search, Filter } from"lucide-react";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type NegativeCredit = {
  _id: string;
@@ -131,7 +132,7 @@ export default function AppealsPage() {
  sort: '-appeal.createdAt',
  });
  
- const url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}/negative`;
+ const url = `${API_BASE_URL}/credits/credits/faculty/${facultyId}/negative`;
 
  const response = await fetch(`${url}?${params.toString()}`, {
  headers: {"Authorization": `Bearer ${token}` }
@@ -152,7 +153,7 @@ export default function AppealsPage() {
  if (resData.success) {
  // Relaxed filter: just check if credit.appeal exists (backend might not send _id inside the appeal object)
  const fetchedAppeals = resData.items.filter((credit: NegativeCredit): credit is Appeal => 
- !!credit.appeal && credit.status === 'appealed'
+ !!credit.appeal
  );
  
  setAppeals(fetchedAppeals);
@@ -206,7 +207,7 @@ export default function AppealsPage() {
  formData.append("proof", appealProof);
  }
  
- const url = `${API_BASE_URL}/api/v1/credits/credits/appeals/${selectedAppeal._id}`;
+ const url = `${API_BASE_URL}/credits/credits/appeals/${selectedAppeal._id}`;
 
  try {
  const response = await fetch(url, {
@@ -237,7 +238,7 @@ export default function AppealsPage() {
 
  const handleWithdrawAppeal = async (creditId: string) => {
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/appeals/${creditId}`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/appeals/${creditId}`, {
  method: 'DELETE',
  headers: { 'Authorization': `Bearer ${token}` }
  });

@@ -16,7 +16,7 @@ export async function shortenUrl(longUrl: string, customAlias: string | null = n
  payload.alias = customAlias;
  }
 
- const response = await fetch(`${API_BASE_URL}/api/v1/url/shorten`, {
+ const response = await fetch(`${API_BASE_URL}/url/shorten`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',

@@ -29,7 +29,7 @@ export function useCreditTitles() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
+ const response = await fetch(`${API_BASE_URL}/admin/credit-title`, {
  headers: {
 "Authorization": `Bearer ${token}`
  }

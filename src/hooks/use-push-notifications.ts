@@ -83,7 +83,7 @@ export function usePushNotifications() {
  if (fcmToken) {
  console.log('%c FCM TOKEN IS: ', 'color: white; background: #007bff; font-size: 16px; padding: 4px;', fcmToken);
  
- const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
+ const response = await fetch(`${API_BASE_URL}/notifications/device-token`, {
  method: 'PUT',
  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },
  body: JSON.stringify({ fcmToken }),

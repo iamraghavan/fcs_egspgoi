@@ -51,14 +51,19 @@ const TableFooter = React.forwardRef<
 ))
 TableFooter.displayName ="TableFooter"
 
+import { motion } from "framer-motion";
+
 const TableRow = React.forwardRef<
  HTMLTableRowElement,
- React.HTMLAttributes<HTMLTableRowElement>
+ React.HTMLAttributes<HTMLTableRowElement> & { id?: string }
 >(({ className, id, ...props }, ref) => {
  const generatedId = React.useId().replace(/:/g, '');
  return (
- <tr
- ref={ref}
+ <motion.tr
+ initial={{ opacity: 0, y: 10 }}
+ animate={{ opacity: 1, y: 0 }}
+ transition={{ duration: 0.2 }}
+ ref={ref as any}
  id={id || `tr-${generatedId}`}
  className={cn(
 "border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted",

@@ -16,8 +16,9 @@ import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { useRemoteConfig } from '@/hooks/use-remote-config';
 import { cn } from '@/lib/utils';
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1` : 'https://faculty-credit-system.vercel.app/api/v1';
+
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {

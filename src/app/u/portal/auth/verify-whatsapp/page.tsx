@@ -88,7 +88,7 @@ function VerifyWhatsApp() {
  return;
  }
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/auth/profile`, {
+ const res = await fetch(`${API_BASE_URL}/auth/profile`, {
  headers: { Authorization: `Bearer ${token}` },
  });
  const data = await res.json();
@@ -118,7 +118,7 @@ function VerifyWhatsApp() {
  setIsSubmitting(true);
  const token = localStorage.getItem("token");
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/auth/whatsapp/send-otp`, {
+ const res = await fetch(`${API_BASE_URL}/auth/whatsapp/send-otp`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
  body: JSON.stringify({ phone }),
@@ -144,7 +144,7 @@ function VerifyWhatsApp() {
  setIsSubmitting(true);
  const token = localStorage.getItem("token");
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/auth/whatsapp/verify-otp`, {
+ const res = await fetch(`${API_BASE_URL}/auth/whatsapp/verify-otp`, {
  method: 'POST',
  headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
  body: JSON.stringify({ otp }),

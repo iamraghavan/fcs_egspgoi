@@ -16,6 +16,7 @@ import { FileUpload } from"@/components/file-upload";
 import { Skeleton } from"@/components/ui/skeleton";
 import type { CreditTitle } from"@/hooks/use-credit-titles";
 import { Textarea } from"./ui/textarea";
+import { motion, AnimatePresence } from "framer-motion";
 
 const getCurrentAcademicYear = () => {
  const today = new Date();
@@ -128,7 +129,13 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
  }
 
  return (
- <form className="space-y-6"onSubmit={handleSubmit}>
+ <motion.form 
+  initial={{ opacity: 0, y: 20 }}
+  animate={{ opacity: 1, y: 0 }}
+  transition={{ duration: 0.4, ease: "easeOut" }}
+  onSubmit={handleSubmit} 
+  className="space-y-6"
+ >
  {errors.form && <p className="text-sm font-medium text-destructive"role="alert">{errors.form}</p>}
  <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
  <div>

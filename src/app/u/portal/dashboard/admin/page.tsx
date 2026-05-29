@@ -31,6 +31,7 @@ import { Skeleton } from"@/components/ui/skeleton";
 import { useAlert } from"@/context/alert-context";
 import { gsap } from"gsap";
 import { Users, FolderKanban, ShieldAlert, BarChartHorizontal, Megaphone, Send, Activity, TrendingUp, Clock } from 'lucide-react';
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 import { Input } from"@/components/ui/input";
 import { Button } from"@/components/ui/button";
 import { Textarea } from"@/components/ui/textarea";
@@ -38,7 +39,7 @@ import { useToast } from"@/hooks/use-toast";
 import { cn } from"@/lib/utils";
 import _ from"lodash";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type AnalyticsData = {
  totalUsers: number;
@@ -107,10 +108,10 @@ export default function AdminDashboard() {
  }
  try {
  const [usersRes, creditsRes, recentActivitiesRes, trendsRes] = await Promise.all([
- fetch(`${API_BASE_URL}/api/v1/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
- fetch(`${API_BASE_URL}/api/v1/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
- fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=8&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } }),
- fetch(`${API_BASE_URL}/api/v1/analytics/credit-trends`, { headers: { Authorization: `Bearer ${token}` } })
+ fetch(`${API_BASE_URL}/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
+ fetch(`${API_BASE_URL}/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
+ fetch(`${API_BASE_URL}/admin/credits/positive?limit=8&sort=-createdAt`, { headers: { Authorization: `Bearer ${token}` } }),
+ fetch(`${API_BASE_URL}/analytics/credit-trends`, { headers: { Authorization: `Bearer ${token}` } })
  ]);
 
  const usersData = await usersRes.json();
@@ -199,7 +200,7 @@ export default function AdminDashboard() {
  const token = localStorage.getItem("token");
  
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/notifications/broadcast`, {
+ const res = await fetch(`${API_BASE_URL}/notifications/broadcast`, {
  method: 'POST',
  headers: {
  'Authorization': `Bearer ${token}`,

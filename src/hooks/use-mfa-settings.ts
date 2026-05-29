@@ -17,7 +17,7 @@ export function useMfaSettings() {
  setIsLoading(true);
  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/setup`, {
+ const res = await fetch(`${API_BASE_URL}/users/me/mfa/setup`, {
  headers: {"Authorization": `Bearer ${token}` }
  });
  const data = await res.json();
@@ -36,7 +36,7 @@ export function useMfaSettings() {
  setIsLoading(true);
  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/enable`, {
+ const res = await fetch(`${API_BASE_URL}/users/me/mfa/enable`, {
  method: 'POST',
  headers: {
  'Authorization': `Bearer ${token}`,
@@ -60,7 +60,7 @@ export function useMfaSettings() {
  setIsLoading(true);
  const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
  try {
- const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/disable`, {
+ const res = await fetch(`${API_BASE_URL}/users/me/mfa/disable`, {
  method: 'POST',
  headers: {
  'Authorization': `Bearer ${token}`,

@@ -122,7 +122,7 @@ export default function FacultyAccountsPage() {
  return;
  }
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
+ const response = await fetch(`${API_BASE_URL}/users?limit=1000&sort=name`, {
  headers: {"Authorization": `Bearer ${token}` },
  });
  const responseData = await response.json();
@@ -214,7 +214,7 @@ export default function FacultyAccountsPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+ const response = await fetch(`${API_BASE_URL}/auth/register`, {
  method:"POST",
  headers: {
 "Content-Type":"application/json",
@@ -292,7 +292,7 @@ export default function FacultyAccountsPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/users/${editingFaculty._id}`, {
+ const response = await fetch(`${API_BASE_URL}/users/${editingFaculty._id}`, {
  method: 'PUT',
  headers: {
  'Authorization': `Bearer ${adminToken}`

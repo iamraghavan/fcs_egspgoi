@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect, useMemo, useRef } from"react";
 import {
@@ -54,7 +55,7 @@ import { Label } from"@/components/ui/label";
 import { shortenUrl } from"@/lib/url-shortener";
 import { Badge } from"@/components/ui/badge";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ? `${process.env.NEXT_PUBLIC_API_BASE_URL}/api/v1` : 'https://faculty-credit-system.vercel.app/api/v1';
+
 
 type User = {
  _id: string;
@@ -263,8 +264,8 @@ export default function ManagePositiveCreditsPage() {
 
  const getProofUrl = (url: string) => {
  if (!url) return '';
- const baseDomain = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
- return url.startsWith('http') ? url : `${baseDomain}/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+ 
+ return url.startsWith('http') ? url : `${BASE_DOMAIN}/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
  };
 
  useEffect(() => {

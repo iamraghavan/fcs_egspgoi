@@ -1,4 +1,5 @@
-"use client"
+"use client";
+import { API_BASE_URL, BASE_DOMAIN } from "@/lib/config";
 
 import { useState, useEffect } from"react";
 import { useSearchParams } from"next/navigation";
@@ -52,7 +53,7 @@ import { shortenUrl } from"@/lib/url-shortener";
 import { cn } from"@/lib/utils";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+
 
 type GoodWork = {
  _id: string;
@@ -147,7 +148,7 @@ export default function GoodWorksPage() {
  params.append('status', currentStatus);
  }
 
- let url = `${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}?${params.toString()}`;
+ let url = `${API_BASE_URL}/credits/credits/faculty/${facultyId}?${params.toString()}`;
 
  try {
  const response = await fetch(url, {
@@ -240,7 +241,7 @@ export default function GoodWorksPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/positive/${editingWork._id}`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/positive/${editingWork._id}`, {
  method: 'PUT',
  headers: {
 "Authorization": `Bearer ${token}`,
@@ -275,7 +276,7 @@ export default function GoodWorksPage() {
  }
 
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/${creditId}`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/${creditId}`, {
  headers: {"Authorization": `Bearer ${token}` }
  });
  const responseData = await response.json();
@@ -300,7 +301,7 @@ export default function GoodWorksPage() {
 
  const token = localStorage.getItem("token");
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/positive/${creditId}`, {
+ const response = await fetch(`${API_BASE_URL}/credits/credits/positive/${creditId}`, {
  method: 'DELETE',
  headers: { 'Authorization': `Bearer ${token}` }
  });

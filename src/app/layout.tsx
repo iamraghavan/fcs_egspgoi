@@ -26,8 +26,15 @@ const plexMono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
- title: 'CreditWise',
- description: 'A comprehensive faculty performance management system for E.G.S. Pillay Engineering College.',
+  title: "Faculty Credit System",
+  description: "A comprehensive credit management system for faculty.",
+  manifest: "/site.webmanifest",
+  themeColor: "#ffffff",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "FCS",
+  },
 };
 
 export default function RootLayout({
@@ -40,13 +47,11 @@ export default function RootLayout({
  <head>
  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"rel="stylesheet"/>
  </head>
- <body className="antialiased"suppressHydrationWarning>
- <AlertProvider>
- {children}
- <Toaster />
- <GlobalAlert />
- </AlertProvider>
- </body>
+  <body className="antialiased" suppressHydrationWarning>
+    {children}
+    <Toaster />
+    <GlobalAlert />
+  </body>
  </html>
  );
 }

@@ -23,7 +23,7 @@ export function PushNotificationManager() {
  
  setIsTestProcessing(true);
  try {
- const response = await fetch(`${API_BASE_URL}/api/v1/notifications/test`, {
+ const response = await fetch(`${API_BASE_URL}/notifications/test`, {
  method: 'POST',
  headers: {
  'Content-Type': 'application/json',
