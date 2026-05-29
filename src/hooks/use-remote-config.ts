@@ -11,23 +11,23 @@ import { fetchAndActivate, getValue, type Value } from 'firebase/remote-config';
  * @returns The value of the parameter or null if not yet loaded.
  */
 export function useRemoteConfig(key: string): Value | null {
-  const [value, setValue] = useState<Value | null>(null);
+ const [value, setValue] = useState<Value | null>(null);
 
-  useEffect(() => {
-    if (!remoteConfig) return;
+ useEffect(() => {
+ if (!remoteConfig) return;
 
-    const fetchConfig = async () => {
-      try {
-        await fetchAndActivate(remoteConfig!);
-        const remoteValue = getValue(remoteConfig!, key);
-        setValue(remoteValue);
-      } catch (error) {
-        console.error(`Error fetching Remote Config for key: ${key}`, error);
-      }
-    };
+ const fetchConfig = async () => {
+ try {
+ await fetchAndActivate(remoteConfig!);
+ const remoteValue = getValue(remoteConfig!, key);
+ setValue(remoteValue);
+ } catch (error) {
+ console.error(`Error fetching Remote Config for key: ${key}`, error);
+ }
+ };
 
-    fetchConfig();
-  }, [key]);
+ fetchConfig();
+ }, [key]);
 
-  return value;
+ return value;
 }

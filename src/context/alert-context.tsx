@@ -1,41 +1,19 @@
-
 "use client";
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-
-type AlertContextType = {
-  showAlert: (title: string, description: string) => void;
-  isAlertOpen: boolean;
-  alertContent: { title: string; description: string };
-  closeAlert: () => void;
-};
-
-const AlertContext = createContext<AlertContextType | undefined>(undefined);
+import React, { ReactNode } from 'react';
+import { useAppStore } from '@/store/use-app-store';
 
 export function AlertProvider({ children }: { children: ReactNode }) {
-  const [isAlertOpen, setIsAlertOpen] = useState(false);
-  const [alertContent, setAlertContent] = useState({ title: '', description: '' });
-
-  const showAlert = useCallback((title: string, description: string) => {
-    setAlertContent({ title, description });
-    setIsAlertOpen(true);
-  }, []);
-
-  const closeAlert = useCallback(() => {
-    setIsAlertOpen(false);
-  }, []);
-
-  return (
-    <AlertContext.Provider value={{ showAlert, isAlertOpen, alertContent, closeAlert }}>
-      {children}
-    </AlertContext.Provider>
-  );
+ // AlertProvider is now a pass-through since state is managed by Zustand.
+ // Kept here to maintain backwards compatibility with RootLayout.
+ return <>{children}</>;
 }
 
 export function useAlert() {
-  const context = useContext(AlertContext);
-  if (context === undefined) {
-    throw new Error('useAlert must be used within an AlertProvider');
-  }
-  return context;
+ const showAlert = useAppStore(state => state.showAlert);
+ const closeAlert = useAppStore(state => state.closeAlert);
+ const isAlertOpen = useAppStore(state => state.isAlertOpen);
+ const alertContent = useAppStore(state => state.alertContent);
+
+ return { showAlert, closeAlert, isAlertOpen, alertContent };
 }

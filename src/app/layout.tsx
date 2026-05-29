@@ -6,44 +6,47 @@ import { GlobalAlert } from '@/components/ui/global-alert';
 import { Inter, IBM_Plex_Sans, IBM_Plex_Mono } from 'next/font/google';
 
 const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-inter',
+ subsets: ['latin'],
+ display: 'swap',
+ variable: '--font-inter',
 });
 
 const plexSans = IBM_Plex_Sans({
-  weight: ['300', '400', '500', '600', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-plex-sans',
+ weight: ['300', '400', '500', '600', '700'],
+ subsets: ['latin'],
+ display: 'swap',
+ variable: '--font-plex-sans',
 });
 
 const plexMono = IBM_Plex_Mono({
-  weight: ['400', '500'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-plex-mono',
+ weight: ['400', '500'],
+ subsets: ['latin'],
+ display: 'swap',
+ variable: '--font-plex-mono',
 });
 
 export const metadata: Metadata = {
-  title: 'CreditWise',
-  description: 'A comprehensive faculty performance management system for E.G.S. Pillay Engineering College.',
+ title: 'CreditWise',
+ description: 'A comprehensive faculty performance management system for E.G.S. Pillay Engineering College.',
 };
 
 export default function RootLayout({
-  children,
+ children,
 }: Readonly<{
-  children: React.ReactNode;
+ children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" className={`${inter.variable} ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
-      <body className="antialiased" suppressHydrationWarning>
-          <AlertProvider>
-            {children}
-            <Toaster />
-            <GlobalAlert />
-          </AlertProvider>
-      </body>
-    </html>
-  );
+ return (
+ <html lang="en"className={`${inter.variable} ${plexSans.variable} ${plexMono.variable}`} suppressHydrationWarning>
+ <head>
+ <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0"rel="stylesheet"/>
+ </head>
+ <body className="antialiased"suppressHydrationWarning>
+ <AlertProvider>
+ {children}
+ <Toaster />
+ <GlobalAlert />
+ </AlertProvider>
+ </body>
+ </html>
+ );
 }
