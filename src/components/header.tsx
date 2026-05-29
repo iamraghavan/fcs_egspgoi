@@ -10,7 +10,7 @@ import { GlobalSearch } from './global-search';
 import { Bell, HelpCircle, Settings, Menu } from 'lucide-react';
 import { format } from 'date-fns';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
 
 type User = {

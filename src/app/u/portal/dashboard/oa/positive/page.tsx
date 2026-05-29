@@ -22,7 +22,7 @@ import { useSearchParams } from"next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from"@/components/ui/avatar";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+import { API_BASE_URL } from "@/lib/config";
 
 type User = {
  _id: string;

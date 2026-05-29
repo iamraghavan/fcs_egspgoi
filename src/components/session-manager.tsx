@@ -18,7 +18,7 @@ import {
  AlertDialogTrigger,
 } from"@/components/ui/alert-dialog"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 type Session = {
  _id: string;

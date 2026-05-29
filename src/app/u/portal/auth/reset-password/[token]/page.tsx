@@ -14,7 +14,7 @@ import { useToast } from"@/hooks/use-toast";
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 export default function ResetPasswordPage() {
  const router = useRouter();

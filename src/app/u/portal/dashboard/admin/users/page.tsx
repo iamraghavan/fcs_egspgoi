@@ -42,7 +42,7 @@ import { Switch } from"@/components/ui/switch";
 import { FileUpload } from"@/components/file-upload";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+import { API_BASE_URL } from "@/lib/config";
 
 type FacultyAccount = {
  _id: string;

@@ -5,7 +5,7 @@ import { useState } from"react";
 import { useToast } from"./use-toast";
 import { useAlert } from"@/context/alert-context";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 export function useMfaSettings() {
  const [isLoading, setIsLoading] = useState(false);

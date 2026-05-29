@@ -13,7 +13,7 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { MuiTelInput, matchIsValidTel } from 'mui-tel-input';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 const muiTheme = createTheme({
  components: {

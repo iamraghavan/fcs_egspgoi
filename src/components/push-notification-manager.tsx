@@ -7,7 +7,7 @@ import { useToast } from '@/hooks/use-toast';
 import { BellRing, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 export function PushNotificationManager() {
  const { toast } = useToast();

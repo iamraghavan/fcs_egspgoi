@@ -14,7 +14,7 @@ import {
 } from"@/components/ui/command"
 import { Button } from"./ui/button"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+import { API_BASE_URL } from "@/lib/config";
 
 type SearchItem = {
  id: string;

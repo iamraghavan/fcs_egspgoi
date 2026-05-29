@@ -85,26 +85,6 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
  e.preventDefault();
  if (isLoading || !validate() || !selectedCreditTitle) return;
  
- try {
- const aiRes = await fetch('/api/ai/rationale', {
- method: 'POST',
- headers: { 'Content-Type': 'application/json' },
- body: JSON.stringify({
- title,
- description: notes ||"No additional notes",
- pointsRequested: selectedCreditTitle.points
- })
- });
- const aiData = await aiRes.json();
- if (aiData.success && aiData.data.isValid === false) {
- if (!window.confirm(`AI Analysis: ${aiData.data.feedback}\n\nDo you still want to proceed with this submission?`)) {
- return;
- }
- }
- } catch (e) {
- console.warn('AI reason validation skipped or failed', e);
- }
-
  onSubmit({
  title,
  creditTitleId: selectedCreditTitleId,

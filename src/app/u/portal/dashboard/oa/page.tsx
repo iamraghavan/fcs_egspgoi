@@ -22,7 +22,7 @@ import { Avatar, AvatarFallback, AvatarImage } from"@/components/ui/avatar";
 import { Label } from"@/components/ui/label";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 
 type User = {
  _id: string;

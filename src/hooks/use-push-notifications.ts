@@ -7,7 +7,7 @@ import { messaging } from '@/lib/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_BASE_URL } from "@/lib/config";
 const PUBLIC_VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || '';
 
 export function usePushNotifications() {
