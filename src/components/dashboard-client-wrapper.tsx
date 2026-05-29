@@ -185,7 +185,8 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
  <Header user={user} />
  <main className="flex-1 overflow-y-auto w-full p-4 md:p-6 lg:p-8 scroll-smooth">
  <div className="max-w-[1600px] mx-auto w-full pb-20">
- {children}
+ <SystemUpdateBanner />
+            {children}
  </div>
  </main>
  <footer className="h-12 shrink-0 bg-cds-ui-01 border-t border-sidebar-border px-6 flex items-center justify-between text-[11px] text-cds-text-05">
