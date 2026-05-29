@@ -215,6 +215,6 @@ export function AchievementForm({ creditTitles, onSubmit, isLoading }: Achieveme
  {isLoading ?"Submitting...":"Submit Achievement"}
  </Button>
  </div>
- </form>
+ </motion.form>
  )
 }
