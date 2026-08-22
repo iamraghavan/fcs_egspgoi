@@ -20,6 +20,7 @@ const WhatsAppVerificationModal = dynamic(() =>
 );
 
 const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const ENFORCE_WHATSAPP_VERIFICATION = process.env.NEXT_PUBLIC_ENFORCE_WHATSAPP_VERIFICATION === 'true';
 
 type User = {
   id: string;
@@ -131,7 +132,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         
         setUser(userPayload);
         
-        if ((userData.role === 'faculty' || userData.role === 'admin') && !userData.whatsappVerified) {
+        if (ENFORCE_WHATSAPP_VERIFICATION && (userData.role === 'faculty' || userData.role === 'admin') && !userData.whatsappVerified) {
              setUserForVerification(userData);
              setIsVerificationModalOpen(true);
         } else {

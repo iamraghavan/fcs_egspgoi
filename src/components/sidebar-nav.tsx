@@ -17,7 +17,8 @@ import {
   ShieldAlert, 
   ListPlus, 
   UploadCloud,
-  BarChart3
+  BarChart3,
+  UserRoundSearch
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -54,6 +55,7 @@ const navMap = {
     { name: "Positive Credits", href: `/u/portal/dashboard/admin/positive-remarks?uid=${uid}`, icon: Award },
     { name: "Review Appeals", href: `/u/portal/dashboard/admin/appeals?uid=${uid}`, icon: ShieldAlert },
     { name: "System Reports", href: `/u/portal/dashboard/admin/reports?uid=${uid}`, icon: BarChart3 },
+    { name: "Faculty Ledger", href: `/u/portal/dashboard/admin/faculty-ledger?uid=${uid}`, icon: UserRoundSearch },
   ],
   oa: (uid: string) => [
     { name: "Faculty Accounts", href: `/u/portal/dashboard/admin/users?uid=${uid}`, icon: Users },
