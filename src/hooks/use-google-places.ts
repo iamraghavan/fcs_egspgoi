@@ -1,14 +1,18 @@
 
 import { useState, useEffect } from 'react';
 
-const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyDfUl7G2CIfkJdCRwakYUQeen2o5cCzcVE';
-const GOOGLE_MAPS_API_URL = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&libraries=places`;
+const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
 
 export function useGooglePlaces() {
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    if (!GOOGLE_MAPS_API_KEY) {
+      setError('Google Maps is not configured.');
+      return;
+    }
+
     // Check if the script is already loaded
     if (window.google && window.google.maps && window.google.maps.places) {
       setLoaded(true);
@@ -21,7 +25,7 @@ export function useGooglePlaces() {
     if (!script) {
         script = document.createElement('script');
         script.id = scriptId;
-        script.src = GOOGLE_MAPS_API_URL;
+        script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(GOOGLE_MAPS_API_KEY)}&libraries=places`;
         script.async = true;
         script.defer = true;
         document.head.appendChild(script);

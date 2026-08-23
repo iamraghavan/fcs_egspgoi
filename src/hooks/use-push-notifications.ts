@@ -62,7 +62,7 @@ export function usePushNotifications() {
                 appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
             };
 
-            if (!firebaseConfig.apiKey) {
+            if (!firebaseConfig.apiKey || !firebaseConfig.projectId || !firebaseConfig.messagingSenderId || !firebaseConfig.appId) {
                 throw new Error("Client-side Firebase config is missing. Check environment variables.");
             }
 

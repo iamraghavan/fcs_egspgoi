@@ -25,7 +25,6 @@ import { DateRange } from "react-day-picker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Calendar } from "@/components/ui/calendar"
 import { format } from "date-fns"
-import * as XLSX from 'xlsx';
 import { Switch } from "@/components/ui/switch"
 import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
@@ -209,7 +208,7 @@ export default function ReviewSubmissionsPage() {
         }
     };
     
-    const exportToCsv = () => {
+    const exportSignedExcel = async () => {
         if (submissions.length === 0) {
             toast({ variant: 'destructive', title: "No data to export" });
             return;
@@ -226,10 +225,27 @@ export default function ReviewSubmissionsPage() {
             proofUrl: s.proofUrl,
             notes: s.notes || ''
         }));
-        const worksheet = XLSX.utils.json_to_sheet(dataToExport);
-        const workbook = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(workbook, worksheet, "Submissions");
-        XLSX.writeFile(workbook, "GoodWorksSubmissions.xlsx");
+        const token = localStorage.getItem("token");
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/v1/exports/official-excel`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ documentType: 'good_works_submissions', rows: dataToExport }),
+            });
+            if (!response.ok) {
+                const body = await response.json().catch(() => ({}));
+                throw new Error(body.message || 'Official export failed');
+            }
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement('a');
+            anchor.href = url;
+            anchor.download = 'GoodWorksSubmissions_Signed.xlsx';
+            anchor.click();
+            URL.revokeObjectURL(url);
+        } catch (error: any) {
+            toast({ variant: 'destructive', title: 'Export failed', description: error.message });
+        }
     };
 
     const getFacultyDetails = (submission: Submission) => submission.facultySnapshot || (typeof submission.faculty === 'object' ? submission.faculty : undefined);
@@ -263,7 +279,7 @@ export default function ReviewSubmissionsPage() {
             <h2 className="text-2xl font-bold tracking-tight">Good Works Submissions</h2>
             <p className="text-muted-foreground">Review and process faculty submissions for good works.</p>
           </div>
-          <Button onClick={exportToCsv} variant="outline"><FileDown className="mr-2 h-4 w-4" />Export CSV</Button>
+          <Button onClick={exportSignedExcel} variant="outline"><FileDown className="mr-2 h-4 w-4" />Export Signed Excel</Button>
         </div>
         
         <Collapsible open={isFilterPanelOpen} onOpenChange={setIsFilterPanelOpen}>

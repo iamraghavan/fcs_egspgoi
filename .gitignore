@@ -39,6 +39,15 @@ next-env.d.ts
 
 .genkit/*
 .env*
+!.env.example
+
+# credentials and private keys
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*credentials*.json
+*accessKeys*.csv
 
 # firebase
 firebase-debug.log

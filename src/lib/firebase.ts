@@ -15,14 +15,25 @@ const firebaseConfig: FirebaseOptions = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
 };
 
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const hasFirebaseConfig = Boolean(
+  firebaseConfig.apiKey &&
+  firebaseConfig.projectId &&
+  firebaseConfig.messagingSenderId &&
+  firebaseConfig.appId
+);
+
+// Firebase is optional for local/development environments. Do not create a
+// partially configured app because Installations throws during module loading.
+const app = hasFirebaseConfig
+  ? (!getApps().length ? initializeApp(firebaseConfig) : getApp())
+  : null;
 
 let remoteConfig: RemoteConfig | null = null;
 
-if (typeof window !== "undefined") {
+if (typeof window !== "undefined" && app) {
     try {
         getPerformance(app);
-        getAnalytics(app);
+        if (firebaseConfig.measurementId) getAnalytics(app);
         
         // Initialize Remote Config
         remoteConfig = getRemoteConfig(app);
@@ -34,7 +45,7 @@ if (typeof window !== "undefined") {
 }
 
 const messaging = () => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== 'undefined' && app) {
         try {
             return getMessaging(app);
         } catch (err) {
