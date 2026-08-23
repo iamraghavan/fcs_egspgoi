@@ -18,7 +18,9 @@ import {
   ListPlus, 
   UploadCloud,
   BarChart3,
-  UserRoundSearch
+  UserRoundSearch,
+  BookOpenCheck,
+  ContactRound
 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
@@ -44,12 +46,14 @@ const navMap = {
     { name: "Negative Remarks", href: `/u/portal/dashboard/remarks?uid=${uid}`, icon: MessageSquareWarning },
     { name: "My Appeals", href: `/u/portal/dashboard/appeals?uid=${uid}`, icon: ShieldCheck },
     { name: "Notifications", href: `/u/portal/dashboard/notifications?uid=${uid}`, icon: Bell },
+    { name: "Professional Profile", href: `/u/portal/dashboard/profile?uid=${uid}`, icon: ContactRound },
   ],
   admin: (uid: string) => [
     { name: "Admin Dashboard", href: `/u/portal/dashboard/admin?uid=${uid}`, icon: LayoutDashboard },
     { name: "Faculty Accounts", href: `/u/portal/dashboard/admin/users?uid=${uid}`, icon: Users },
     { name: "Bulk Import", href: `/u/portal/dashboard/admin/users/bulk-add?uid=${uid}`, icon: UploadCloud },
     { name: "Credit Templates", href: `/u/portal/dashboard/admin/credits?uid=${uid}`, icon: ListPlus },
+    { name: "Credit Policies", href: `/u/portal/dashboard/admin/policies?uid=${uid}`, icon: BookOpenCheck },
     { name: "Review Queue", href: `/u/portal/dashboard/admin/review?uid=${uid}`, icon: FolderKanban },
     { name: "Manage Remarks", href: `/u/portal/dashboard/admin/remarks?uid=${uid}`, icon: MessageSquareWarning },
     { name: "Positive Credits", href: `/u/portal/dashboard/admin/positive-remarks?uid=${uid}`, icon: Award },
