@@ -10,8 +10,7 @@ import { GlobalSearch } from './global-search';
 import { Bell, HelpCircle, Settings, Menu } from 'lucide-react';
 import { format } from 'date-fns';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
-const READ_NOTIFICATIONS_KEY = 'readNotificationIds';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
 
 type User = {
   name: string;
@@ -45,22 +44,22 @@ export function Header({ user }: { user: User }) {
     useEffect(() => {
         const checkNotifications = async () => {
             const token = localStorage.getItem("token");
-            const facultyId = searchParams.get('uid');
-            if (!token || !facultyId || user.role === 'admin' || user.role === 'oa') return;
+            if (!token || user.role === 'admin' || user.role === 'oa') return;
 
             try {
-                const res = await fetch(`${API_BASE_URL}/api/v1/credits/credits/faculty/${facultyId}`, {
+                const res = await fetch(`${API_BASE_URL}/api/v1/notifications?limit=50`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 });
                 if (res.ok) {
                     const data = await res.json();
-                    const storedReadIds = JSON.parse(localStorage.getItem(READ_NOTIFICATIONS_KEY) || '[]');
-                    const readIdsSet = new Set(storedReadIds);
-                    setHasUnread(data.items?.some((item: any) => !readIdsSet.has(item._id)));
+                    setHasUnread((data.unreadCount || 0) > 0);
                 }
             } catch (e) {}
         };
         checkNotifications();
+        const interval = window.setInterval(checkNotifications, 60000);
+        window.addEventListener('notifications-updated', checkNotifications);
+        return () => { window.clearInterval(interval); window.removeEventListener('notifications-updated', checkNotifications); };
     }, [searchParams, user.role]);
 
   return (
