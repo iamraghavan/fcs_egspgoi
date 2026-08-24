@@ -19,7 +19,6 @@ type Report = { rows: Row[]; summary: { facultyCount: number; positivePoints: nu
 export default function FacultyLedgerPage() {
   const { showAlert } = useAlert();
   const [type, setType] = useState("all");
-  const [sort, setSort] = useState("desc");
   const [groupBy, setGroupBy] = useState("institution");
   const [college, setCollege] = useState("all");
   const [department, setDepartment] = useState("all");
@@ -30,14 +29,14 @@ export default function FacultyLedgerPage() {
   const [exporting, setExporting] = useState<"pdf" | "excel" | null>(null);
 
   const params = useCallback((format?: string) => {
-    const value = new URLSearchParams({ type, sort, groupBy });
+    const value = new URLSearchParams({ type, sort: "desc", groupBy });
     if (college !== "all") value.set("college", college);
     if (department !== "all") value.set("department", department);
     if (startDate) value.set("startDate", startDate);
     if (endDate) value.set("endDate", endDate);
     if (format) value.set("format", format);
     return value.toString();
-  }, [type, sort, groupBy, college, department, startDate, endDate]);
+  }, [type, groupBy, college, department, startDate, endDate]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -76,7 +75,6 @@ export default function FacultyLedgerPage() {
       <Select value={groupBy} onValueChange={setGroupBy}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="institution">Institution wise</SelectItem><SelectItem value="college">College wise</SelectItem><SelectItem value="department">Department wise</SelectItem></SelectContent></Select>
       <Select value={college} onValueChange={value => { setCollege(value); setDepartment("all"); }}><SelectTrigger><SelectValue placeholder="All colleges" /></SelectTrigger><SelectContent><SelectItem value="all">All colleges</SelectItem>{report?.options.colleges.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select>
       <Select value={department} onValueChange={setDepartment}><SelectTrigger><SelectValue placeholder="All departments" /></SelectTrigger><SelectContent><SelectItem value="all">All departments</SelectItem>{report?.options.departments.map(value => <SelectItem key={value} value={value}>{value}</SelectItem>)}</SelectContent></Select>
-      <Select value={sort} onValueChange={setSort}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="desc">Top credit to low</SelectItem><SelectItem value="asc">Low credit to top</SelectItem></SelectContent></Select>
       <Select value={type} onValueChange={setType}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All credits</SelectItem><SelectItem value="positive">Positive credits</SelectItem><SelectItem value="negative">Negative credits</SelectItem></SelectContent></Select>
       <Input type="date" aria-label="From date" value={startDate} onChange={e => setStartDate(e.target.value)} />
       <Input type="date" aria-label="To date" value={endDate} onChange={e => setEndDate(e.target.value)} />
@@ -86,7 +84,7 @@ export default function FacultyLedgerPage() {
     {loading && <div className="space-y-3"><Skeleton className="h-28" /><Skeleton className="h-80" /></div>}
     {!loading && report && <>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3"><Metric label="Faculty" value={report.summary.facultyCount} neutral /><Metric label="Positive credits" value={`+${report.summary.positivePoints}`} positive /><Metric label="Negative credits" value={`-${report.summary.negativePoints}`} /><Metric label="Net credits" value={report.summary.netCredits > 0 ? `+${report.summary.netCredits}` : report.summary.netCredits} positive={report.summary.netCredits >= 0} /></div>
-      <Card className="rounded-none overflow-hidden"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" />{groupBy[0].toUpperCase() + groupBy.slice(1)} faculty ranking</CardTitle><Badge variant="outline"><ArrowDownUp className="h-3 w-3 mr-1" />{type === "all" ? "All recorded credits" : `${type[0].toUpperCase() + type.slice(1)} credits`} · {sort === "desc" ? "Highest first" : "Lowest first"}</Badge></CardHeader><CardContent className="p-0 overflow-x-auto">
+      <Card className="rounded-none overflow-hidden"><CardHeader className="flex-row items-center justify-between"><CardTitle className="text-base flex items-center gap-2"><Building2 className="h-4 w-4" />{groupBy[0].toUpperCase() + groupBy.slice(1)} faculty ranking</CardTitle><Badge variant="outline"><ArrowDownUp className="h-3 w-3 mr-1" />{type === "all" ? "All recorded credits" : `${type[0].toUpperCase() + type.slice(1)} credits`} · Highest first</Badge></CardHeader><CardContent className="p-0 overflow-x-auto">
         <table className="w-full text-sm"><thead className="bg-muted"><tr><th className="p-3 text-center">Rank</th><th className="p-3 text-left">Faculty</th><th className="p-3 text-left">College</th><th className="p-3 text-left">Department</th><th className="p-3 text-right">Positive</th><th className="p-3 text-right">Negative</th><th className="p-3 text-right">Ranking credits</th><th className="p-3 text-right">Records</th></tr></thead><tbody>
           {report.rows.map(row => <tr key={row.faculty.id} className="border-t"><td className="p-3 text-center font-bold">#{row.rank}</td><td className="p-3"><p className="font-semibold">{row.faculty.prefix} {row.faculty.name}</p><p className="text-xs text-muted-foreground">{row.faculty.facultyID || "No faculty ID"}</p></td><td className="p-3">{row.faculty.college || "N/A"}</td><td className="p-3">{row.faculty.department || "N/A"}</td><td className="p-3 text-right font-medium text-green-700">+{row.positivePoints}</td><td className="p-3 text-right font-medium text-red-700">-{row.negativePoints}</td><td className="p-3 text-right text-base font-bold">{row.rankingPoints}</td><td className="p-3 text-right">{row.records}</td></tr>)}
           {!report.rows.length && <tr><td colSpan={8} className="p-12 text-center text-muted-foreground">No faculty match the selected filters.</td></tr>}
