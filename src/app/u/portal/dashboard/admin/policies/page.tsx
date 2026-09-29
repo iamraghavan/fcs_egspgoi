@@ -1,5 +1,6 @@
 "use client";
 
+import { API_V1 } from '@/lib/api-url';
 import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 
-const API = process.env.NEXT_PUBLIC_API_BASE_URL || "https://faculty-credit-system.vercel.app/api/v1";
+const API = API_V1;
 type Policy = { policyId: string; version: number; revision: number; name: string; status: string; effectiveFrom: string; effectiveTo?: string; rules: { ruleId: string; name: string; creditType: string; calculation: { basePoints: number } }[] };
 
 export default function CreditPoliciesPage() {

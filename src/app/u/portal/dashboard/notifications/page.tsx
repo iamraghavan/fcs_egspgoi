@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Bell, CheckCircle2, ChevronDown, Clock3, Info, Megaphone, XCircle } from "lucide-react";
@@ -8,7 +9,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "https://faculty-credit-system.vercel.app";
+const API_BASE_URL = API_ORIGIN;
 type NotificationItem = { _id: string; type: string; title: string; message: string; url?: string | null; read: boolean; createdAt: string };
 type Filter = "all" | "read" | "unread";
 

@@ -1,6 +1,6 @@
-
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import {
   Table,
   TableBody,
@@ -30,7 +30,7 @@ import { Label } from "@/components/ui/label"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Skeleton } from "@/components/ui/skeleton"
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = API_ORIGIN;
 
 type Submission = {
   _id: string;

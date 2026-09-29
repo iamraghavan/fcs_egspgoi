@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button"
@@ -43,12 +44,13 @@ import { FileUpload } from "@/components/file-upload";
 import { Edit, Trash2, Search, Filter } from "lucide-react";
 
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = API_ORIGIN;
 
 type NegativeCredit = {
   _id: string;
   title: string;
   createdAt: string;
+  updatedAt?: string;
   points: number;
   notes?: string;
   proofUrl?: string;
@@ -278,7 +280,7 @@ export default function AppealsPage() {
     const isPast = itemIndex < currentIndex && currentStatus !== 'rejected';
     const isCurrent = status === currentStatus;
 
-    if (isPast || (status === 'submitted' && currentStatus !== 'submitted')) {
+    if (isPast || status === 'submitted') {
       return (
         <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-primary-foreground">
           <span className="material-symbols-outlined text-base">check</span>

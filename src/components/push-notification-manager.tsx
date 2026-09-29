@@ -1,13 +1,13 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState } from 'react';
 import { Button } from './ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { BellRing, CheckCircle, Send, Loader2 } from 'lucide-react';
 import { usePushNotifications } from '@/hooks/use-push-notifications';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 export function PushNotificationManager() {
     const { toast } = useToast();

@@ -1,6 +1,6 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -11,7 +11,7 @@ import { useAlert } from "@/context/alert-context";
 import { MuiTelInput, matchIsValidTel } from 'mui-tel-input';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 const muiTheme = createTheme({
   components: {

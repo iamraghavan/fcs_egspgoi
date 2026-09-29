@@ -1,6 +1,6 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import EgspgoiLogo from '@/app/egspgoi_logo_tr.png';
 import EngineeringCollegeImage from '@/app/engineering_college.webp';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 export default function ResetPasswordPage() {
   const router = useRouter();

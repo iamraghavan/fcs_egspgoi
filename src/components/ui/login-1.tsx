@@ -1,5 +1,6 @@
 "use client";
 
+import { API_V1 } from '@/lib/api-url';
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from "next/navigation";
 import Turnstile from "react-turnstile";
@@ -17,7 +18,7 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { useRemoteConfig } from '@/hooks/use-remote-config';
 import { cn } from '@/lib/utils';
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
 const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {

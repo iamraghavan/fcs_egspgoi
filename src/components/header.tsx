@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
@@ -10,7 +11,7 @@ import { GlobalSearch } from './global-search';
 import { Bell, HelpCircle, Settings, Menu } from 'lucide-react';
 import { format } from 'date-fns';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = API_ORIGIN;
 
 type User = {
   name: string;

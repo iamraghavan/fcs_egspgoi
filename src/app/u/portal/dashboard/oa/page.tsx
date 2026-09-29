@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Select,
@@ -20,9 +21,10 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
+import { OAIssuedSummary } from "@/components/oa-issued-summary";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 type User = {
   _id: string;
@@ -212,6 +214,7 @@ export default function OADashboardPage() {
         title: "Remark issued",
         description: "The negative remark has been successfully recorded.",
       });
+      window.dispatchEvent(new Event("oa-credit-issued"));
 
       setSelectedFaculty(null);
       setFacultySearch("");
@@ -271,6 +274,7 @@ export default function OADashboardPage() {
             </Link>
         </Button>
       </header>
+      <OAIssuedSummary />
         
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -327,7 +331,8 @@ export default function OADashboardPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
-                            <Input id="points" type="number" placeholder="e.g., -5" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                            <Input id="points" type="number" value={points} readOnly aria-describedby="oa-negative-points-help" required />
+                            <p id="oa-negative-points-help" className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>
                         </div>
                         <div>
                         <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>

@@ -146,15 +146,12 @@ export default function DynamicReportsPage() {
     if (!facultyQuery || facultyQuery.length < 2) return [];
     const term = facultyQuery.toLowerCase();
     
-    return R.pipe(
-        R.filter((f: Faculty) => {
+    return allUsers.filter((f: Faculty) => {
             const nameMatch = (f.name?.toLowerCase() || '').includes(term);
             const idMatch = (f.facultyID?.toLowerCase() || '').includes(term);
             const deptMatch = (f.department?.toLowerCase() || '').includes(term);
             return nameMatch || idMatch || deptMatch;
-        }),
-        R.take(10)
-    )(allUsers);
+        }).slice(0, 10);
   }, [allUsers, facultyQuery]);
 
   const fetchReportPreview = useCallback(async () => {

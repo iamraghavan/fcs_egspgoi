@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef } from "react";
 import { 
   Bar, 
@@ -38,7 +39,7 @@ import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import _ from "lodash";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = API_ORIGIN;
 
 type AnalyticsData = {
     totalUsers: number;

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_V1 } from '@/lib/api-url';
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip, Area, AreaChart, Legend, CartesianGrid, Bar, BarChart } from "recharts";
@@ -37,10 +38,15 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { format, startOfMonth, parseISO, isValid } from "date-fns";
-import _ from "lodash";
+import { format, parseISO } from "date-fns";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
+
+function currentAcademicYear() {
+  const now = new Date();
+  const start = now.getMonth() >= 5 ? now.getFullYear() : now.getFullYear() - 1;
+  return `${start}-${String(start + 1).slice(-2)}`;
+}
 
 type CreditActivity = {
   _id: string;
@@ -55,6 +61,8 @@ type CreditActivity = {
 
 type UserProfileStats = {
     currentCredit: number;
+    totalPositiveCredit: number;
+    totalNegativeCredit: number;
     stats: {
         totalCreditsCount: number;
         totalPositiveCount: number;
@@ -74,58 +82,16 @@ export default function FacultyDashboard() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const router = useRouter();
-  const [academicYear, setAcademicYear] = useState("2025-26");
+  const [academicYear, setAcademicYear] = useState(currentAcademicYear);
+  const yearStart = Number(currentAcademicYear().slice(0, 4));
+  const yearOptions = Array.from({ length: 5 }, (_, index) => {
+    const start = yearStart - index;
+    return `${start}-${String(start + 1).slice(-2)}`;
+  });
   const [stats, setStats] = useState<UserProfileStats | null>(null);
   const [recentActivities, setRecentActivities] = useState<CreditActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
-
-  const calculateStatsFromItems = (items: CreditActivity[]) => {
-      const validItems = items.filter(it => it.status !== 'deleted');
-      const approved = validItems.filter(it => it.status === 'approved');
-      const currentYear = academicYear;
-      
-      const currentCredit = _.sumBy(approved, it => Number(it.points) || 0);
-      
-      const yearApproved = approved.filter(it => it.academicYear === currentYear);
-      const yearPos = _.sumBy(yearApproved.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Math.abs(Number(it.points) || 0));
-      const yearNeg = _.sumBy(yearApproved.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Math.abs(Number(it.points) || 0));
-
-      const grouped = _.groupBy(approved, it => {
-          const d = parseISO(it.createdAt);
-          return isValid(d) ? format(startOfMonth(d), 'yyyy-MM') : 'unknown';
-      });
-
-      const series = Object.entries(grouped)
-          .filter(([period]) => period !== 'unknown')
-          .map(([period, mItems]) => {
-            const pos = _.sumBy(mItems.filter(it => (it.type === 'positive' || (Number(it.points) > 0))), it => Math.abs(Number(it.points) || 0));
-            const neg = _.sumBy(mItems.filter(it => (it.type === 'negative' || (Number(it.points) < 0))), it => Math.abs(Number(it.points) || 0));
-            return {
-                period,
-                positivePoints: pos,
-                negativePoints: neg,
-                net: pos - neg
-            };
-          })
-          .sort((a, b) => a.period.localeCompare(b.period));
-
-      return {
-          currentCredit,
-          stats: {
-              totalCreditsCount: approved.length,
-              totalPositiveCount: validItems.filter(it => it.type === 'positive' || (Number(it.points) > 0)).length,
-              totalNegativeCount: validItems.filter(it => it.type === 'negative' || (Number(it.points) < 0)).length,
-              currentYearStats: {
-                  academicYear: currentYear,
-                  positivePoints: yearPos,
-                  negativePoints: yearNeg,
-                  netForYear: yearPos - yearNeg
-              },
-              series
-          }
-      } as UserProfileStats;
-  };
 
   const fetchData = useCallback(async (forceRecalc = false) => {
     const token = localStorage.getItem("token");
@@ -136,37 +102,31 @@ export default function FacultyDashboard() {
     else setLoading(true);
 
     try {
-      const url = `${API_BASE_URL}/credits/credits/faculty/${uid}${forceRecalc ? '?recalc=true' : ''}`;
-      const response = await fetch(url, { 
-        headers: { "Authorization": `Bearer ${token}` } 
-      });
+      const summaryParams = new URLSearchParams({ academicYear });
+      if (forceRecalc) summaryParams.set('recalc', 'true');
+      const headers = { Authorization: `Bearer ${token}` };
+      const [response, activityResponse] = await Promise.all([
+        fetch(`${API_BASE_URL}/credits/${encodeURIComponent(uid)}/credits?${summaryParams}`, { headers }),
+        fetch(`${API_BASE_URL}/credits/credits/faculty/${encodeURIComponent(uid)}?limit=8`, { headers }),
+      ]);
       
-      if (response.status === 403 || response.status === 401) {
+      if ([response.status, activityResponse.status].some(status => status === 401 || status === 403)) {
         localStorage.clear();
         router.replace('/u/portal/auth?faculty_login&reason=session_expired');
         return;
       }
 
-      if (!response.ok) {
+      if (!response.ok || !activityResponse.ok) {
         throw new Error('System synchronization error.');
       }
 
-      const resData = await response.json();
-      
-      if (resData.success) {
-        if (resData.data && resData.data.stats) {
-            setStats(resData.data);
-            setRecentActivities(resData.data.recentActivities || []);
-        } else if (resData.items) {
-            const computed = calculateStatsFromItems(resData.items);
-            setStats(computed);
-            setRecentActivities(resData.items.slice(0, 8));
-        }
-
-        if (forceRecalc) {
-          toast({ title: "Credits Synced", description: "Balance updated successfully." });
-        }
+      const [resData, activityData] = await Promise.all([response.json(), activityResponse.json()]);
+      if (!resData.success || !resData.data?.stats || !activityData.success) {
+        throw new Error(resData.message || activityData.message || 'Unable to load credit totals.');
       }
+      setStats(resData.data);
+      setRecentActivities(activityData.items || []);
+      if (forceRecalc) toast({ title: "Credits Synced", description: "Balance updated successfully." });
     } catch (e: any) {
       showAlert("Sync Error", e.message || "Failed to connect to the performance engine.");
     } finally {
@@ -232,9 +192,7 @@ export default function FacultyDashboard() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-none">
-              <SelectItem value="2025-26">AY 2025-26</SelectItem>
-              <SelectItem value="2024-25">AY 2024-25</SelectItem>
-              <SelectItem value="2023-24">AY 2023-24</SelectItem>
+              {yearOptions.map(year => <SelectItem key={year} value={year}>AY {year}</SelectItem>)}
             </SelectContent>
           </Select>
         </div>
@@ -263,22 +221,22 @@ export default function FacultyDashboard() {
         </Card>
         <Card className="dashboard-card border-l-4 border-l-cds-support-02 border-y-0 border-r-0">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-green-600">Good Works</CardTitle>
+            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-green-600">Overall Positive</CardTitle>
             <Award className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">+{(stats?.stats?.currentYearStats?.positivePoints ?? 0).toLocaleString()}</div>
-            <p className="text-[10px] mt-1 text-cds-text-05 italic">Positive credits earned</p>
+            <div className="text-3xl font-bold text-green-600">+{(stats?.totalPositiveCredit ?? 0).toLocaleString()}</div>
+            <p className="text-[10px] mt-1 text-cds-text-05 italic">{academicYear}: +{(stats?.stats?.currentYearStats?.positivePoints ?? 0).toLocaleString()}</p>
           </CardContent>
         </Card>
         <Card className="dashboard-card border-l-4 border-l-cds-support-01 border-y-0 border-r-0">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-red-600">Negative Remarks</CardTitle>
+            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-red-600">Overall Negative</CardTitle>
             <AlertCircle className="h-4 w-4 text-red-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-red-600">{(stats?.stats?.currentYearStats?.negativePoints ?? 0).toLocaleString()}</div>
-            <p className="text-[10px] mt-1 text-cds-text-05 italic">Credit deductions received</p>
+            <div className="text-3xl font-bold text-red-600">-{(stats?.totalNegativeCredit ?? 0).toLocaleString()}</div>
+            <p className="text-[10px] mt-1 text-cds-text-05 italic">{academicYear}: -{(stats?.stats?.currentYearStats?.negativePoints ?? 0).toLocaleString()}</p>
           </CardContent>
         </Card>
       </div>

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useEffect, useMemo, useRef } from "react";
+import { API_ORIGIN } from '@/lib/api-url';
+import { useState, useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -42,7 +43,7 @@ import { Switch } from "@/components/ui/switch";
 import { FileUpload } from "@/components/file-upload";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = API_ORIGIN;
 
 type FacultyAccount = {
   _id: string;
@@ -52,7 +53,7 @@ type FacultyAccount = {
   department?: string;
   currentCredit: number;
   isActive: boolean;
-  role: 'faculty' | 'admin' | 'oa';
+  role: 'faculty' | 'admin' | 'oa' | 'superadmin';
   prefix?: string;
   designation?: string;
   phone?: string;
@@ -76,7 +77,7 @@ export default function FacultyAccountsPage() {
   const [password, setPassword] = useState("");
   const [college, setCollege] = useState("");
   const [department, setDepartment] = useState("");
-  const [role, setRole] = useState<'faculty' | 'oa'>('faculty');
+  const [role, setRole] = useState<'faculty' | 'oa' | 'admin'>('faculty');
   const [departments, setDepartments] = useState<Departments>({});
   const [isLoading, setIsLoading] = useState(false);
   
@@ -92,18 +93,22 @@ export default function FacultyAccountsPage() {
   const [editCollege, setEditCollege] = useState("");
   const [editDepartment, setEditDepartment] = useState("");
   const [editIsActive, setEditIsActive] = useState(true);
-  const [editRole, setEditRole] = useState<'faculty' | 'admin' | 'oa'>('faculty');
+  const [editRole, setEditRole] = useState<'faculty' | 'admin' | 'oa' | 'superadmin'>('faculty');
   const [editProfileImage, setEditProfileImage] = useState<File | null>(null);
+  const [resetPasswordValue, setResetPasswordValue] = useState("");
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
   const [editDepartments, setEditDepartments] = useState<Departments>({});
   
   // Table state
   const [allFaculty, setAllFaculty] = useState<FacultyAccount[]>([]);
+  const [totalUsers, setTotalUsers] = useState(0);
   const [isLoadingUsers, setIsLoadingUsers] = useState(true);
   const [selectedFaculty, setSelectedFaculty] = useState<FacultyAccount | null>(null);
 
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [roleFilter, setRoleFilter] = useState("all");
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
@@ -113,7 +118,7 @@ export default function FacultyAccountsPage() {
   
   const tableRef = useRef(null);
 
-  const fetchAllUsers = async () => {
+  const fetchAllUsers = async (signal?: AbortSignal) => {
     setIsLoadingUsers(true);
     const token = localStorage.getItem("token");
     if (!token) {
@@ -122,25 +127,40 @@ export default function FacultyAccountsPage() {
       return;
     }
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/users?limit=1000&sort=name`, {
-        headers: { "Authorization": `Bearer ${token}` },
+      const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+      if (searchTerm.trim()) params.set('q', searchTerm.trim());
+      if (roleFilter !== 'all') params.set('role', roleFilter);
+      if (statusFilter !== 'all') params.set('isActive', String(statusFilter === 'active'));
+      if (collegeFilter !== 'all') params.set('college', collegeFilter);
+      if (departmentFilter !== 'all') params.set('department', departmentFilter);
+      const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
+        headers: { "Authorization": `Bearer ${token}` }, signal, cache: 'no-store',
       });
       const responseData = await response.json();
       if (!response.ok || !responseData.success) {
         throw new Error(responseData.message || "Failed to fetch users.");
       }
-      setAllFaculty(responseData.items);
+      if (signal?.aborted) return;
+      setAllFaculty(responseData.items || []);
+      setTotalUsers(responseData.total ?? 0);
+      const lastPage = Math.max(1, Math.ceil((responseData.total ?? 0) / limit));
+      if (page > lastPage) setPage(lastPage);
     } catch (error: any) {
+      if (signal?.aborted || error?.name === 'AbortError') return;
       showAlert("Failed to Fetch Users", error.message);
       setAllFaculty([]);
+      setTotalUsers(0);
     } finally {
-      setIsLoadingUsers(false);
+      if (!signal?.aborted) setIsLoadingUsers(false);
     }
   };
 
   useEffect(() => {
-    fetchAllUsers();
-  }, []);
+    const controller = new AbortController();
+    setIsLoadingUsers(true);
+    const timer = window.setTimeout(() => { void fetchAllUsers(controller.signal); }, 250);
+    return () => { window.clearTimeout(timer); controller.abort(); };
+  }, [page, limit, searchTerm, roleFilter, statusFilter, collegeFilter, departmentFilter]);
   
   useEffect(() => {
     if (!isLoadingUsers && tableRef.current) {
@@ -208,19 +228,20 @@ export default function FacultyAccountsPage() {
         }
         payload.college = college;
         payload.department = department;
-    } else if (role === 'oa') {
+    } else if (role === 'oa' || role === 'admin') {
         payload.college = "EGS Pillay Group of Institutions";
-        payload.department = "Academics / Admistrative";
+        payload.department = "Academics / Administrative";
     }
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+      const formData = new FormData();
+      Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)));
+      const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
         method: "POST",
         headers: {
-          "Content-Type": "application/json",
           "Authorization": `Bearer ${adminToken}`,
         },
-        body: JSON.stringify(payload),
+        body: formData,
       });
 
       const responseData = await response.json();
@@ -265,6 +286,7 @@ export default function FacultyAccountsPage() {
     setEditIsActive(account.isActive);
     setEditRole(account.role);
     setEditProfileImage(null);
+    setResetPasswordValue('');
     setIsEditDialogOpen(true);
   };
 
@@ -316,39 +338,28 @@ export default function FacultyAccountsPage() {
     }
   };
 
-  const { paginatedItems, totalPages } = useMemo(() => {
-    let filtered = allFaculty;
+  const handleResetPassword = async () => {
+    if (!editingFaculty || resetPasswordValue.length < 12) {
+      showAlert('Password too short', 'Use at least 12 characters for the new password.');
+      return;
+    }
+    setIsResettingPassword(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/v1/users/${editingFaculty._id}/reset-password`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: resetPasswordValue }),
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || 'Unable to reset password');
+      setResetPasswordValue('');
+      toast({ title: 'Password reset', description: 'Existing sessions were revoked.' });
+    } catch (error: any) { showAlert('Reset failed', error.message); }
+    finally { setIsResettingPassword(false); }
+  };
 
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(user => 
-        user.name.toLowerCase().includes(term) ||
-        user.email.toLowerCase().includes(term)
-      );
-    }
-    if (statusFilter !== 'all') {
-      filtered = filtered.filter(user => user.isActive === (statusFilter === 'active'));
-    }
-    if (collegeFilter !== 'all') {
-      filtered = filtered.filter(user => user.college === collegeFilter);
-    }
-    if (departmentFilter !== 'all') {
-      filtered = filtered.filter(user => user.department === departmentFilter);
-    }
-
-    const newTotalPages = Math.ceil(filtered.length / limit);
-    if(page > newTotalPages && newTotalPages > 0) {
-      setPage(newTotalPages);
-    }
-    
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-    
-    return {
-      paginatedItems: filtered.slice(startIndex, endIndex),
-      totalPages: newTotalPages
-    };
-  }, [allFaculty, page, limit, searchTerm, statusFilter, collegeFilter, departmentFilter]);
+  const paginatedItems = allFaculty;
+  const totalPages = Math.max(1, Math.ceil(totalUsers / limit));
   
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
@@ -379,21 +390,21 @@ export default function FacultyAccountsPage() {
     <div className="flex-1">
       <header className="mb-8">
         <h2 className="text-3xl font-bold text-foreground">
-          Faculty Accounts
+          User Management
         </h2>
         <p className="text-muted-foreground mt-1">
-          Manage faculty accounts and their credit balances.
+          Create and manage faculty, office assistant, and administrator accounts. Inactive accounts retain all records.
         </p>
       </header>
       <div className="bg-card p-6 rounded-xl shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="relative lg:col-span-1">
             <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">
               search
             </span>
             <Input
               className="w-full pl-10 pr-4 py-2.5 bg-background rounded-lg focus:ring-2 focus:ring-primary transition"
-              placeholder="Search by name or email"
+              placeholder="Search by name, email, or faculty ID"
               type="text"
               value={searchTerm}
               onChange={handleSearchChange}
@@ -436,13 +447,18 @@ export default function FacultyAccountsPage() {
                 <SelectItem value="inactive">Inactive</SelectItem>
               </SelectContent>
             </Select>
+            <Select onValueChange={value => { setRoleFilter(value); setPage(1); }} value={roleFilter}>
+              <SelectTrigger><SelectValue placeholder="Role" /></SelectTrigger>
+              <SelectContent><SelectItem value="all">All Roles</SelectItem><SelectItem value="faculty">Faculty</SelectItem><SelectItem value="oa">Office Assistant</SelectItem><SelectItem value="admin">Administrator</SelectItem></SelectContent>
+            </Select>
         </div>
         <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Faculty</TableHead>
+                <TableHead>Account</TableHead>
                 <TableHead>Email</TableHead>
+                <TableHead>Role</TableHead>
                 <TableHead>College</TableHead>
                 <TableHead className="text-right">Credits</TableHead>
                 <TableHead className="text-center">Status</TableHead>
@@ -452,8 +468,8 @@ export default function FacultyAccountsPage() {
             <TableBody ref={tableRef}>
               {isLoadingUsers ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center h-24">
-                    Loading faculty accounts...
+                  <TableCell colSpan={7} className="text-center h-24">
+                    Loading accounts...
                   </TableCell>
                 </TableRow>
               ) : paginatedItems.length > 0 ? (
@@ -472,6 +488,7 @@ export default function FacultyAccountsPage() {
                         </div>
                     </TableCell>
                     <TableCell>{account.email}</TableCell>
+                    <TableCell className="capitalize">{account.role === 'oa' ? 'Office assistant' : account.role}</TableCell>
                     <TableCell>{account.college || 'N/A'}</TableCell>
                     <TableCell className="text-right font-semibold">{account.currentCredit ?? 0}</TableCell>
                     <TableCell className="text-center">
@@ -495,9 +512,9 @@ export default function FacultyAccountsPage() {
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-md">
                             <DialogHeader>
-                                <DialogTitle>Faculty Details</DialogTitle>
+                                <DialogTitle>Account Details</DialogTitle>
                                 <DialogDescription>
-                                Detailed information about the faculty member.
+                                Profile and access details for this account.
                                 </DialogDescription>
                             </DialogHeader>
                             {selectedFaculty && (
@@ -555,7 +572,7 @@ export default function FacultyAccountsPage() {
                             </DialogContent>
                         </Dialog>
                         
-                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(account)}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditClick(account)} disabled={account.role === 'superadmin'} aria-label={`Edit ${account.name}`}>
                             <Edit className="h-4 w-4" />
                         </Button>
                       </div>
@@ -564,8 +581,8 @@ export default function FacultyAccountsPage() {
                 ))
               ) : (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center h-24">
-                        No faculty accounts found.
+                    <TableCell colSpan={7} className="text-center h-24">
+                        No accounts found.
                     </TableCell>
                 </TableRow>
               )}
@@ -574,7 +591,7 @@ export default function FacultyAccountsPage() {
         </div>
         <div className="flex items-center justify-between pt-4">
           <div className="text-sm text-muted-foreground">
-            Page {page} of {totalPages || 1}
+            {totalUsers} accounts · Page {page} of {totalPages}
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
@@ -682,7 +699,7 @@ export default function FacultyAccountsPage() {
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="faculty">Faculty</SelectItem>
-                                        <SelectItem value="admin">Administrator</SelectItem>
+                                <SelectItem value="admin">Administrator</SelectItem>
                                         <SelectItem value="oa">Office Assistant</SelectItem>
                                     </SelectContent>
                                 </Select>
@@ -733,6 +750,15 @@ export default function FacultyAccountsPage() {
                     </div>
                 </div>
 
+                <div className="space-y-2 border-t pt-4">
+                    <Label htmlFor="reset-account-password">Reset password</Label>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Input id="reset-account-password" type="password" autoComplete="new-password" minLength={12} value={resetPasswordValue} onChange={event => setResetPasswordValue(event.target.value)} placeholder="New password, at least 12 characters" />
+                        <Button type="button" variant="outline" onClick={handleResetPassword} disabled={isResettingPassword || resetPasswordValue.length < 12 || editingFaculty?.role === 'superadmin'}>{isResettingPassword ? 'Resetting...' : 'Reset password'}</Button>
+                    </div>
+                    <p className="text-xs text-muted-foreground">This revokes the account&apos;s active sessions.</p>
+                </div>
+
                 <DialogFooter className="pt-4 border-t">
                     <DialogClose asChild>
                         <Button type="button" variant="secondary" className="rounded-none">Cancel</Button>
@@ -768,7 +794,7 @@ export default function FacultyAccountsPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
                     <Label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">Password</Label>
-                    <Input id="password" placeholder="Enter a temporary password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+                    <Input id="password" placeholder="At least 12 characters" type="password" minLength={12} value={password} onChange={(e) => setPassword(e.target.value)} required />
                 </div>
                 <div>
                     <Label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">Role</Label>
@@ -779,6 +805,7 @@ export default function FacultyAccountsPage() {
                       <SelectContent>
                         <SelectItem value="faculty">Faculty</SelectItem>
                         <SelectItem value="oa">Office Assistant (OA)</SelectItem>
+                        <SelectItem value="admin">Administrator</SelectItem>
                       </SelectContent>
                     </Select>
                 </div>

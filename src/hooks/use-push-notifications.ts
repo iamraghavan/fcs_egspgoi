@@ -1,13 +1,13 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, useCallback } from 'react';
 import { useToast } from './use-toast';
 import { messaging } from '@/lib/firebase';
 import { getToken, onMessage } from 'firebase/messaging';
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 const PUBLIC_VAPID_KEY = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY || '';
 
 export function usePushNotifications() {
@@ -81,8 +81,6 @@ export function usePushNotifications() {
                 serviceWorkerRegistration: registration,
             }).then(async (fcmToken) => {
                 if (fcmToken) {
-                    console.log('%c FCM TOKEN IS: ', 'color: white; background: #007bff; font-size: 16px; padding: 4px;', fcmToken);
-                    
                     const response = await fetch(`${API_BASE_URL}/api/v1/notifications/device-token`, {
                         method: 'PUT',
                         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${userToken}` },

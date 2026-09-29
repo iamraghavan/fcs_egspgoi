@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ORIGIN, API_V1 } from '@/lib/api-url';
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import React, { useState, useEffect, type ReactNode } from "react";
@@ -19,7 +20,7 @@ const WhatsAppVerificationModal = dynamic(() =>
   import("@/components/whatsapp-verification-modal").then((mod) => mod.WhatsAppVerificationModal)
 );
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
 const ENFORCE_WHATSAPP_VERIFICATION = process.env.NEXT_PUBLIC_ENFORCE_WHATSAPP_VERIFICATION === 'true';
 
 type User = {
@@ -116,7 +117,7 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         const userData = responseData.user || responseData.data;
         const getAvatarUrl = (u: any) => {
             if (u.profileImage) {
-                return u.profileImage.startsWith('http') ? u.profileImage : `https://faculty-credit-system.vercel.app${u.profileImage.startsWith('/') ? '' : '/'}${u.profileImage}`;
+                return u.profileImage.startsWith('http') ? u.profileImage : `${API_ORIGIN}${u.profileImage.startsWith('/') ? '' : '/'}${u.profileImage}`;
             }
             return `https://ui-avatars.com/api/?name=${encodeURIComponent(u.name)}&background=random`;
         };

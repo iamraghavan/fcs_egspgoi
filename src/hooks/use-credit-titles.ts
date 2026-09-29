@@ -1,9 +1,9 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect } from "react";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 export type CreditTitle = {
   _id: string;

@@ -1,7 +1,8 @@
-
 "use server";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+import { API_ORIGIN } from '@/lib/api-url';
+
+const API_BASE_URL = API_ORIGIN;
 
 /**
  * Shortens a long URL using the backend API.

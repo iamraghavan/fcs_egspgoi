@@ -1,5 +1,6 @@
 "use client"
 
+import { API_V1 } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Table,
@@ -54,7 +55,7 @@ import { Label } from "@/components/ui/label";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
 
 type User = {
   _id: string;
@@ -263,13 +264,14 @@ export default function ManagePositiveCreditsPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `https://faculty-credit-system.vercel.app/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `${API_V1}/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
     if (selectedCreditDetails?.proofUrl) {
       setShortProofUrl(null);
-      shortenUrl(getProofUrl(selectedCreditDetails.proofUrl)).then(setShortProofUrl).catch(() => setShortProofUrl(getProofUrl(selectedCreditDetails!.proofUrl)));
+      const proofUrl = getProofUrl(selectedCreditDetails.proofUrl);
+      shortenUrl(proofUrl).then(setShortProofUrl).catch(() => setShortProofUrl(proofUrl));
     }
   }, [selectedCreditDetails]);
 
@@ -287,7 +289,7 @@ export default function ManagePositiveCreditsPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const response = await fetch(`https://faculty-credit-system.vercel.app/api/v1/admin/credits/positive`, {
+      const response = await fetch(`${API_V1}/admin/credits/positive`, {
         method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData,
       });
       const responseData = await response.json();
@@ -312,7 +314,7 @@ export default function ManagePositiveCreditsPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const response = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/positive/${editingCredit._id}`, {
+        const response = await fetch(`${API_V1}/credits/credits/positive/${editingCredit._id}`, {
             method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData,
         });
         const data = await response.json();
@@ -329,15 +331,15 @@ export default function ManagePositiveCreditsPage() {
 
   const handleDeleteCredit = async (creditId: string) => {
       try {
-          const response = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/positive/${creditId}`, {
+          const response = await fetch(`${API_V1}/admin/credits/positive/${creditId}`, {
               method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` },
           });
           const data = await response.json();
-          if (!response.ok || !data.success) throw new Error(data.message || "Failed to delete");
-          toast({ title: "Credit Deleted", description: "The credit has been voided." });
+          if (!response.ok || !data.success) throw new Error(data.message || "Failed to void credit");
+          toast({ title: "Credit voided", description: "The credit was removed from the balance; its record and audit history were preserved." });
           fetchCredits(page);
       } catch (error: any) {
-          showAlert("Delete Failed", error.message);
+          showAlert("Void failed", error.message);
       }
   };
 
@@ -379,7 +381,7 @@ export default function ManagePositiveCreditsPage() {
                         </div>
                         <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</Label><Input id="title" placeholder="e.g., Guest Lecture" value={title} onChange={(e) => setTitle(e.target.value)} required className="rounded-none" /></div>
                         <div className="grid grid-cols-2 gap-4">
-                            <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</Label><Input id="points" type="number" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" /></div>
+                  <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</Label><Input id="points" type="number" min="0.01" max="10000" step="0.01" value={points} onChange={(e) => setPoints(Number(e.target.value))} readOnly={!!creditTitleId} required className="rounded-none" />{creditTitleId && <p className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>}</div>
                             <div><Label className="block text-sm font-medium text-muted-foreground">Academic Year</Label><Input value={getCurrentAcademicYear()} readOnly className="bg-muted rounded-none" /></div>
                         </div>
                         <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes</Label><Textarea id="notes" placeholder="Rationale..." rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" /></div>
@@ -448,9 +450,9 @@ export default function ManagePositiveCreditsPage() {
                                     <AlertDialogHeader>
                                         <div className="flex items-center gap-3 text-destructive mb-2">
                                           <AlertCircle className="h-6 w-6" />
-                                          <AlertDialogTitle>Delete Credit Adjustment?</AlertDialogTitle>
+                                          <AlertDialogTitle>Void credit adjustment?</AlertDialogTitle>
                                         </div>
-                                        <AlertDialogDescription>Institutional record will be voided.</AlertDialogDescription>
+                                        <AlertDialogDescription>The credit will be removed from the balance. Its record will be preserved for audit.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>

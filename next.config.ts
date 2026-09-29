@@ -1,5 +1,4 @@
 
-require('dotenv').config({ path: './.env' });
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -17,7 +16,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: '/api/v1/:path*',
-        destination: 'https://faculty-credit-system.vercel.app/api/v1/:path*',
+        destination: `${process.env.NEXT_PUBLIC_API_URL || 'https://faculty-credit-system.vercel.app/api/v1'}/:path*`,
       },
     ]
   },

@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -11,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGr
 import { colleges } from "@/lib/colleges";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Camera, ShieldCheck, Star, Briefcase, UserCircle, Bell, Palette } from "lucide-react"
+import { Camera, ShieldCheck, Star, Briefcase, UserCircle, Bell, Palette, Lock } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { gsap } from "gsap";
 import { MfaSettings } from "@/components/mfa-settings"
@@ -19,7 +20,7 @@ import { SessionManager } from "@/components/session-manager"
 import { PushNotificationManager } from "@/components/push-notification-manager"
 import { Switch } from "@/components/ui/switch"
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app';
+const API_BASE_URL = API_ORIGIN;
 
 type UserProfile = {
   name: string;

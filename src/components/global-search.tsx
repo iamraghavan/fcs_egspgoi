@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import * as React from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Search, Loader2 } from "lucide-react"
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/command"
 import { Button } from "./ui/button"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = API_ORIGIN;
 
 type SearchItem = {
   id: string;

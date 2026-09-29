@@ -1,6 +1,6 @@
-
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Select,
@@ -20,9 +20,10 @@ import { useAlert } from "@/context/alert-context";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { OAIssuedSummary } from "@/components/oa-issued-summary";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = API_ORIGIN;
 
 type User = {
   _id: string;
@@ -218,6 +219,7 @@ export default function OAPositiveCreditPage() {
         title: "Credit Issued",
         description: "The positive credit has been successfully recorded.",
       });
+      window.dispatchEvent(new Event("oa-credit-issued"));
 
       // Reset form
       setSelectedFaculty(null);
@@ -262,6 +264,7 @@ export default function OAPositiveCreditPage() {
             </Link>
         </Button>
       </header>
+      <OAIssuedSummary />
         
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -319,7 +322,8 @@ export default function OAPositiveCreditPage() {
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</label>
-                            <Input id="points" type="number" placeholder="e.g., 10" value={points} onChange={(e) => setPoints(Number(e.target.value))} required />
+                            <Input id="points" type="number" min="0.01" max="10000" step="0.01" placeholder="e.g., 10" value={points} onChange={(e) => setPoints(Number(e.target.value))} readOnly={!!creditTitleId} required />
+                            {creditTitleId && <p className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>}
                         </div>
                         <div>
                         <label className="block text-sm font-medium text-muted-foreground" htmlFor="academicYear">Academic Year</label>

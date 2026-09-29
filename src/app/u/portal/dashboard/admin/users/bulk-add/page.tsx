@@ -1,6 +1,6 @@
-
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState } from "react";
 import * as XLSX from 'xlsx';
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Separator } from "@/components/ui/separator";
 
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = API_ORIGIN;
 
 type UploadResult = {
   row: number;

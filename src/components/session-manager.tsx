@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { useAlert } from '@/context/alert-context';
@@ -18,7 +19,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 type Session = {
   _id: string;

@@ -1,5 +1,6 @@
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -13,7 +14,7 @@ import EngineeringCollegeImage from '@/app/engineering_college.webp';
 import { MuiTelInput, matchIsValidTel } from 'mui-tel-input';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 const muiTheme = createTheme({
   components: {

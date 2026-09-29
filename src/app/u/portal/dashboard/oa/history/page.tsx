@@ -1,5 +1,6 @@
 "use client"
 
+import { API_ORIGIN, API_V1 } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef, memo } from "react";
 import {
   Table,
@@ -50,7 +51,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
 
 type IssuedRemark = {
     _id: string;
@@ -69,6 +70,9 @@ type IssuedRemark = {
         name: string;
     };
     notes?: string;
+    creditTitle?: string;
+    appeal?: { status?: string };
+    activityLog?: Array<{ id: string; action: string; at: string; actorId: string; reason?: string; before?: { points?: number }; after?: { points?: number; status?: string } }>;
     points: number;
     proofUrl?: string;
     status: 'pending' | 'approved' | 'rejected' | 'appealed' | 'deleted';
@@ -90,48 +94,49 @@ type DynamicFilters = {
     departments: string[];
 };
 
-const RemarkRow = memo(({ 
-    remark, 
-    onView, 
-    onEdit, 
-    onDelete 
-}: { 
-    remark: IssuedRemark, 
-    onView: (r: IssuedRemark) => void, 
-    onEdit: (r: IssuedRemark) => void, 
-    onDelete: (id: string) => void 
+const RemarkRow = memo(({
+    remark,
+    onView,
+    onEdit,
+    onDelete
+}: {
+    remark: IssuedRemark,
+    onView: (r: IssuedRemark) => void,
+    onEdit: (r: IssuedRemark) => void,
+    onDelete: (id: string, reason: string) => void
 }) => {
+    const [voidReason, setVoidReason] = useState('');
     const getStatusBadge = (status: IssuedRemark['status']) => {
         let cl = "bg-yellow-100 text-yellow-800";
         if (status === 'approved') cl = "bg-green-100 text-green-800";
         else if (status === 'rejected' || status === 'deleted') cl = "bg-red-100 text-red-800";
         else if (status === 'appealed') cl = "bg-blue-100 text-blue-800";
-        return <Badge variant="secondary" className={cn("rounded-none", cl)} aria-label={`Status: ${status}`}>{status}</Badge>;
+        return <Badge variant="secondary" className={cn("rounded-none", cl)} aria-label={`Status: ${status === 'deleted' ? 'voided' : status}`}>{status === 'deleted' ? 'Voided' : status}</Badge>;
     };
 
     return (
         <TableRow className={cn("hover:bg-cds-ui-01/50 transition-colors border-b last:border-0", remark.status === 'deleted' && 'opacity-50 grayscale bg-cds-ui-01')}>
             <TableCell>
               <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-cds-text-01 text-[13px]">{remark.facultySnapshot.name}</span>
-                <span className="text-[10px] text-muted-foreground font-mono uppercase">{remark.facultySnapshot.facultyID}</span>
+                <span className="font-bold text-cds-text-01 text-[13px]">{remark.facultySnapshot?.name || 'Faculty'}</span>
+                <span className="text-[10px] text-muted-foreground font-mono uppercase">{remark.facultySnapshot?.facultyID || remark.faculty}</span>
               </div>
             </TableCell>
-            <TableCell className="text-[12px] max-w-[200px] truncate">{remark.title}</TableCell>
+            <TableCell className="text-[12px] max-w-[200px] truncate"><span className="block text-[10px] uppercase text-muted-foreground">{remark.type}</span>{remark.title}</TableCell>
             <TableCell className="text-center">{getStatusBadge(remark.status)}</TableCell>
-            <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{new Date(remark.createdAt).toLocaleDateString()}</TableCell>
-            <TableCell className="text-right font-bold tabular-nums text-cds-support-01">{remark.points}</TableCell>
+            <TableCell className="text-[12px] text-cds-text-05 tabular-nums">{Number.isFinite(Date.parse(remark.createdAt)) ? new Date(remark.createdAt).toLocaleDateString() : 'Date unavailable'}</TableCell>
+            <TableCell className={cn("text-right font-bold tabular-nums", remark.type === 'positive' ? 'text-cds-support-02' : 'text-cds-support-01')}>{remark.points > 0 ? '+' : ''}{remark.points}</TableCell>
             <TableCell className="text-center">
                 <div className="flex items-center justify-center gap-1">
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onView(remark)} aria-label="View Audit">
                       <Eye className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted'} aria-label="Edit Record">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onEdit(remark)} disabled={remark.status === 'deleted' || Boolean(remark.appeal?.status)} aria-label="Edit Record">
                       <Edit className="h-4 w-4" />
                     </Button>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted'} aria-label="Delete Record">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10" disabled={remark.status === 'deleted' || remark.appeal?.status === 'pending'} title={remark.appeal?.status === 'pending' ? 'Admin review is required while an appeal is open' : 'Void credit'} aria-label="Void Record">
                                 <Trash2 className="h-4 w-4" />
                             </Button>
                         </AlertDialogTrigger>
@@ -139,13 +144,15 @@ const RemarkRow = memo(({
                             <AlertDialogHeader>
                                 <div className="flex items-center gap-3 text-destructive mb-2">
                                   <AlertCircle className="h-6 w-6" />
-                                  <AlertDialogTitle>Delete Remark?</AlertDialogTitle>
+                                  <AlertDialogTitle>Void credit?</AlertDialogTitle>
                                 </div>
-                                <AlertDialogDescription>Institutional record will be voided. This action cannot be undone.</AlertDialogDescription>
+                                <AlertDialogDescription>The points will be removed from the balance. The credit and its history remain available for audit.</AlertDialogDescription>
+                                <Label htmlFor={`void-reason-${remark._id}`}>Reason for voiding</Label>
+                                <Input id={`void-reason-${remark._id}`} value={voidReason} onChange={event => setVoidReason(event.target.value)} minLength={5} maxLength={1000} placeholder="Explain why this credit should be voided" />
                             </AlertDialogHeader>
                             <AlertDialogFooter>
                                 <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => onDelete(remark._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm Deletion</AlertDialogAction>
+                                <AlertDialogAction disabled={voidReason.trim().length < 5} onClick={() => onDelete(remark._id, voidReason.trim())} className="bg-destructive hover:bg-destructive/90 rounded-none">Void credit</AlertDialogAction>
                             </AlertDialogFooter>
                         </AlertDialogContent>
                     </AlertDialog>
@@ -170,24 +177,27 @@ export default function IssuedHistoryPage() {
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [typeFilter, setTypeFilter] = useState("all");
   const [academicYearFilter, setAcademicYearFilter] = useState("all");
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
-  
+
   const [dynamicFilters, setDynamicFilters] = useState<DynamicFilters>({
       templates: [],
       years: [],
       colleges: [],
       departments: []
   });
-  
+
   const [selectedRemark, setSelectedRemark] = useState<IssuedRemark | null>(null);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
-  
+
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
   const [editingRemark, setEditingRemark] = useState<IssuedRemark | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editNotes, setEditNotes] = useState("");
   const [editCreditTitleId, setEditCreditTitleId] = useState("");
+  const [editPoints, setEditPoints] = useState("");
+  const [editReason, setEditReason] = useState("");
   const [editProof, setEditProof] = useState<File | null>(null);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
@@ -198,7 +208,7 @@ export default function IssuedHistoryPage() {
   const fetchRemarks = async (currentPage: number) => {
       setIsLoadingRemarks(true);
       if (!adminToken) return;
-  
+
       try {
           const params = new URLSearchParams({
               page: currentPage.toString(),
@@ -207,22 +217,26 @@ export default function IssuedHistoryPage() {
           });
           if (searchTerm) params.append('search', searchTerm);
           if (statusFilter !== 'all') params.append('status', statusFilter);
+          if (typeFilter !== 'all') params.append('type', typeFilter);
           if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
-          if (dateRange?.from) params.append('fromDate', format(dateRange.from, 'yyyy-MM-dd'));
-          if (dateRange?.to) params.append('toDate', format(dateRange.to, 'yyyy-MM-dd'));
+          if (dateRange?.from) params.append('createdFrom', dateRange.from.toISOString());
+          if (dateRange?.to) params.append('createdTo', new Date(dateRange.to.getTime() + 86400000 - 1).toISOString());
 
-          const response = await fetch(`${API_BASE_URL}/admin/credits/negative?${params.toString()}`, {
+          const response = await fetch(`${API_BASE_URL}/admin/oa/credits/issued?${params.toString()}`, {
               headers: { Authorization: `Bearer ${adminToken}` },
           });
-  
+
           const resData = await response.json();
-          if (resData.success) {
+          if (response.ok && resData.success) {
               setRemarks(resData.items || resData.data?.items || []);
-              setTotal(resData.total || resData.data?.total || 0);
-              if (resData.filters) setDynamicFilters(resData.filters);
+              setTotal(resData.data?.totalFiltered ?? resData.data?.total ?? 0);
+              setDynamicFilters(current => ({ ...current, years: resData.data?.filters?.years || [] }));
+          } else {
+              throw new Error(resData.message || 'Unable to load issued credits');
           }
       } catch (error: any) {
           setRemarks([]);
+          showAlert('History unavailable', error.message);
       } finally {
           setIsLoadingRemarks(false);
       }
@@ -245,36 +259,44 @@ export default function IssuedHistoryPage() {
       if (adminToken) fetchRemarks(page);
     }, 400);
     return () => clearTimeout(timer);
-  }, [page, searchTerm, statusFilter, academicYearFilter, dateRange, adminToken]);
+  }, [page, searchTerm, statusFilter, typeFilter, academicYearFilter, dateRange, adminToken]);
 
-  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, academicYearFilter, dateRange]);
+  useEffect(() => { setPage(1); }, [searchTerm, statusFilter, typeFilter, academicYearFilter, dateRange]);
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `https://faculty-credit-system.vercel.app/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `${API_ORIGIN}${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
     if (selectedRemark?.proofUrl) {
         setShortProofUrl(null);
-        shortenUrl(getProofUrl(selectedRemark.proofUrl)).then(setShortProofUrl).catch(() => setShortProofUrl(getProofUrl(selectedRemark!.proofUrl)));
+        const proofUrl = getProofUrl(selectedRemark.proofUrl);
+        shortenUrl(proofUrl).then(setShortProofUrl).catch(() => setShortProofUrl(proofUrl));
     }
   }, [selectedRemark]);
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingRemark) return;
+    const correctingPoints = editingRemark.type === 'positive' && !editingRemark.creditTitle && !editCreditTitleId && Number(editPoints) !== Number(editingRemark.points);
+    if (correctingPoints && editReason.trim().length < 5) {
+        showAlert('Reason required', 'Explain the point correction in at least 5 characters.');
+        return;
+    }
     setIsSubmittingEdit(true);
     const formData = new FormData();
     formData.append("notes", editNotes);
     if (editCreditTitleId) formData.append("creditTitleId", editCreditTitleId);
+    if (correctingPoints) formData.append("points", editPoints);
+    if (editReason.trim()) formData.append("reason", editReason.trim());
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${editingRemark._id}`, { 
-            method: 'PUT', 
-            headers: { 'Authorization': `Bearer ${adminToken}` }, 
-            body: formData 
+        const res = await fetch(`${API_V1}/admin/oa/credits/issued/${editingRemark._id}`, {
+            method: 'PATCH',
+            headers: { 'Authorization': `Bearer ${adminToken}` },
+            body: formData
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
@@ -288,18 +310,19 @@ export default function IssuedHistoryPage() {
     }
   };
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, reason: string) => {
     try {
-        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${id}`, { 
-            method: "DELETE", 
-            headers: { "Authorization": `Bearer ${adminToken}` } 
+        const res = await fetch(`${API_V1}/admin/oa/credits/issued/${id}`, {
+            method: "DELETE",
+            headers: { "Authorization": `Bearer ${adminToken}`, "Content-Type": "application/json" },
+            body: JSON.stringify({ reason }),
         });
         const data = await res.json();
-        if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
-        toast({ title: "Remark Deleted", description: "Record has been permanently removed from logs." });
+        if (!res.ok || !data.success) throw new Error(data.message || "Failed to void");
+        toast({ title: "Credit voided", description: "The record and activity history have been preserved." });
         fetchRemarks(page);
     } catch (error: any) {
-        showAlert("Delete Failed", error.message);
+        showAlert("Void Failed", error.message);
     }
   };
 
@@ -307,9 +330,9 @@ export default function IssuedHistoryPage() {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
     try {
-        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/admin/credits/credits/negative/${id}/reopen`, { 
-            method: "PATCH", 
-            headers: { "Authorization": `Bearer ${adminToken}` } 
+        const res = await fetch(`${API_V1}/admin/credits/credits/negative/${id}/reopen`, {
+            method: "PATCH",
+            headers: { "Authorization": `Bearer ${adminToken}` }
         });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen");
@@ -326,7 +349,7 @@ export default function IssuedHistoryPage() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Transaction History</h1>
-          <p className="mt-1 text-muted-foreground text-sm">OA record of institutional remark issuances.</p>
+          <p className="mt-1 text-muted-foreground text-sm">Positive and negative credits issued by your account.</p>
         </div>
          <Button asChild className="rounded-none font-semibold">
             <Link href={`/u/portal/dashboard/oa?uid=${uid}`}>
@@ -335,12 +358,13 @@ export default function IssuedHistoryPage() {
             </Link>
         </Button>
       </header>
-        
+
       <Card className="rounded-none shadow-none border-cds-ui-03">
         <CardHeader className="bg-cds-ui-01/50 border-b">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-0">
-                <div className="relative col-span-1 lg:col-span-3 border-b mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search name, ID, title..." className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
-                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="rejected">Rejected</SelectItem></SelectContent></Select>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-0">
+                <div className="relative col-span-1 lg:col-span-4 border-b mb-4"><Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" /><Input placeholder="Search name, ID, title..." className="pl-10 h-12 border-0 rounded-none bg-transparent focus:ring-0" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} /></div>
+                 <Select value={typeFilter} onValueChange={setTypeFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Credit type" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All types</SelectItem><SelectItem value="positive">Positive</SelectItem><SelectItem value="negative">Negative</SelectItem></SelectContent></Select>
+                 <Select value={statusFilter} onValueChange={setStatusFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Status" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Statuses</SelectItem><SelectItem value="pending">Pending</SelectItem><SelectItem value="approved">Approved</SelectItem><SelectItem value="appealed">Appealed</SelectItem><SelectItem value="rejected">Rejected</SelectItem><SelectItem value="deleted">Voided</SelectItem></SelectContent></Select>
                  <Select value={academicYearFilter} onValueChange={setAcademicYearFilter}><SelectTrigger className="h-10 border-0 rounded-none border-r focus:ring-0 bg-transparent text-xs"><SelectValue placeholder="Year" /></SelectTrigger><SelectContent className="z-[150] rounded-none"><SelectItem value="all">All Years</SelectItem>{dynamicFilters.years.map(y => (<SelectItem key={y} value={y}>{y}</SelectItem>))}</SelectContent></Select>
                  <Popover><PopoverTrigger asChild><Button variant={"outline"} className="h-10 border-0 rounded-none focus:ring-0 bg-transparent text-xs justify-start"><CalendarIcon className="mr-2 h-3 w-3" />{dateRange?.from ? (dateRange.to ? (<>{format(dateRange.from, "LLL dd")} - {format(dateRange.to, "LLL dd")}</>) : (format(dateRange.from, "LLL dd"))) : (<span>Date Range</span>)}</Button></PopoverTrigger><PopoverContent className="z-[150] w-auto p-0 rounded-none" align="start"><Calendar initialFocus mode="range" defaultMonth={dateRange?.from} selected={dateRange} onSelect={setDateRange} numberOfMonths={2} /></PopoverContent></Popover>
             </div>
@@ -361,11 +385,11 @@ export default function IssuedHistoryPage() {
               <TableBody>
                 {isLoadingRemarks ? (<TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>) : remarks.length > 0 ? (
                   remarks.map((r) => (
-                    <RemarkRow 
-                        key={r._id} 
-                        remark={r} 
-                        onView={setSelectedRemark} 
-                        onEdit={(remark) => { setEditingRemark(remark); setEditNotes(remark.notes || ""); setEditCreditTitleId(remark.creditTitle || ""); setIsEditDialogOpen(true); }}
+                    <RemarkRow
+                        key={r._id}
+                        remark={r}
+                        onView={setSelectedRemark}
+                        onEdit={(remark) => { setEditingRemark(remark); setEditNotes(remark.notes || ""); setEditCreditTitleId(remark.creditTitle || ""); setEditPoints(String(remark.points)); setEditReason(""); setEditProof(null); setIsEditDialogOpen(true); }}
                         onDelete={handleDelete}
                     />
                   ))
@@ -380,8 +404,8 @@ export default function IssuedHistoryPage() {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md rounded-none border-cds-ui-03">
             <DialogHeader>
-                <DialogTitle>Update Remark Details</DialogTitle>
-                <DialogDescription>Correct notes or modify the violation category. This is now enabled for all non-deleted records.</DialogDescription>
+                <DialogTitle>Edit your issued credit</DialogTitle>
+                <DialogDescription>Update details or category. Point corrections for manual positive awards require a reason and are recorded in the activity history.</DialogDescription>
             </DialogHeader>
             <form onSubmit={handleEditSubmit} className="space-y-4 pt-4">
                 <div>
@@ -399,6 +423,11 @@ export default function IssuedHistoryPage() {
                         </SelectContent>
                     </Select>
                 </div>
+                {editingRemark?.type === 'positive' && !editingRemark.creditTitle && !editCreditTitleId && <div>
+                    <Label htmlFor="edit-points" className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Positive points</Label>
+                    <Input id="edit-points" type="number" min="0.01" max="10000" step="0.01" value={editPoints} onChange={event => setEditPoints(event.target.value)} required />
+                </div>}
+                <div><Label htmlFor="edit-reason" className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Correction reason</Label><Input id="edit-reason" value={editReason} onChange={event => setEditReason(event.target.value)} maxLength={1000} placeholder="Required when changing points" /></div>
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Administrative Rationale</Label><Textarea id="edit-notes" value={editNotes} onChange={(e) => setEditNotes(e.target.value)} className="rounded-none border-0 border-b border-cds-ui-04 bg-cds-ui-01 min-h-[120px] resize-none focus:ring-0 focus:border-b-2" /></div>
                 <div><Label className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1 block">Proof Replacement (Optional)</Label><FileUpload onFileSelect={setEditProof} description="Upload a new supporting document" /></div>
                 <DialogFooter className="pt-4 border-t"><DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose><Button type="submit" disabled={isSubmittingEdit} className="rounded-none px-8">{isSubmittingEdit ? "Updating..." : "Save Transaction"}</Button></DialogFooter>
@@ -408,27 +437,27 @@ export default function IssuedHistoryPage() {
 
        <Dialog open={!!selectedRemark} onOpenChange={(o) => !o && setSelectedRemark(null)}>
         <DialogContent className="sm:max-w-2xl rounded-none border-cds-ui-03">
-            <DialogHeader><DialogTitle>Remark Audit Details</DialogTitle></DialogHeader>
+            <DialogHeader><DialogTitle>Credit details and activity</DialogTitle></DialogHeader>
             {selectedRemark && (
             <div className="space-y-6 py-4 text-sm">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-cds-ui-01 p-4 border border-cds-ui-03">
                     <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                            <AvatarImage src={selectedRemark.facultySnapshot.profileImage} />
-                            <AvatarFallback>{selectedRemark.facultySnapshot.name.charAt(0)}</AvatarFallback>
+                            <AvatarImage src={selectedRemark.facultySnapshot?.profileImage} />
+                            <AvatarFallback>{selectedRemark.facultySnapshot?.name?.charAt(0) || 'F'}</AvatarFallback>
                         </Avatar>
                         <div>
                             <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Faculty Associate</p>
-                            <p className="font-bold text-base leading-tight">{selectedRemark.facultySnapshot.name}</p>
-                            <p className="text-xs font-mono text-muted-foreground uppercase">{selectedRemark.facultySnapshot.facultyID}</p>
+                            <p className="font-bold text-base leading-tight">{selectedRemark.facultySnapshot?.name || 'Faculty'}</p>
+                            <p className="text-xs font-mono text-muted-foreground uppercase">{selectedRemark.facultySnapshot?.facultyID || selectedRemark.faculty}</p>
                         </div>
                     </div>
                     <div className="sm:text-right">
                         <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest">Department</p>
-                        <p className="font-medium text-cds-text-02">{selectedRemark.facultySnapshot.department}</p>
+                        <p className="font-medium text-cds-text-02">{selectedRemark.facultySnapshot?.department || 'Unknown'}</p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Violation Title</p><p className="font-semibold leading-tight">{selectedRemark.title}</p></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className={cn("text-2xl font-bold tabular-nums", selectedRemark.type === 'positive' ? "text-cds-support-02" : "text-cds-support-01")}>{selectedRemark.type === 'positive' ? '+' : ''}{selectedRemark.points}</p></div></div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6"><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">{selectedRemark.type === 'positive' ? 'Positive' : 'Negative'} credit</p><p className="font-semibold leading-tight">{selectedRemark.title}</p></div><div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className={cn("text-2xl font-bold tabular-nums", selectedRemark.type === 'positive' ? "text-cds-support-02" : "text-cds-support-01")}>{selectedRemark.type === 'positive' ? '+' : ''}{selectedRemark.points}</p></div></div>
                 <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-2">Administrative Rationale</p><div className="p-4 bg-cds-ui-01 border-l-4 border-cds-support-01 italic text-cds-text-02 leading-relaxed">{selectedRemark.notes || "No rationale provided."}</div></div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
@@ -445,9 +474,22 @@ export default function IssuedHistoryPage() {
                         {selectedRemark.proofUrl ? (<Button asChild variant="link" className="p-0 h-auto font-bold"><a href={getProofUrl(selectedRemark.proofUrl)} target="_blank" rel="noopener noreferrer">View Original Proof</a></Button>) : <span className="text-xs italic">No proof attached.</span>}
                     </div>
                 </div>
+                <div className="border-t pt-4">
+                    <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-2">Activity</p>
+                    <div className="space-y-2 max-h-44 overflow-y-auto">
+                        <div className="text-xs"><span className="font-semibold">Issued</span> · {Number.isFinite(Date.parse(selectedRemark.createdAt)) ? new Date(selectedRemark.createdAt).toLocaleString() : 'Date unavailable'}</div>
+                        {(selectedRemark.activityLog || []).map(event => (
+                            <div key={event.id} className="border-l-2 pl-3 text-xs">
+                                <span className="font-semibold capitalize">{event.action}</span> · {Number.isFinite(Date.parse(event.at)) ? new Date(event.at).toLocaleString() : 'Date unavailable'}
+                                {event.reason && <p className="text-muted-foreground">Reason: {event.reason}</p>}
+                                {event.before?.points !== undefined && event.after?.points !== undefined && event.before.points !== event.after.points && <p className="text-muted-foreground">Points: {event.before.points} → {event.after.points}</p>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
             </div>
             )}
-            <DialogFooter className="border-t pt-4 flex items-center justify-between"><div className="flex gap-2">{selectedRemark && selectedRemark.status !== 'deleted' && (<Button variant="outline" size="sm" className="rounded-none gap-2 text-xs" onClick={() => handleReopenWindow(selectedRemark._id)}><RefreshCw className="h-3 w-3" /> Re-open Appeal Window</Button>)}</div><DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Audit</Button></DialogClose></DialogFooter>
+            <DialogFooter className="border-t pt-4 flex items-center justify-between"><div className="flex gap-2">{selectedRemark && selectedRemark.type === 'negative' && selectedRemark.status !== 'deleted' && (<Button variant="outline" size="sm" className="rounded-none gap-2 text-xs" onClick={() => handleReopenWindow(selectedRemark._id)}><RefreshCw className="h-3 w-3" /> Re-open Appeal Window</Button>)}</div><DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close</Button></DialogClose></DialogFooter>
         </DialogContent>
     </Dialog>
     </div>

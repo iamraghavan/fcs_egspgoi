@@ -1,5 +1,6 @@
 "use client"
 
+import { API_V1 } from '@/lib/api-url';
 import { useState, useEffect, useMemo, useRef } from "react";
 import {
   Table,
@@ -52,7 +53,7 @@ import { shortenUrl } from "@/lib/url-shortener";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 
-const API_BASE_URL = 'https://faculty-credit-system.vercel.app/api/v1';
+const API_BASE_URL = API_V1;
 
 type User = {
   _id: string;
@@ -260,13 +261,14 @@ export default function ManageRemarksPage() {
 
   const getProofUrl = (url: string) => {
     if (!url) return '';
-    return url.startsWith('http') ? url : `https://faculty-credit-system.vercel.app/api/v1/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    return url.startsWith('http') ? url : `${API_V1}/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
   };
 
   useEffect(() => {
     if (selectedRemarkDetails?.proofUrl) {
       setShortProofUrl(null);
-      shortenUrl(getProofUrl(selectedRemarkDetails.proofUrl)).then(setShortProofUrl).catch(() => setShortProofUrl(getProofUrl(selectedRemarkDetails!.proofUrl)));
+      const proofUrl = getProofUrl(selectedRemarkDetails.proofUrl);
+      shortenUrl(proofUrl).then(setShortProofUrl).catch(() => setShortProofUrl(proofUrl));
     }
   }, [selectedRemarkDetails]);
 
@@ -284,7 +286,7 @@ export default function ManageRemarksPage() {
     if (proof) formData.append("proof", proof);
 
     try {
-      const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative`, { method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData });
+      const res = await fetch(`${API_V1}/credits/credits/negative`, { method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to issue");
       toast({ title: "Remark Issued", description: "Record has been successfully saved." });
@@ -307,7 +309,7 @@ export default function ManageRemarksPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
+        const res = await fetch(`${API_V1}/credits/credits/negative/${editingRemark._id}`, { method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to update");
         toast({ title: "Remark Updated", description: "Changes saved successfully." });
@@ -322,10 +324,10 @@ export default function ManageRemarksPage() {
 
   const handleDeleteRemark = async (id: string) => {
       try {
-          const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
+          const res = await fetch(`${API_V1}/credits/credits/negative/${id}`, { method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` } });
           const data = await res.json();
           if (!res.ok || !data.success) throw new Error(data.message || "Failed to delete");
-          toast({ title: "Remark Deleted", description: "Record has been permanently removed." });
+          toast({ title: "Remark voided", description: "The deduction was removed from the balance; its record was preserved." });
           fetchRemarks(page);
       } catch (error: any) {
           showAlert("Delete Failed", error.message);
@@ -336,7 +338,7 @@ export default function ManageRemarksPage() {
     const confirm = window.confirm("Allow this faculty member to submit a new appeal for this remark?");
     if (!confirm) return;
     try {
-        const res = await fetch(`https://faculty-credit-system.vercel.app/api/v1/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
+        const res = await fetch(`${API_V1}/admin/credits/credits/negative/${id}/reopen`, { method: "PATCH", headers: { "Authorization": `Bearer ${adminToken}` } });
         const data = await res.json();
         if (!res.ok || !data.success) throw new Error(data.message || "Failed to reopen");
         toast({ title: "Window Re-opened", description: "Faculty can now submit a new appeal." });
@@ -396,7 +398,8 @@ export default function ManageRemarksPage() {
                         <div className="grid grid-cols-2 gap-4">
                             <div>
                                 <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
-                                <Input id="points" type="number" value={points} onChange={(e) => setPoints(Number(e.target.value))} required className="rounded-none" />
+                                <Input id="points" type="number" value={points} readOnly required className="rounded-none" />
+                                <p className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>
                             </div>
                             <div>
                                 <Label className="mb-1">Academic Year</Label>
@@ -513,9 +516,9 @@ export default function ManageRemarksPage() {
                                     <AlertDialogHeader>
                                         <div className="flex items-center gap-3 text-destructive mb-2">
                                           <AlertCircle className="h-6 w-6" />
-                                          <AlertDialogTitle>Delete Remark?</AlertDialogTitle>
+                                        <AlertDialogTitle>Void remark?</AlertDialogTitle>
                                         </div>
-                                        <AlertDialogDescription>Institutional records will be restored.</AlertDialogDescription>
+                                        <AlertDialogDescription>The deduction will be removed from the balance. Its record will remain available for audit.</AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>

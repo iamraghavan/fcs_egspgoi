@@ -1,10 +1,10 @@
-
 "use client";
 
+import { API_ORIGIN } from '@/lib/api-url';
 import { useState } from "react";
 import type { AchievementFormData } from "@/components/achievement-form";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || '';
+const API_BASE_URL = API_ORIGIN;
 
 export function useSubmitAchievement() {
   const [isLoading, setIsLoading] = useState(false);

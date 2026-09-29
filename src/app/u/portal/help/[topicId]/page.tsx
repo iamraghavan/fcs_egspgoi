@@ -309,8 +309,8 @@ const helpContent = {
   },
 };
 
-export default function HelpTopicPage({ params }: { params: { topicId: string } }) {
-    const { topicId } = params;
+export default async function HelpTopicPage({ params }: { params: Promise<{ topicId: string }> }) {
+    const { topicId } = await params;
     const content = helpContent[topicId as keyof typeof helpContent];
 
     if (!content) {

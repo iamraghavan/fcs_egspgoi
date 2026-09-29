@@ -117,7 +117,7 @@ export function CookiePreferencesDialog({ open, onOpenChange }: CookiePreference
           </div>
         </div>
         <DialogFooter className="sm:justify-between gap-2">
-            <Button type="button" variant="primary" onClick={handleAcceptAll}>Accept All</Button>
+            <Button type="button" variant="default" onClick={handleAcceptAll}>Accept All</Button>
             <Button type="button" onClick={handleSave}>Save Preferences</Button>
         </DialogFooter>
       </DialogContent>

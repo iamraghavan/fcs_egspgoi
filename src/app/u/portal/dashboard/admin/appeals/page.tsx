@@ -1,6 +1,6 @@
-
 "use client"
 
+import { API_ORIGIN } from '@/lib/api-url';
 import {
   Table,
   TableBody,
@@ -12,20 +12,19 @@ import {
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import React, { useEffect, useState, useMemo } from "react"
+import React, { useEffect, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, SelectGroup, SelectLabel } from "@/components/ui/select"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
 import { colleges } from "@/lib/colleges"
-import { Search, File as FileIcon } from "lucide-react"
+import { Search, File as FileIcon, Plus, RotateCcw, SlidersHorizontal } from "lucide-react"
 import { useAlert } from "@/context/alert-context"
 import { useToast } from "@/hooks/use-toast"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { shortenUrl } from "@/lib/url-shortener"
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://fcs.egspgroup.in';
+const API_BASE_URL = API_ORIGIN;
 
 type Appeal = {
   creditId: string;
@@ -40,15 +39,34 @@ type Appeal = {
   title: string;
   notes?: string;
   proofUrl?: string;
+  creditProofUrl?: string;
+  appealProofUrl?: string;
   points: number;
+  academicYear?: string;
+  status?: string;
   appeal: {
     status: 'pending' | 'accepted' | 'rejected';
     reason: string;
-    submittedAt: string;
+    submittedAt?: string;
+    createdAt?: string;
+    decisionNotes?: string;
   };
   createdAt: string;
   [key: string]: any; // Allow for other properties
 };
+
+type AppealStatus = 'pending' | 'accepted' | 'rejected' | 'all';
+
+function formatDateTime(value?: string) {
+  if (!value) return 'Date unavailable';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'Date unavailable';
+  return new Intl.DateTimeFormat(undefined, { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZoneName: 'short' }).format(date);
+}
+
+function formatAppealDate(appeal: Appeal) {
+  return formatDateTime(appeal.appeal?.submittedAt || appeal.appeal?.createdAt);
+}
 
 type Departments = {
     [key: string]: string[];
@@ -64,18 +82,26 @@ export default function AppealReviewPage() {
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
+  const [availableYears, setAvailableYears] = useState<string[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Filtering and searching state
-  const [statusFilter, setStatusFilter] = useState<'pending' | 'accepted' | 'rejected' | 'all'>('pending');
+  const [statusFilter, setStatusFilter] = useState<AppealStatus>('pending');
   const [searchTerm, setSearchTerm] = useState("");
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
+  const [yearFilter, setYearFilter] = useState('all');
+  const [dateFrom, setDateFrom] = useState('');
+  const [dateTo, setDateTo] = useState('');
+  const [sort, setSort] = useState('-appealDate');
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
-  const [shortenedProofUrl, setShortenedProofUrl] = useState<string | null>(null);
+  const [proofLinks, setProofLinks] = useState<{ credit?: string; appeal?: string }>({});
   
-  const totalPages = Math.ceil(total / limit);
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const activeFilterCount = [collegeFilter !== 'all', departmentFilter !== 'all', yearFilter !== 'all', !!dateFrom, !!dateTo].filter(Boolean).length;
 
-  const fetchAppeals = async (currentPage: number) => {
+  const fetchAppeals = async (currentPage: number, signal?: AbortSignal) => {
     setIsLoading(true);
     const token = localStorage.getItem("token");
     if (!token) {
@@ -88,7 +114,7 @@ export default function AppealReviewPage() {
       const params = new URLSearchParams({
         page: currentPage.toString(),
         limit: limit.toString(),
-        sort: '-createdAt'
+        sort
       });
       
       if (statusFilter !== 'all') {
@@ -103,11 +129,15 @@ export default function AppealReviewPage() {
       if (departmentFilter !== 'all') {
         params.append('department', departmentFilter);
       }
+      if (yearFilter !== 'all') params.append('academicYear', yearFilter);
+      if (dateFrom) params.append('submittedFrom', dateFrom);
+      if (dateTo) params.append('submittedTo', dateTo);
       
       const url = `${API_BASE_URL}/api/v1/admin/credits/negative/appeals/all?${params.toString()}`;
 
       const response = await fetch(url, {
-        headers: { Authorization: `Bearer ${token}` }
+        headers: { Authorization: `Bearer ${token}` },
+        signal
       });
 
       if (response.status === 404) {
@@ -123,45 +153,41 @@ export default function AppealReviewPage() {
         if (errorText.trim().startsWith("<!DOCTYPE")) {
             throw new Error(`API endpoint not found or returned an invalid response. Status: ${response.status}`);
         }
-        try {
-            const errorJson = JSON.parse(errorText);
-            throw new Error(errorJson.message || `Failed to fetch appeals. Status: ${response.status}`);
-        } catch (e) {
-            throw new Error(`An unexpected error occurred: ${errorText}`);
-        }
+        let message = `Failed to fetch appeals. Status: ${response.status}`;
+        try { message = JSON.parse(errorText).message || message; } catch { /* keep status message */ }
+        throw new Error(message);
       }
 
       const data = await response.json();
       if (data.success) {
         setAllAppeals(data.items);
         setTotal(data.total);
+        setAvailableYears(data.filters?.years || []);
         
-        if (data.items.length > 0) {
-           const currentSelection = data.items.find((a: Appeal) => a._id === selectedAppeal?._id);
-           setSelectedAppeal(currentSelection || data.items[0]);
-        } else {
-           setSelectedAppeal(null);
-        }
+        setSelectedAppeal(previous => data.items.find((a: Appeal) => a._id === previous?._id) || null);
 
       } else {
         throw new Error(data.message || 'Failed to fetch appeals, unexpected response structure.');
       }
     } catch (err: any) {
+      if (err.name === 'AbortError') return;
       showAlert('Error fetching appeals', err.message);
       setAllAppeals([]);
+      setTotal(0);
     } finally {
-        setIsLoading(false);
+        if (!signal?.aborted) setIsLoading(false);
     }
   }
 
   useEffect(() => {
-    const debounceTimer = setTimeout(() => fetchAppeals(page), 500);
-    return () => clearTimeout(debounceTimer);
-  }, [page, statusFilter, collegeFilter, departmentFilter, searchTerm]);
+    const controller = new AbortController();
+    const debounceTimer = setTimeout(() => fetchAppeals(page, controller.signal), searchTerm ? 350 : 0);
+    return () => { clearTimeout(debounceTimer); controller.abort(); };
+  }, [page, statusFilter, collegeFilter, departmentFilter, yearFilter, dateFrom, dateTo, sort, searchTerm]);
 
   useEffect(() => {
     setPage(1);
-  }, [statusFilter, collegeFilter, departmentFilter, searchTerm]);
+  }, [statusFilter, collegeFilter, departmentFilter, yearFilter, dateFrom, dateTo, sort, searchTerm]);
 
   useEffect(() => {
     if (collegeFilter !== 'all' && colleges[collegeFilter as keyof typeof colleges]) {
@@ -179,16 +205,24 @@ export default function AppealReviewPage() {
   };
 
   useEffect(() => {
-    if (selectedAppeal?.proofUrl) {
-      setShortenedProofUrl(null); // Reset on selection change
-      shortenUrl(getProofUrl(selectedAppeal.proofUrl))
-          .then(url => setShortenedProofUrl(url))
-          .catch(() => setShortenedProofUrl(getProofUrl(selectedAppeal.proofUrl))); // Fallback to original
-    }
-  }, [selectedAppeal]);
+    let active = true;
+    setProofLinks({});
+    const createLink = (kind: 'credit' | 'appeal', value?: string) => {
+      if (!value) return;
+      const url = getProofUrl(value);
+      shortenUrl(url).then(link => {
+        if (active) setProofLinks(previous => ({ ...previous, [kind]: link }));
+      }).catch(() => {
+        if (active) setProofLinks(previous => ({ ...previous, [kind]: url }));
+      });
+    };
+    createLink('credit', selectedAppeal?.creditProofUrl);
+    createLink('appeal', selectedAppeal?.appealProofUrl);
+    return () => { active = false; };
+  }, [selectedAppeal?.creditProofUrl, selectedAppeal?.appealProofUrl]);
 
   const handleDecision = async (decision: 'accepted' | 'rejected') => {
-    if (!selectedAppeal) {
+    if (!selectedAppeal || isSubmitting) {
         showAlert('Error', 'No appeal selected.');
         return;
     };
@@ -199,6 +233,7 @@ export default function AppealReviewPage() {
         return;
     }
 
+    setIsSubmitting(true);
     try {
         const response = await fetch(`${API_BASE_URL}/api/v1/admin/credits/negative/${selectedAppeal.creditId}/appeal`, {
             method: 'PUT',
@@ -224,14 +259,28 @@ export default function AppealReviewPage() {
 
         toast({ title: "Decision Submitted", description: `The appeal has been marked as ${decision}.`});
         
-        fetchAppeals(page);
+        await fetchAppeals(page);
         
         setComments("");
 
     } catch (error: any) {
          showAlert('Decision Failed', error.message);
+    } finally {
+        setIsSubmitting(false);
     }
   }
+
+  const resetFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('pending');
+    setCollegeFilter('all');
+    setDepartmentFilter('all');
+    setYearFilter('all');
+    setDateFrom('');
+    setDateTo('');
+    setSort('-appealDate');
+    setPage(1);
+  };
   
   const getStatusColor = (status: Appeal['appeal']['status']) => {
       switch (status) {
@@ -243,8 +292,8 @@ export default function AppealReviewPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-6">
-      <div className="flex-grow lg:w-2/3 space-y-6">
+    <div className="space-y-6">
+      <div className="space-y-6">
         <Card>
           <CardHeader>
             <CardTitle>Appeal Review</CardTitle>
@@ -256,65 +305,54 @@ export default function AppealReviewPage() {
         
         <Card>
             <CardHeader>
-                 <div className="flex flex-col md:flex-row flex-wrap gap-4">
-                  <div className="relative flex-grow min-w-[200px] md:max-w-xs">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input 
-                        placeholder="Search by faculty, title..." 
-                        className="pl-10"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
-                  </div>
-                  <Select value={collegeFilter} onValueChange={setCollegeFilter}>
-                      <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select College" /></SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="all">All Colleges</SelectItem>
-                          {Object.keys(colleges).map(college => (<SelectItem key={college} value={college}>{college}</SelectItem>))}
-                      </SelectContent>
-                  </Select>
-                  <Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={Object.keys(filteredDepartments).length === 0}>
-                      <SelectTrigger className="flex-grow min-w-[180px]"><SelectValue placeholder="Select Department" /></SelectTrigger>
-                      <SelectContent>
-                          <SelectItem value="all">All Departments</SelectItem>
-                          {Object.entries(filteredDepartments).map(([group, courses]) => (
-                              <SelectGroup key={group}>
-                                  <SelectLabel>{group}</SelectLabel>
-                                  {courses.map(course => (
-                                      <SelectItem key={course} value={course}>{course}</SelectItem>
-                                  ))}
-                              </SelectGroup>
-                          ))}
-                      </SelectContent>
-                  </Select>
-                  <div className="flex items-center gap-2 justify-start md:justify-end flex-grow">
-                      <Select value={statusFilter} onValueChange={(value) => setStatusFilter(value as any)}>
-                        <SelectTrigger className="w-full md:w-[150px]"><SelectValue /></SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="all">All Statuses</SelectItem>
-                            <SelectItem value="pending">Pending</SelectItem>
-                            <SelectItem value="accepted">Accepted</SelectItem>
-                            <SelectItem value="rejected">Rejected</SelectItem>
-                        </SelectContent>
-                      </Select>
-                  </div>
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <div className="relative flex-1">
+                  <Label htmlFor="appeal-search">Search appeals</Label>
+                  <Search aria-hidden="true" className="absolute left-3 top-[38px] h-4 w-4 text-muted-foreground" />
+                  <Input id="appeal-search" placeholder="Faculty, ID, activity, or reason" className="mt-1 pl-10" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                 </div>
+                <div className="sm:w-44">
+                  <Label htmlFor="appeal-status">Status</Label>
+                  <Select value={statusFilter} onValueChange={value => setStatusFilter(value as AppealStatus)}>
+                    <SelectTrigger id="appeal-status" className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="accepted">Accepted</SelectItem>
+                      <SelectItem value="rejected">Rejected</SelectItem>
+                      <SelectItem value="all">All statuses</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button type="button" variant={showAdvanced ? 'secondary' : 'outline'} aria-expanded={showAdvanced} aria-controls="appeal-advanced-filters" onClick={() => setShowAdvanced(value => !value)}>
+                  <SlidersHorizontal aria-hidden="true" className="mr-2 h-4 w-4" /> Filters{activeFilterCount ? ` (${activeFilterCount})` : ''}
+                </Button>
+                <Button type="button" variant="ghost" onClick={resetFilters}><RotateCcw aria-hidden="true" className="mr-2 h-4 w-4" /> Reset</Button>
+              </div>
+              {showAdvanced && (
+                <div id="appeal-advanced-filters" className="mt-4 grid gap-3 border-t pt-4 sm:grid-cols-2 xl:grid-cols-3">
+                  <div><Label htmlFor="appeal-college">College</Label><Select value={collegeFilter} onValueChange={setCollegeFilter}><SelectTrigger id="appeal-college" className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All colleges</SelectItem>{Object.keys(colleges).map(college => <SelectItem key={college} value={college}>{college}</SelectItem>)}</SelectContent></Select></div>
+                  <div><Label htmlFor="appeal-department">Department</Label><Select value={departmentFilter} onValueChange={setDepartmentFilter} disabled={collegeFilter === 'all'}><SelectTrigger id="appeal-department" className="mt-1"><SelectValue placeholder="Choose a college first" /></SelectTrigger><SelectContent><SelectItem value="all">All departments</SelectItem>{Object.entries(filteredDepartments).map(([group, courses]) => <SelectGroup key={group}><SelectLabel>{group}</SelectLabel>{courses.map(course => <SelectItem key={course} value={course}>{course}</SelectItem>)}</SelectGroup>)}</SelectContent></Select></div>
+                  <div><Label htmlFor="appeal-year">Academic year</Label><Select value={yearFilter} onValueChange={setYearFilter}><SelectTrigger id="appeal-year" className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">All years</SelectItem>{availableYears.map(year => <SelectItem key={year} value={year}>{year}</SelectItem>)}</SelectContent></Select></div>
+                  <div><Label htmlFor="appeal-from">Submitted from</Label><Input id="appeal-from" type="date" className="mt-1" value={dateFrom} max={dateTo || undefined} onChange={e => setDateFrom(e.target.value)} /></div>
+                  <div><Label htmlFor="appeal-to">Submitted through</Label><Input id="appeal-to" type="date" className="mt-1" value={dateTo} min={dateFrom || undefined} onChange={e => setDateTo(e.target.value)} /></div>
+                  <div><Label htmlFor="appeal-sort">Sort by</Label><Select value={sort} onValueChange={setSort}><SelectTrigger id="appeal-sort" className="mt-1"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="-appealDate">Newest appeals</SelectItem><SelectItem value="appealDate">Oldest appeals</SelectItem><SelectItem value="-createdAt">Newest credit</SelectItem></SelectContent></Select></div>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
-                <p className="text-sm text-muted-foreground mb-4">
-                    Displaying {allAppeals.length} of {total} appeals.
+                <p className="text-sm text-muted-foreground mb-4" role="status" aria-live="polite">
+                    {isLoading ? 'Loading appeals…' : total ? `Showing ${(page - 1) * limit + 1}–${(page - 1) * limit + allAppeals.length} of ${total} appeals` : 'No appeals match these filters'}
                 </p>
-              <div className="overflow-x-auto border rounded-lg">
+              <div className="overflow-x-auto border rounded-lg" aria-busy={isLoading}>
                 <Table>
+                  <caption className="sr-only">Faculty credit appeals. Use the plus button to open the appeal and issued negative credit details.</caption>
                   <TableHeader>
                     <TableRow>
                       <TableHead>Faculty</TableHead>
                       <TableHead>Activity</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Appealed on</TableHead>
                       <TableHead>Status</TableHead>
-                      <TableHead className="relative px-6 py-3">
-                        <span className="sr-only">View</span>
-                      </TableHead>
+                      <TableHead className="text-right">Action</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -324,33 +362,32 @@ export default function AppealReviewPage() {
                         allAppeals.map((appeal) => (
                         <TableRow
                             key={appeal._id}
-                            className={`cursor-pointer ${selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}`}
-                            onClick={() => setSelectedAppeal(appeal)}
+                            className={selectedAppeal?._id === appeal._id ? "bg-primary/10" : ""}
                         >
                             <TableCell>
                             <div className="font-medium text-foreground">
-                                {appeal.faculty.name}
+                                {appeal.faculty?.name || 'Unknown faculty'}
                             </div>
                             <div className="text-sm text-muted-foreground">
-                                {appeal.faculty.department}
+                                {appeal.faculty?.facultyID || appeal.faculty?.department || '—'}
                             </div>
                             </TableCell>
-                            <TableCell>{appeal.title}</TableCell>
-                            <TableCell>{new Date(appeal.appeal.submittedAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="max-w-64 truncate" title={appeal.title}>{appeal.title || 'Untitled credit'}</TableCell>
+                            <TableCell className="whitespace-nowrap">{formatAppealDate(appeal)}</TableCell>
                             <TableCell>
                             <Badge className={getStatusColor(appeal.appeal.status)}>
                                 {appeal.appeal.status}
                             </Badge>
                             </TableCell>
                             <TableCell className="text-right">
-                            <Button variant="link" className="text-primary">
-                                View
+                            <Button variant="outline" size="sm" aria-label={`Open appeal and negative credit details for ${appeal.faculty?.name || 'faculty'}: ${appeal.title || 'untitled credit'}`} onClick={() => { setSelectedAppeal(appeal); setComments(''); }}>
+                                <Plus aria-hidden="true" className="mr-1.5 h-4 w-4" /> Review details
                             </Button>
                             </TableCell>
                         </TableRow>
                         ))
                     ) : (
-                        <TableRow><TableCell colSpan={5} className="text-center h-24">No appeals found for the selected filters.</TableCell></TableRow>
+                        <TableRow><TableCell colSpan={5} className="text-center h-24">No appeals found. Try another status, date range, or search term.</TableCell></TableRow>
                     )}
                   </TableBody>
                 </Table>
@@ -358,141 +395,90 @@ export default function AppealReviewPage() {
             </CardContent>
              <CardFooter className="flex items-center justify-between">
                 <div className="text-sm text-muted-foreground">
-                    Page {page} of {totalPages || 1}
+                    Page {page} of {totalPages}
                 </div>
                 <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1}>
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1 || isLoading}>
                         Previous
                     </Button>
-                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages}>
+                    <Button variant="outline" size="sm" onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page >= totalPages || isLoading}>
                         Next
                     </Button>
                 </div>
             </CardFooter>
         </Card>
       </div>
-      <aside className="w-full lg:w-1/3 lg:max-w-md">
-        <div className="sticky top-6 space-y-6">
-          {selectedAppeal ? (
-          <Card>
-            <CardHeader>
-                <div className="flex items-start gap-4">
-                     <Avatar className="h-12 w-12 border">
-                        <AvatarImage src={selectedAppeal.faculty?.profileImage} />
-                        <AvatarFallback>{selectedAppeal.faculty?.name?.charAt(0) ?? '?'}</AvatarFallback>
-                    </Avatar>
-                    <div>
-                        <p className="font-semibold text-lg">{selectedAppeal.faculty.name}</p>
-                        <p className="text-sm text-muted-foreground">{selectedAppeal.faculty.facultyID}</p>
-                         <p className="text-xs text-muted-foreground">{selectedAppeal.faculty.department}</p>
-                    </div>
+      <Sheet open={!!selectedAppeal} onOpenChange={open => { if (!open && !isSubmitting) setSelectedAppeal(null); }}>
+        <SheetContent side="right" className="flex h-full w-full flex-col p-0 sm:max-w-2xl">
+          {selectedAppeal && (
+            <>
+              <SheetHeader className="border-b px-6 py-5 pr-14 text-left">
+                <SheetTitle>Review faculty appeal</SheetTitle>
+                <SheetDescription>See the issued negative credit and the faculty response before recording a decision.</SheetDescription>
+              </SheetHeader>
+              <div className="min-h-0 flex-1 space-y-6 overflow-y-auto px-6 py-5">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <p className="font-semibold">{selectedAppeal.faculty?.name || 'Unknown faculty'}</p>
+                    <p className="text-sm text-muted-foreground">{selectedAppeal.faculty?.facultyID || 'No faculty ID'} · {selectedAppeal.faculty?.department || 'No department'}</p>
+                    <p className="text-sm text-muted-foreground">{selectedAppeal.faculty?.college || 'College unavailable'}</p>
+                  </div>
+                  <Badge className={getStatusColor(selectedAppeal.appeal.status)}>{selectedAppeal.appeal.status}</Badge>
                 </div>
-                 <div className="pt-4">
-                    <h3 className="font-semibold text-base">Appeal for: {selectedAppeal.title}</h3>
-                    <p className="text-sm text-destructive font-semibold">({selectedAppeal.points} points)</p>
-                </div>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Tabs defaultValue="appeal">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="appeal">Appeal</TabsTrigger>
-                  <TabsTrigger value="remark">Remark</TabsTrigger>
-                  <TabsTrigger value="details">Full Details</TabsTrigger>
-                </TabsList>
-                <div className="p-6">
-                    <TabsContent value="appeal">
-                        <div className="space-y-2">
-                             <p className="text-sm font-medium text-muted-foreground">Faculty's Reason:</p>
-                             <p className="text-sm italic bg-muted/50 p-3 rounded-md">"{selectedAppeal.appeal.reason}"</p>
-                             <p className="text-xs text-muted-foreground pt-2">
-                                Submitted on: {selectedAppeal.appeal.submittedAt ? new Date(selectedAppeal.appeal.submittedAt).toLocaleString() : 'N/A'}
-                             </p>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="remark">
-                         <div className="space-y-2">
-                             <p className="text-sm font-medium text-muted-foreground">Original Admin Notes:</p>
-                             <p className="text-sm italic bg-muted/50 p-3 rounded-md">"{selectedAppeal.notes || 'No notes provided.'}"</p>
-                              {selectedAppeal.proofUrl && (
-                                shortenedProofUrl ? (
-                                    <Button asChild variant="link" className="p-0 h-auto">
-                                        <a href={shortenedProofUrl} target="_blank" rel="noopener noreferrer">
-                                            <FileIcon className="mr-2 h-4 w-4" />
-                                            View Original Proof
-                                        </a>
-                                    </Button>
-                                ) : <p className="text-xs text-muted-foreground">Generating secure link...</p>
-                             )}
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="details">
-                        <div className="space-y-2 text-xs overflow-x-auto">
-                            <h4 className="font-semibold mb-2">System Data</h4>
-                            <pre className="bg-muted/50 p-3 rounded-md">
-                                {JSON.stringify(selectedAppeal, (key, value) => key === 'faculty' ? undefined : value, 2)}
-                            </pre>
-                        </div>
-                    </TabsContent>
-                </div>
-              </Tabs>
-              <div className="p-6 border-t">
-                <h4 className="text-md font-semibold text-foreground mb-4">
-                  Decision
-                </h4>
-                <div>
-                    <Label
-                    className="block text-sm font-medium text-muted-foreground"
-                    htmlFor="comments"
-                    >
-                    Rationale
-                    </Label>
-                    <div className="mt-1">
-                    <Textarea
-                        id="comments"
-                        name="comments"
-                        placeholder="Add comments for your decision (optional)"
-                        rows={3}
-                        value={comments}
-                        onChange={(e) => setComments(e.target.value)}
-                        disabled={selectedAppeal.appeal.status !== 'pending'}
-                    />
+
+                <section aria-labelledby="issued-credit-heading" className="space-y-4 rounded-lg border p-4">
+                  <div>
+                    <h3 id="issued-credit-heading" className="font-semibold">Issued negative credit</h3>
+                    <p className="text-sm text-muted-foreground">The credit the faculty member is appealing.</p>
+                  </div>
+                  <div className="grid gap-3 text-sm sm:grid-cols-2">
+                    <div className="sm:col-span-2"><p className="text-muted-foreground">Activity / reason</p><p className="font-medium">{selectedAppeal.title || 'Untitled credit'}</p></div>
+                    <div><p className="text-muted-foreground">Points deducted</p><p className="font-semibold text-destructive">−{Math.abs(selectedAppeal.points)} points</p></div>
+                    <div><p className="text-muted-foreground">Issued on</p><p className="font-medium">{formatDateTime(selectedAppeal.createdAt)}</p></div>
+                    <div><p className="text-muted-foreground">Academic year</p><p className="font-medium">{selectedAppeal.academicYear || 'Not provided'}</p></div>
+                    <div><p className="text-muted-foreground">Credit status</p><p className="font-medium capitalize">{selectedAppeal.status || 'Not provided'}</p></div>
+                  </div>
+                  <div className="text-sm"><p className="text-muted-foreground">Credit notes</p><p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3">{selectedAppeal.notes || 'No notes provided.'}</p></div>
+                  {selectedAppeal.creditProofUrl && (proofLinks.credit
+                    ? <Button asChild variant="outline" size="sm"><a href={proofLinks.credit} target="_blank" rel="noopener noreferrer"><FileIcon aria-hidden="true" className="mr-2 h-4 w-4" /> View credit proof</a></Button>
+                    : <p className="text-xs text-muted-foreground">Preparing credit proof link…</p>)}
+                  <p className="break-all text-xs text-muted-foreground">Credit ID: {selectedAppeal.creditId}</p>
+                </section>
+
+                <section aria-labelledby="faculty-appeal-heading" className="space-y-4 rounded-lg border p-4">
+                  <div>
+                    <h3 id="faculty-appeal-heading" className="font-semibold">Faculty appeal</h3>
+                    <p className="text-sm text-muted-foreground">Submitted {formatAppealDate(selectedAppeal)}</p>
+                  </div>
+                  <div className="text-sm"><p className="text-muted-foreground">Reason for appeal</p><p className="mt-1 whitespace-pre-wrap rounded-md bg-muted/50 p-3">{selectedAppeal.appeal.reason || 'No reason provided.'}</p></div>
+                  {selectedAppeal.appealProofUrl && (proofLinks.appeal
+                    ? <Button asChild variant="outline" size="sm"><a href={proofLinks.appeal} target="_blank" rel="noopener noreferrer"><FileIcon aria-hidden="true" className="mr-2 h-4 w-4" /> View appeal proof</a></Button>
+                    : <p className="text-xs text-muted-foreground">Preparing appeal proof link…</p>)}
+                </section>
+
+                <section aria-labelledby="appeal-decision-heading" className="space-y-3 border-t pt-5">
+                  <h3 id="appeal-decision-heading" className="font-semibold">Decision</h3>
+                  {selectedAppeal.appeal.status === 'pending' ? (
+                    <>
+                      <Label htmlFor="appeal-decision-notes">Decision rationale</Label>
+                      <Textarea id="appeal-decision-notes" placeholder="Explain the reason for your decision" rows={3} value={comments} onChange={e => setComments(e.target.value)} disabled={isSubmitting} />
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        <Button type="button" className="bg-green-600 text-white hover:bg-green-700" disabled={isSubmitting} onClick={() => handleDecision('accepted')}>{isSubmitting ? 'Saving…' : 'Accept appeal'}</Button>
+                        <Button type="button" variant="destructive" disabled={isSubmitting} onClick={() => handleDecision('rejected')}>{isSubmitting ? 'Saving…' : 'Reject appeal'}</Button>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="rounded-md bg-muted/50 p-3 text-sm">
+                      <p>This appeal was {selectedAppeal.appeal.status}.</p>
+                      {selectedAppeal.appeal.decisionNotes && <p className="mt-2 whitespace-pre-wrap"><span className="font-medium">Decision notes:</span> {selectedAppeal.appeal.decisionNotes}</p>}
                     </div>
-                </div>
-                {selectedAppeal.appeal.status === 'pending' ? (
-                    <div className="flex items-center gap-4 mt-4">
-                    <Button
-                        className="w-full bg-green-600 hover:bg-green-700 text-white"
-                        type="button"
-                        onClick={() => handleDecision('accepted')}
-                    >
-                        Accept Appeal
-                    </Button>
-                    <Button
-                        className="w-full"
-                        variant="destructive"
-                        type="button"
-                        onClick={() => handleDecision('rejected')}
-                    >
-                        Reject Appeal
-                    </Button>
-                    </div>
-                ) : (
-                    <div className="text-center text-muted-foreground p-4 border rounded-md mt-4">
-                        This appeal has already been {selectedAppeal.appeal.status}.
-                    </div>
-                )}
+                  )}
+                </section>
               </div>
-            </CardContent>
-          </Card>
-          ) : (
-            <Card className="h-96 flex items-center justify-center">
-                <CardContent className="text-center text-muted-foreground">
-                    <p>{isLoading ? "Loading..." : "Select an appeal to review."}</p>
-                </CardContent>
-            </Card>
+            </>
           )}
-        </div>
-      </aside>
+        </SheetContent>
+      </Sheet>
     </div>
   )
 }
