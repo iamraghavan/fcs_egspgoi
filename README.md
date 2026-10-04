@@ -1,72 +1,105 @@
-# CreditWise: Faculty Performance Management System
+# CreditWise — Faculty Credit System (Website)
 
-**CreditWise** is a robust, institutional-grade performance tracking and credit management platform specifically designed for the **E.G.S. Pillay Group of Institutions**. It empowers faculty members to track their achievements and career growth while providing administrators with high-fidelity oversight and reporting tools.
+**CreditWise** is the faculty performance and credit platform of the **E.G.S. Pillay Group of Institutions**.
+Faculty submit "good works" and track their credits; Office Assistants (OA) record remarks and awards;
+administrators review submissions, decide appeals, manage users and produce reports.
 
-## 🚀 Project Overview
+|                 |                                                                                    |
+| --------------- | ---------------------------------------------------------------------------------- |
+| Framework       | Next.js 15 (App Router), React 18, TypeScript                                      |
+| UI              | Tailwind CSS, shadcn/ui (Radix), IBM Carbon-inspired tokens, Recharts              |
+| Talks to        | The backend API (`../backend`), configured with `NEXT_PUBLIC_API_URL`              |
+| Login           | Backend JWT + server session, optional MFA; Cloudflare Turnstile on the login form |
+| Push            | Firebase Cloud Messaging (optional)                                                |
+| Package manager | **pnpm only** (`corepack pnpm …`)                                                  |
 
-The system facilitates a transparent, merit-based environment where faculty can submit "Good Works" for points and administrators can issue official remarks. It leverages a modern, responsive interface built on the **IBM Carbon Design System** to ensure maximum productivity and accessibility.
-
-### Key Functional Areas:
-- **Faculty Portal**: Achievement submission, credit tracking, real-time analytics, and automated appeal filing.
-- **Admin Dashboard**: Bulk user management, credit category configuration, submission review, and institutional reporting.
-- **OA (Office Assistant) Workflow**: Optimized data entry for recording remarks and awarding achievement credits as directed.
-- **Security & Communications**: Multi-factor authentication (MFA), secure session management, and cross-channel notifications (Push, WhatsApp, Email).
-
----
-
-## 🛠️ Tech Stack
-
-### Frontend & UI
-- **Next.js 15 (App Router)**: High-performance React framework with server-side rendering.
-- **TypeScript**: Static typing for robust, error-free development.
-- **Tailwind CSS**: Utility-first styling for rapid layout development.
-- **IBM Carbon Design System**: Institutional "Productive UI" design language and tokens.
-- **ShadCN UI**: Accessible, high-quality component primitives.
-- **GSAP**: Precision motion and interface transitions.
-- **Recharts**: Responsive data visualization for performance trends.
-
-### Backend & AI
-- **Firebase**:
-  - **Authentication**: Secure identity management with MFA support.
-  - **Remote Config**: Real-time feature toggles and system announcements.
-  - **Cloud Messaging (FCM)**: Institutional push notifications.
-  - **Analytics & Performance**: Real-time monitoring of user experience.
-- **Genkit**: AI-powered helpers for achievement rationale and reporting (Ready for integration).
+> The website has no database of its own; every check that matters is enforced by the backend.
 
 ---
 
-## 📐 Design Philosophy: IBM Carbon
+## 1. Run it locally (safe, no real data)
 
-CreditWise strictly adheres to the **IBM Carbon Design System** principles:
-- **Clarity**: Every pixel serves a purpose. High-contrast data entry and simplified workflows.
-- **Responsiveness**: A true 16-column flexible grid that adapts from mobile (4 columns) to 4K displays.
-- **Productivity**: Focused on "Productive UI" traits—sharp edges, precise spacing, and minimal distraction.
-- **Institutional Branding**: Integration of EGS Pillay's identity within a professional design framework.
+Requirements: Node.js 22+. For the full local stack also Java 17+ (used by the backend's test database).
 
----
+```powershell
+# terminal 1 - backend test server with fake data (see ../backend/README.md)
+cd ../backend
+corepack pnpm install
+corepack pnpm test:db:install
+corepack pnpm test:server          # http://127.0.0.1:5050
 
-## 🔐 Security Features
-- **Multi-Factor Authentication**: Support for both Email OTP and TOTP Authenticator Apps.
-- **Session Control**: Active session monitoring with the ability to remotely revoke device access.
-- **WhatsApp Verification**: Secure number linking via OTP for instant institutional updates.
-- **Data Integrity**: Immutable snapshotting of faculty profiles for all historical credit records.
-
----
-
-## 🚦 Getting Started
-
-### Development
-```bash
-npm run dev
-```
-Access the development server at `http://localhost:9002`.
-
-### Production Build
-```bash
-npm run build
-npm start
+# terminal 2 - website
+cd ../frontend
+corepack pnpm install
 ```
 
+Create `frontend/.env.local` (never commit it):
+
+```
+NEXT_PUBLIC_API_URL=http://127.0.0.1:5050/api/v1
+NEXT_PUBLIC_API_BASE_URL=http://127.0.0.1:5050
+NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY=1x00000000000000000000AA
+```
+
+Then `corepack pnpm dev` and open <http://localhost:9002/u/portal/auth>.
+Test accounts are listed in `../backend/README.md` (password `Test-Passw0rd-123!`).
+
+> ⚠️ If `NEXT_PUBLIC_API_URL` is not set, API calls go to the **production** backend through the
+> rewrite in `next.config.ts`. Always set it for local work.
+
+## 2. Tests
+
+| Command                                       | What it does                                                                                                                                                             |
+| --------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `corepack pnpm test`                          | Component and page tests (fake backend via MSW)                                                                                                                          |
+| `corepack pnpm test:coverage`                 | Same + coverage → `coverage/lcov-report/index.html`                                                                                                                      |
+| `corepack pnpm test:e2e`                      | Browser journeys in Chrome, Firefox, Safari engine and 2 phone sizes. Starts the backend test server and the website automatically; blocks all non-local network traffic |
+| `corepack pnpm test:e2e:ui`                   | Same, in a window where you can watch each step                                                                                                                          |
+| `corepack pnpm test:a11y`                     | Accessibility scans (axe, WCAG 2.1 AA)                                                                                                                                   |
+| `corepack pnpm test:e2e:install`              | One-time download of the test browsers                                                                                                                                   |
+| `corepack pnpm lint` / `typecheck` / `format` | ESLint / TypeScript / Prettier                                                                                                                                           |
+
+Tests named **`[BUG] …`** document known bugs and are expected to fail until fixed.
+CI (`.github/workflows/ci.yml`) runs lint, type check, unit tests and a production build on every push.
+
+## 3. Configuration
+
+| Variable                                                   | Meaning                                                                              |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `NEXT_PUBLIC_API_URL`                                      | Backend base URL including `/api/v1` (required)                                      |
+| `NEXT_PUBLIC_API_BASE_URL`                                 | Older fallback for the backend origin                                                |
+| `NEXT_PUBLIC_CLOUDFLARE_TURNSTILE_SITE_KEY`                | Captcha site key (public)                                                            |
+| `NEXT_PUBLIC_FIREBASE_*`, `NEXT_PUBLIC_FIREBASE_VAPID_KEY` | Push notifications (optional, public keys; restrict them to your domain in Firebase) |
+| `NEXT_PUBLIC_ENFORCE_WHATSAPP_VERIFICATION`                | `true` to require WhatsApp verification after login                                  |
+| `NEXT_PUBLIC_SENTRY_DSN`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | Error tracking (off when unset)                                                      |
+| `DATA_ACCESS_TOKEN`                                        | Server-only token (≥ 32 chars) for the admissions data viewer                        |
+| `MAINTENANCE_MODE`                                         | `true` redirects every page to `/maintenance`                                        |
+
+Everything starting with `NEXT_PUBLIC_` is visible to anyone in the browser — never put secrets there.
+
+## 4. Project layout
+
+| Path                               | Purpose                                                                                   |
+| ---------------------------------- | ----------------------------------------------------------------------------------------- |
+| `src/app/u/portal/auth`            | Login, MFA step, password reset, WhatsApp verification                                    |
+| `src/app/u/portal/dashboard`       | Faculty pages (dashboard, good works, remarks, appeals, profile, settings, notifications) |
+| `src/app/u/portal/dashboard/admin` | Admin pages (users, review, credits, appeals, reports, policies, ledger)                  |
+| `src/app/u/portal/dashboard/oa`    | Office Assistant pages (issue remarks/awards, history)                                    |
+| `src/app/verify/[token]`           | Public check of a signed export                                                           |
+| `src/components`                   | Shared UI (header, sidebar, login screen, forms, dialogs)                                 |
+| `src/lib/api.ts`                   | **Use this to call the backend** (token header, consistent 401/403/network handling)      |
+| `src/lib/api-url.ts`               | Backend base URL                                                                          |
+| `src/instrumentation*.ts`          | Sentry (no-op unless configured)                                                          |
+| `tests/`                           | `unit/`, `pages/`, `e2e/` (Playwright), `utils/`                                          |
+
+## 5. Deploy
+
+Vercel builds from `main` with `pnpm-lock.yaml`. Production builds **fail on type or lint errors**
+(by design). Set the variables in §3 in the Vercel project, and deploy backend and frontend changes
+that belong together at the same time.
+
+Audit reports are in `../docs/audit/` in the project folder.
+
 ---
 
-© 2025 E.G.S. Pillay Group of Institutions. All rights reserved.
+© E.G.S. Pillay Group of Institutions. All rights reserved.
