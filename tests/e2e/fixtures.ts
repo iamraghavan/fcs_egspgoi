@@ -85,6 +85,20 @@ export async function loginUI(page: Page, role: Role) {
   await page.waitForURL(new RegExp(`${USERS[role].home.replace(/\//g, '\\/')}\\?uid=`));
 }
 
+/**
+ * After logout the app may redirect more than once (a dashboard request still
+ * in flight also sends the user to login - bug F-07). Wait for the final
+ * login page and for the browser storage to be cleared.
+ */
+export async function waitForSignedOut(page: Page) {
+  await expect(page).toHaveURL(/\/u\/portal\/auth/, { timeout: 30_000 });
+  await page.waitForLoadState('networkidle').catch(() => {});
+  await expect.poll(
+    () => page.evaluate(() => localStorage.getItem('token')).catch(() => 'navigating'),
+    { timeout: 15_000 },
+  ).toBeNull();
+}
+
 export async function logout(page: Page) {
   await page.locator('header').getByRole('button').last().click();
   await page.getByRole('menuitem', { name: /log ?out|sign ?out/i }).click();

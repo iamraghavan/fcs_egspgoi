@@ -1,6 +1,6 @@
 "use client"
 
-import { API_ORIGIN } from '@/lib/api-url';
+import { API_ORIGIN, API_V1 } from '@/lib/api-url';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "@/components/user-nav";
@@ -104,7 +104,15 @@ export function Header({ user }: { user: User }) {
             </Button>
           </Link>
           <div className="h-8 w-[1px] bg-border mx-1 hidden sm:block" />
-          <UserNav user={user} logout={() => {
+          <UserNav user={user} logout={async () => {
+              // End the session on the server too, so a copied token stops working (SEC-10).
+              const token = localStorage.getItem("token");
+              if (token) {
+                await fetch(`${API_V1}/auth/logout`, {
+                  method: "POST",
+                  headers: { Authorization: `Bearer ${token}` },
+                }).catch(() => { /* still sign out locally */ });
+              }
               localStorage.clear();
               window.location.href = '/u/portal/auth?faculty_login';
           }} />

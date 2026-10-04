@@ -1,7 +1,7 @@
 /**
  * Login, logout and protected pages in a real browser (local stack).
  */
-import { test, expect, resetData, loginUI, loginFast, apiLogin, USERS, API } from './fixtures';
+import { test, expect, resetData, loginUI, loginFast, apiLogin, USERS, API, waitForSignedOut } from './fixtures';
 
 test.beforeAll(resetData);
 
@@ -94,19 +94,17 @@ test.describe('logout', () => {
     await loginUI(page, 'faculty');
     await page.locator('header button').last().click();
     await page.getByRole('menuitem', { name: /log ?out|sign ?out/i }).click();
-    await page.waitForURL(/\/u\/portal\/auth/);
-    expect(await page.evaluate(() => localStorage.getItem('token'))).toBeNull();
+    await waitForSignedOut(page);
     await page.goBack();
     await page.waitForURL(/\/u\/portal\/auth/);
   });
 
-  test('[BUG] after logout the old token still works on the server (no server-side logout)', async ({ page }) => {
-    test.fail(true, 'Known bug: logout only clears browser storage');
+  test('[FIXED SEC-10] after logout the old token no longer works on the server', async ({ page }) => {
     await loginUI(page, 'faculty');
     const token = await page.evaluate(() => localStorage.getItem('token'));
     await page.locator('header button').last().click();
     await page.getByRole('menuitem', { name: /log ?out|sign ?out/i }).click();
-    await page.waitForURL(/\/u\/portal\/auth/);
+    await waitForSignedOut(page);
     const res = await page.request.get(`${API}/api/v1/auth/profile`, { headers: { Authorization: `Bearer ${token}` } });
     expect(res.status()).toBe(401);
   });

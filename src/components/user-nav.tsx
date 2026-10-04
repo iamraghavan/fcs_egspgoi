@@ -22,7 +22,7 @@ type User = {
 
 type UserNavProps = {
   user: User;
-  logout: () => void;
+  logout: () => void | Promise<void>;
 };
 
 export function UserNav({ user, logout }: UserNavProps) {

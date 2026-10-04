@@ -2,7 +2,7 @@
  * Full user journeys per role in a real browser (local stack).
  * Each step is checked on screen AND in the (local test) database through the API.
  */
-import { test, expect, resetData, loginUI, apiLogin, USERS, API } from './fixtures';
+import { test, expect, resetData, loginUI, apiLogin, USERS, API, waitForSignedOut } from './fixtures';
 
 const CREDIT_F1_NEG_PENDING = '7c0000000000000000000004'; // seeded title "negative credit 004"
 
@@ -52,7 +52,7 @@ test('faculty journey: login -> dashboard -> submit good work -> see it pending 
   // Logout.
   await page.locator('header button').last().click();
   await page.getByRole('menuitem', { name: /log ?out|sign ?out/i }).click();
-  await page.waitForURL(/\/u\/portal\/auth/);
+  await waitForSignedOut(page);
 });
 
 test('admin journey: login -> review submissions -> approve one -> faculty total updates', async ({ page }) => {
