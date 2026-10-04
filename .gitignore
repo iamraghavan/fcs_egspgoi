@@ -52,3 +52,8 @@ next-env.d.ts
 # firebase
 firebase-debug.log
 firestore-debug.log
+
+# Audit test outputs
+/test-results/
+/playwright-report/
+/tests/e2e/.auth/
