@@ -60,3 +60,7 @@ firestore-debug.log
 
 # Admission enquiries contain personal data - never commit (SEC-23)
 /src/lib/admissions-data.json
+
+# This project uses pnpm only (see package.json "packageManager").
+package-lock.json
+yarn.lock
