@@ -1,0 +1,60 @@
+# Runs on every push and pull request (roadmap Q-1).
+# Unit/page tests use a fake backend (MSW); the build uses placeholder
+# settings, so no secrets are needed.
+#
+# Browser (E2E) tests need the backend repository next to this one; run them
+# locally with `pnpm test:e2e` (see docs/audit/03-TEST-RESULTS.md section 7).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  NEXT_TELEMETRY_DISABLED: 1
+  NEXT_PUBLIC_API_URL: http://127.0.0.1:5050/api/v1
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4 # version comes from package.json "packageManager"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test:coverage
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: frontend-coverage
+          path: coverage/
+          retention-days: 14
+      - run: pnpm build
+
+  audit:
+    # Informational for now; remove continue-on-error once remaining
+    # advisories (xlsx, firebase/grpc) are resolved (roadmap S-14).
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm audit --prod --audit-level=high
