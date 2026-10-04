@@ -235,7 +235,7 @@ export default function DynamicReportsPage() {
     };
   }, [reportData, view]);
 
-  const handleDownload = (format: 'pdf' | 'excel' | 'html') => {
+  const handleDownload = async (format: 'pdf' | 'excel' | 'html') => {
     const params = new URLSearchParams({
       view,
       level,
@@ -248,8 +248,35 @@ export default function DynamicReportsPage() {
       ...(endDate && { endDate }),
       format
     });
-    window.open(`${API_BASE_URL}/reports/download?${params.toString()}&token=${token}`, '_blank');
+    // The login token is sent in the Authorization header, never in the URL
+    // (URLs end up in browser history and server logs).
+    const previewTab = format === 'html' ? window.open('', '_blank') : null;
     toast({ title: "Report Generation", description: `Your ${format.toUpperCase()} report is being prepared.` });
+    try {
+      const res = await fetch(`${API_BASE_URL}/reports/download?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Report could not be generated (${res.status}).`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      if (previewTab) {
+        previewTab.location.href = url;
+      } else {
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `FCS_Report_${level}_${Date.now()}.${format === 'excel' ? 'xlsx' : 'pdf'}`;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (e: any) {
+      previewTab?.close();
+      showAlert("Download Failed", e.message);
+    }
   };
 
   const generateShareLink = async () => {
@@ -275,7 +302,7 @@ export default function DynamicReportsPage() {
       const data = await res.json();
       if (data.success && data.shareLink) {
         await navigator.clipboard.writeText(data.shareLink);
-        toast({ title: "Link Copied!", description: "Shareable report link copied to clipboard." });
+        toast({ title: "Link Copied!", description: `Read-only report link copied. It expires in ${Math.round((data.expiresInHours || 168) / 24)} days.` });
       } else {
         throw new Error("Could not generate link");
       }
