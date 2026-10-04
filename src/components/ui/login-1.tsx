@@ -23,6 +23,7 @@ const SESSION_DURATION_SECONDS = 10 * 60 * 60; // 10 hours
 
 type TempAuthData = {
     userId: string | null;
+    mfaTicket: string | null;
     email: string | null;
     mfaType: 'email' | 'app' | null;
     message: string;
@@ -183,6 +184,7 @@ export function LoginScreen() {
       if (responseData.success && responseData.mfaRequired) {
         setTempAuthData({
           userId: responseData.userId,
+          mfaTicket: responseData.mfaTicket || null,
           email: email,
           mfaType: responseData.mfaType,
           message: responseData.message || `Secure code sent to your ${responseData.mfaType === 'app' ? 'authenticator' : 'email'}.`,
@@ -206,12 +208,13 @@ export function LoginScreen() {
       setIsLoading(true);
 
       try {
-          if (!tempAuthData || !tempAuthData.email || !tempAuthData.mfaType) {
+          if (!tempAuthData || !tempAuthData.mfaTicket || !tempAuthData.mfaType) {
               throw new Error("MFA session expired. Please log in again.");
           }
 
+          // The ticket from the password step is required; the code alone is never enough.
           const body = {
-            email: tempAuthData.email,
+            mfaTicket: tempAuthData.mfaTicket,
             code: mfaCode.trim(),
             type: tempAuthData.mfaType,
           };

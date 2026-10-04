@@ -84,7 +84,7 @@ describe('LoginScreen', () => {
 
   test('MFA required: shows the code step; verify button needs 6 digits', async () => {
     server.use(
-      http.post(`${API}/auth/login`, () => HttpResponse.json({ success: true, mfaRequired: true, mfaType: 'email', userId: 'u1' })),
+      http.post(`${API}/auth/login`, () => HttpResponse.json({ success: true, mfaRequired: true, mfaType: 'email', userId: 'u1', mfaTicket: 'ticket-123' })),
       http.post(`${API}/auth/verify-mfa`, () => HttpResponse.json({ success: true, token: fakeJwt({ id: 'u1', role: 'faculty' }) })),
     );
     const user = await fill();
@@ -100,10 +100,10 @@ describe('LoginScreen', () => {
     await waitFor(() => expect(mockRouter.push).toHaveBeenCalled());
   });
 
-  test('[INFO] MFA verification request sends email + code only (no proof the password step passed)', async () => {
+  test('[FIXED SEC-06] MFA verification sends the ticket from the password step, not the email', async () => {
     let body: any;
     server.use(
-      http.post(`${API}/auth/login`, () => HttpResponse.json({ success: true, mfaRequired: true, mfaType: 'app', userId: 'u1' })),
+      http.post(`${API}/auth/login`, () => HttpResponse.json({ success: true, mfaRequired: true, mfaType: 'app', userId: 'u1', mfaTicket: 'ticket-123' })),
       http.post(`${API}/auth/verify-mfa`, async ({ request }) => { body = await request.json(); return HttpResponse.json({ success: false }, { status: 400 }); }),
     );
     const user = await fill();
@@ -113,7 +113,8 @@ describe('LoginScreen', () => {
     await user.click(screen.getByRole('button', { name: /verify/i }));
     await waitFor(() => expect(body).toBeDefined());
     // Documents the contract the backend bug relies on (see backend auth tests).
-    expect(Object.keys(body).sort()).toEqual(expect.arrayContaining(['code', 'email']));
+    expect(body).toMatchObject({ mfaTicket: 'ticket-123', code: '123456' });
+    expect(body.email).toBeUndefined();
     expect(body.password).toBeUndefined();
   });
 
