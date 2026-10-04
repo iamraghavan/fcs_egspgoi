@@ -57,3 +57,6 @@ firestore-debug.log
 /test-results/
 /playwright-report/
 /tests/e2e/.auth/
+
+# Admission enquiries contain personal data - never commit (SEC-23)
+/src/lib/admissions-data.json

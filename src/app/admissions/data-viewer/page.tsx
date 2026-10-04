@@ -30,8 +30,8 @@ type Enquiry = {
     enquiryDate: string;
 };
 
-const SECRET_TOKEN = process.env.NEXT_PUBLIC_DATA_ACCESS_TOKEN || '3a9e7b1f-8c6d-4a5b-9f1c-2d0b8e6a5c4d';
-
+// The access token is checked ONLY on the server (DATA_ACCESS_TOKEN). It used
+// to be hard-coded here and shipped to every browser (SEC-16).
 function DataViewer() {
     const searchParams = useSearchParams();
     const token = searchParams.get('token');
@@ -51,16 +51,13 @@ function DataViewer() {
             return;
         }
 
-        if (token !== SECRET_TOKEN) {
-            setError("Invalid access token. Unauthorized.");
-            setLoading(false);
-            return;
-        }
+        // Remove the token from the address bar so it is not kept in browser history.
+        window.history.replaceState(null, '', window.location.pathname);
 
         const fetchData = async () => {
             setLoading(true);
             try {
-                const res = await fetch(`/api/admissions-data?token=${token}`);
+                const res = await fetch('/api/admissions-data', { headers: { 'x-access-token': token } });
                 if (!res.ok) {
                     const errorData = await res.json();
                     throw new Error(errorData.error || `Failed to fetch data. Status: ${res.status}`);
