@@ -10,7 +10,7 @@ import DashboardClientWrapper from '@/components/dashboard-client-wrapper';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { server, API } from '../utils/server';
 import { renderApp } from '../utils/render';
-import { mockRouter, mockNav } from '../utils/setup';
+import { mockRouter, mockNav, mockLocationAssign } from '../utils/setup';
 
 const SECRET = 'secret page content';
 const profile = (role: string, id = 'u1') => http.get(`${API}/auth/profile`, () =>
@@ -34,22 +34,34 @@ describe('dashboard route protection', () => {
     expect(screen.queryByText(SECRET)).not.toBeInTheDocument();
   });
 
-  test.each([401, 403])('server answers %d (expired/revoked token): storage cleared and redirected', async (status) => {
+  test.each([
+    [401, 'session_expired'],
+    [403, 'unauthorized'], // 403 on the profile = account deactivated
+  ])('server answers %d: storage cleared and sent to login (%s)', async (status, reason) => {
     localStorage.setItem('token', 'expired');
     localStorage.setItem('userRole', 'faculty');
     server.use(http.get(`${API}/auth/profile`, () => HttpResponse.json({ success: false }, { status })));
     renderShell();
-    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/u/portal/auth?faculty_login&reason=unauthorized'));
+    await waitFor(() => expect(mockLocationAssign).toHaveBeenCalledWith(`/u/portal/auth?faculty_login&reason=${reason}`));
     expect(localStorage.getItem('token')).toBeNull();
     expect(screen.queryByText(SECRET)).not.toBeInTheDocument();
   });
 
-  test('server error (500): error alert and back to login, no crash', async () => {
+  test('[FIXED F-07] server error (500): message shown, user stays signed in', async () => {
     localStorage.setItem('token', 't');
     server.use(http.get(`${API}/auth/profile`, () => HttpResponse.json({ message: 'boom' }, { status: 500 })));
     renderShell();
-    expect(await screen.findByTestId('app-alert')).toHaveTextContent(/server error: 500/i);
-    expect(mockRouter.push).toHaveBeenCalledWith('/u/portal/auth?faculty_login');
+    expect(await screen.findByTestId('app-alert')).toHaveTextContent(/connection problem.*boom/i);
+    expect(localStorage.getItem('token')).toBe('t');
+    expect(mockLocationAssign).not.toHaveBeenCalled();
+  });
+
+  test('[FIXED F-07] network failure: message shown, user stays signed in', async () => {
+    localStorage.setItem('token', 't');
+    server.use(http.get(`${API}/auth/profile`, () => HttpResponse.error()));
+    renderShell();
+    expect(await screen.findByTestId('app-alert')).toHaveTextContent(/could not reach the server/i);
+    expect(localStorage.getItem('token')).toBe('t');
   });
 
   test('valid faculty on a faculty page: content shown', async () => {

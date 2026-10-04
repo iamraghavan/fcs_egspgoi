@@ -1,6 +1,7 @@
 "use client";
 
 import { API_ORIGIN, API_V1 } from '@/lib/api-url';
+import { apiFetch, ApiError, describeApiError, signOutLocally } from '@/lib/api';
 import { Header } from "@/components/header";
 import { SidebarNav } from "@/components/sidebar-nav";
 import React, { useState, useEffect, type ReactNode } from "react";
@@ -97,22 +98,9 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         return;
     }
       try {
-        const response = await fetch(`${API_BASE_URL}/auth/profile`, {
-          headers: { "Authorization": `Bearer ${token}` }
-        });
-
-        if (response.status === 401 || response.status === 403) {
-          localStorage.clear();
-          router.replace("/u/portal/auth?faculty_login&reason=unauthorized");
-          return;
-        }
-
-        if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
-        }
-
-        const responseData = await response.json();
-        if (!responseData.success) throw new Error(responseData.message || "Session expired");
+        // apiFetch signs the user out on 401 by itself (see src/lib/api.ts).
+        const responseData = await apiFetch('/auth/profile');
+        if (!responseData?.success) throw new Error(responseData?.message || "Could not load your profile.");
 
         const userData = responseData.user || responseData.data;
         const getAvatarUrl = (u: any) => {
@@ -145,9 +133,15 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
             }
         }
       } catch (error: any) {
-        showAlert("Session Error", error.message);
-        localStorage.clear();
-        router.push("/u/portal/auth?faculty_login");
+        if (error instanceof ApiError && error.kind === 'unauthorized') return; // already going to the login page
+        if (error instanceof ApiError && error.kind === 'aborted') return; // the user navigated away
+        if (error instanceof ApiError && error.kind === 'forbidden') {
+          // 403 on the profile means the account was deactivated: sign out.
+          signOutLocally('unauthorized');
+          return;
+        }
+        // Network hiccups and server errors must NOT sign the user out (F-07).
+        showAlert("Connection problem", `${describeApiError(error)} Your session is still active; please try again.`);
       } finally {
         setLoading(false);
       }

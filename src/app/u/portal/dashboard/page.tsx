@@ -1,6 +1,7 @@
 "use client";
 
 import { API_V1 } from '@/lib/api-url';
+import { apiFetch, ApiError, describeApiError } from '@/lib/api';
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { ResponsiveContainer, XAxis, YAxis, Tooltip, Area, AreaChart, Legend, CartesianGrid, Bar, BarChart } from "recharts";
@@ -104,31 +105,23 @@ export default function FacultyDashboard() {
     try {
       const summaryParams = new URLSearchParams({ academicYear });
       if (forceRecalc) summaryParams.set('recalc', 'true');
-      const headers = { Authorization: `Bearer ${token}` };
-      const [response, activityResponse] = await Promise.all([
-        fetch(`${API_BASE_URL}/credits/${encodeURIComponent(uid)}/credits?${summaryParams}`, { headers }),
-        fetch(`${API_BASE_URL}/credits/credits/faculty/${encodeURIComponent(uid)}?limit=8`, { headers }),
+      // apiFetch handles 401 (sign out); 403 and network errors no longer sign the user out (F-02, F-07).
+      const [resData, activityData] = await Promise.all([
+        apiFetch(`/credits/${encodeURIComponent(uid)}/credits?${summaryParams}`),
+        apiFetch(`/credits/credits/faculty/${encodeURIComponent(uid)}?limit=8`),
       ]);
-      
-      if ([response.status, activityResponse.status].some(status => status === 401 || status === 403)) {
-        localStorage.clear();
-        router.replace('/u/portal/auth?faculty_login&reason=session_expired');
-        return;
-      }
-
-      if (!response.ok || !activityResponse.ok) {
-        throw new Error('System synchronization error.');
-      }
-
-      const [resData, activityData] = await Promise.all([response.json(), activityResponse.json()]);
-      if (!resData.success || !resData.data?.stats || !activityData.success) {
-        throw new Error(resData.message || activityData.message || 'Unable to load credit totals.');
+      if (!resData?.success || !resData.data?.stats || !activityData?.success) {
+        throw new Error(resData?.message || activityData?.message || 'Unable to load credit totals.');
       }
       setStats(resData.data);
       setRecentActivities(activityData.items || []);
       if (forceRecalc) toast({ title: "Credits Synced", description: "Balance updated successfully." });
     } catch (e: any) {
-      showAlert("Sync Error", e.message || "Failed to connect to the performance engine.");
+      if (e instanceof ApiError && (e.kind === 'unauthorized' || e.kind === 'aborted')) return;
+      // 403 here usually means the address had another person's id; the dashboard
+      // shell corrects the address to your own, so no message is needed.
+      if (e instanceof ApiError && e.kind === 'forbidden') return;
+      showAlert("Sync Error", describeApiError(e) || "Failed to connect to the performance engine.");
     } finally {
       setLoading(false);
       setIsSyncing(false);

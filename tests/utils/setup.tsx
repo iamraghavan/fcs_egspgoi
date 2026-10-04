@@ -48,3 +48,12 @@ window.HTMLElement.prototype.releasePointerCapture = jest.fn();
 jest.mock('@/lib/firebase', () => ({ app: null, messaging: null, remoteConfig: null }));
 jest.mock('firebase/messaging', () => ({ getToken: jest.fn(async () => null), onMessage: jest.fn(() => () => {}), isSupported: jest.fn(async () => false), getMessaging: jest.fn() }));
 jest.mock('firebase/remote-config', () => ({ fetchAndActivate: jest.fn(), getValue: jest.fn(), getRemoteConfig: jest.fn() }));
+
+// The shared API client signs out with window.location.assign(); record it instead of navigating.
+export const mockLocationAssign = jest.fn();
+Object.defineProperty(window, 'location', { configurable: true, value: { ...window.location, assign: mockLocationAssign } });
+beforeEach(() => {
+  mockLocationAssign.mockClear();
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  require('@/lib/api').__resetApiStateForTests();
+});

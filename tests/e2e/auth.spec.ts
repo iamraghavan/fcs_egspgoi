@@ -69,16 +69,14 @@ test.describe('protected pages', () => {
     await expect(page.getByText('faculty faculty2')).toHaveCount(0);
   });
 
-  test('[BUG-FE] tampering ?uid= logs the user OUT ("session expired") instead of correcting the URL', async ({ page }) => {
-    test.fail(true, 'Known bug: dashboard treats 403 Forbidden as an expired session');
+  test('[FIXED F-02] tampering ?uid= is corrected to your own id (no sign-out)', async ({ page }) => {
     await loginFast(page, 'faculty');
     await page.goto(`/u/portal/dashboard?uid=${USERS.faculty2.id}`);
     await page.waitForURL(new RegExp(`uid=${USERS.faculty.id}`), { timeout: 15000 });
   });
 });
 
-test('[BUG-FE] @cross one failed or cancelled network request logs the user out (F-07)', async ({ page }) => {
-  test.fail(true, 'Known bug F-07: the dashboard shell clears the login on ANY error (e.g. a request cancelled when you click a menu item quickly)');
+test('[FIXED F-07] @cross one failed or cancelled network request does not sign the user out', async ({ page }) => {
   await loginFast(page, 'faculty');
   await page.waitForLoadState('networkidle');
   // Simulate a network hiccup on the next page load (this is what happens in Firefox/Safari

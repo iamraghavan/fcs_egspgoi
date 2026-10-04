@@ -7,7 +7,7 @@ import { screen, waitFor } from '@testing-library/react';
 import { http, HttpResponse, delay } from 'msw';
 import { server, API } from '../utils/server';
 import { renderApp } from '../utils/render';
-import { mockNav, mockRouter } from '../utils/setup';
+import { mockNav, mockRouter, mockLocationAssign } from '../utils/setup';
 
 import GoodWorksPage from '@/app/u/portal/dashboard/good-works/page';
 import RemarksPage from '@/app/u/portal/dashboard/remarks/page';
@@ -123,8 +123,16 @@ describe('Faculty dashboard', () => {
   test('401 from the API: session cleared and redirected to login', async () => {
     server.use(http.get(summary, () => HttpResponse.json({}, { status: 401 })), http.get(recent, () => list([])));
     renderApp(<FacultyDashboard />);
-    await waitFor(() => expect(mockRouter.replace).toHaveBeenCalledWith('/u/portal/auth?faculty_login&reason=session_expired'));
+    await waitFor(() => expect(mockLocationAssign).toHaveBeenCalledWith('/u/portal/auth?faculty_login&reason=session_expired'));
     expect(localStorage.getItem('token')).toBeNull();
+  });
+
+  test("[FIXED F-02] 403 (e.g. another person's id in the address) does NOT sign the user out", async () => {
+    server.use(http.get(summary, () => HttpResponse.json({}, { status: 403 })), http.get(recent, () => HttpResponse.json({}, { status: 403 })));
+    renderApp(<FacultyDashboard />);
+    await new Promise((r) => setTimeout(r, 300));
+    expect(localStorage.getItem('token')).toBe('test-token');
+    expect(mockLocationAssign).not.toHaveBeenCalled();
   });
 
   test('500 from the API: "Sync Error" message', async () => {
