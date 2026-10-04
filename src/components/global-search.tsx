@@ -103,7 +103,7 @@ export function GlobalSearch() {
           type="button"
         >
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-hover:text-sidebar-foreground transition-colors" />
-          <div className="w-full h-10 bg-background/20 text-muted-foreground/80 pl-10 pr-4 rounded-none border border-sidebar-border text-sm flex items-center justify-between group-hover:bg-background/30 group-hover:text-sidebar-foreground transition-all">
+          <div className="w-full h-10 bg-background/20 text-muted-foreground pl-10 pr-4 rounded-none border border-sidebar-border text-sm flex items-center justify-between group-hover:bg-background/30 group-hover:text-sidebar-foreground transition-all">
             <span>Search users, credits...</span>
             <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
               <span className="text-xs">⌘</span>K

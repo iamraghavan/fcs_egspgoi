@@ -411,7 +411,7 @@ export default function FacultyAccountsPage() {
             />
           </div>
             <Select onValueChange={handleCollegeFilterChange} value={collegeFilter}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filter by college">
                 <SelectValue placeholder="College" />
               </SelectTrigger>
               <SelectContent>
@@ -422,7 +422,7 @@ export default function FacultyAccountsPage() {
               </SelectContent>
             </Select>
             <Select onValueChange={handleDepartmentFilterChange} value={departmentFilter} disabled={collegeFilter === 'all' || Object.keys(filteredDepartments).length === 0}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filter by department">
                 <SelectValue placeholder="Department" />
               </SelectTrigger>
               <SelectContent>
@@ -438,7 +438,7 @@ export default function FacultyAccountsPage() {
               </SelectContent>
             </Select>
             <Select onValueChange={handleStatusFilterChange} value={statusFilter}>
-              <SelectTrigger>
+              <SelectTrigger aria-label="Filter by status">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -448,7 +448,7 @@ export default function FacultyAccountsPage() {
               </SelectContent>
             </Select>
             <Select onValueChange={value => { setRoleFilter(value); setPage(1); }} value={roleFilter}>
-              <SelectTrigger><SelectValue placeholder="Role" /></SelectTrigger>
+              <SelectTrigger aria-label="Filter by role"><SelectValue placeholder="Role" /></SelectTrigger>
               <SelectContent><SelectItem value="all">All Roles</SelectItem><SelectItem value="faculty">Faculty</SelectItem><SelectItem value="oa">Office Assistant</SelectItem><SelectItem value="admin">Administrator</SelectItem></SelectContent>
             </Select>
         </div>
@@ -506,7 +506,7 @@ export default function FacultyAccountsPage() {
                       <div className="flex items-center justify-center gap-1">
                         <Dialog>
                             <DialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFaculty(account)}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedFaculty(account)} aria-label={`View details of ${account.name}`}>
                                 <Eye className="h-4 w-4" />
                                 </Button>
                             </DialogTrigger>
@@ -547,7 +547,7 @@ export default function FacultyAccountsPage() {
                                             </div>
                                             <div>
                                                 <span className="text-muted-foreground font-medium block">Status</span>
-                                                <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-600' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
+                                                <span className={`font-medium ${selectedFaculty.isActive ? 'text-green-700' : 'text-red-600'}`}>{selectedFaculty.isActive ? 'Active' : 'Inactive'}</span>
                                             </div>
                                             <div>
                                                 <span className="text-muted-foreground font-medium block">Phone</span>
@@ -715,7 +715,7 @@ export default function FacultyAccountsPage() {
                             <div className="relative">
                                 <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                                 <Select value={editCollege} onValueChange={setEditCollege}>
-                                    <SelectTrigger className="pl-10">
+                                    <SelectTrigger aria-label="College" className="pl-10">
                                         <SelectValue placeholder="Select College" />
                                     </SelectTrigger>
                                     <SelectContent>
@@ -731,7 +731,7 @@ export default function FacultyAccountsPage() {
                             <div className="relative">
                                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                                 <Select value={editDepartment} onValueChange={setEditDepartment} disabled={!editCollege}>
-                                    <SelectTrigger className="pl-10">
+                                    <SelectTrigger aria-label="Department" className="pl-10">
                                         <SelectValue placeholder="Select Department" />
                                     </SelectTrigger>
                                     <SelectContent>

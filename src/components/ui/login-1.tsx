@@ -305,9 +305,11 @@ export function LoginScreen() {
                         variant="ghost"
                         size="icon"
                         onClick={togglePasswordVisibility}
+                        aria-label={showPassword ? "Hide password" : "Show password"}
+                        aria-pressed={showPassword}
                         className="absolute inset-y-0 right-0 flex items-center pr-3 text-cds-text-05 hover:text-cds-text-01 h-full"
                     >
-                        {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                     </Button>
                 </div>
                 {isCapsOn && (

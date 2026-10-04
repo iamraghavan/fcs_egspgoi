@@ -86,20 +86,22 @@ export function SidebarNav({ role }: SidebarNavProps) {
             const isActive = pathname === item.href.split('?')[0];
             return (
                 <SidebarMenuItem key={item.name}>
-                    <Link href={item.href} className="w-full">
-                        <SidebarMenuButton
-                            isActive={isActive}
-                            tooltip={item.name}
-                            className={cn(
-                                "h-10 px-4 flex items-center gap-3 transition-all rounded-none relative",
-                                isActive ? "bg-primary/10 text-primary font-semibold" : "text-cds-text-02 hover:bg-cds-ui-01"
-                            )}
-                        >
-                            {isActive && <div className="absolute left-0 top-0 bottom-0 w-1 bg-primary" />}
-                            <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-cds-text-05")} />
+                    {/* One link per item (a button inside a link is invalid and confuses screen readers). */}
+                    <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.name}
+                        className={cn(
+                            "h-10 px-4 flex items-center gap-3 transition-all rounded-none relative",
+                            isActive ? "bg-primary/10 text-blue-700 font-semibold" : "text-cds-text-02 hover:bg-cds-ui-01"
+                        )}
+                    >
+                        <Link href={item.href} aria-current={isActive ? "page" : undefined}>
+                            {isActive && <span className="absolute left-0 top-0 bottom-0 w-1 bg-primary" aria-hidden="true" />}
+                            <item.icon className={cn("h-5 w-5", isActive ? "text-primary" : "text-cds-text-05")} aria-hidden="true" />
                             <span className="text-[13px] tracking-wide">{item.name}</span>
-                        </SidebarMenuButton>
-                    </Link>
+                        </Link>
+                    </SidebarMenuButton>
                 </SidebarMenuItem>
             )
           })}
@@ -109,18 +111,19 @@ export function SidebarNav({ role }: SidebarNavProps) {
          <SidebarMenu>
             {role !== 'oa' && (
                 <SidebarMenuItem>
-                    <Link href={role === 'admin' ? `/u/portal/dashboard/admin/settings?uid=${uid}` : `/u/portal/dashboard/settings?uid=${uid}`} className="w-full">
-                        <SidebarMenuButton 
-                            tooltip="Account Settings" 
-                            className={cn(
-                                "h-10 px-4 flex items-center gap-3 transition-all rounded-none",
-                                pathname.includes('/settings') ? "bg-primary/10 text-primary font-semibold" : "text-cds-text-02 hover:bg-cds-ui-01"
-                            )}
-                        >
-                            <Settings className="h-5 w-5" />
+                    <SidebarMenuButton
+                        asChild
+                        tooltip="Account Settings"
+                        className={cn(
+                            "h-10 px-4 flex items-center gap-3 transition-all rounded-none",
+                            pathname.includes('/settings') ? "bg-primary/10 text-blue-700 font-semibold" : "text-cds-text-02 hover:bg-cds-ui-01"
+                        )}
+                    >
+                        <Link href={role === 'admin' ? `/u/portal/dashboard/admin/settings?uid=${uid}` : `/u/portal/dashboard/settings?uid=${uid}`}>
+                            <Settings className="h-5 w-5" aria-hidden="true" />
                             <span className="text-[13px] tracking-wide">Settings</span>
-                        </SidebarMenuButton>
-                    </Link>
+                        </Link>
+                    </SidebarMenuButton>
                 </SidebarMenuItem>
             )}
          </SidebarMenu>

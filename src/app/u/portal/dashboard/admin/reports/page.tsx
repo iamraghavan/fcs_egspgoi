@@ -563,7 +563,7 @@ export default function DynamicReportsPage() {
                                         <td className="p-4">
                                             <Badge variant="outline" className={cn(
                                                 "rounded-none text-[10px] uppercase font-bold tracking-wider",
-                                                row.type === 'positive' ? 'text-green-600 border-green-200 bg-green-50' : 'text-red-600 border-red-200 bg-red-50'
+                                                row.type === 'positive' ? 'text-green-700 border-green-200 bg-green-50' : 'text-red-600 border-red-200 bg-red-50'
                                             )}>
                                                 {row.type}
                                             </Badge>

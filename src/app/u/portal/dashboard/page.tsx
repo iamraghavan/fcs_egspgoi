@@ -188,7 +188,7 @@ export default function FacultyDashboard() {
             </AlertDialogContent>
           </AlertDialog>
           <Select value={academicYear} onValueChange={setAcademicYear}>
-            <SelectTrigger className="w-full sm:w-[180px] bg-cds-ui-01 border-none rounded-none shadow-none">
+            <SelectTrigger aria-label="Academic year" className="w-full sm:w-[180px] bg-cds-ui-01 border-none rounded-none shadow-none">
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-none">
@@ -201,12 +201,12 @@ export default function FacultyDashboard() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <Card className="dashboard-card bg-primary text-primary-foreground border-none">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-[11px] font-bold uppercase tracking-widest opacity-80">Net Credit Balance</CardTitle>
+            <CardTitle className="text-[11px] font-bold uppercase tracking-widest">Net Credit Balance</CardTitle>
             <Star className="h-4 w-4 opacity-80" />
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold">{(stats?.currentCredit ?? 0).toLocaleString()}</div>
-            <p className="text-[10px] mt-1 opacity-70 italic">Overall institutional standing</p>
+            <p className="text-[10px] mt-1 italic">Overall institutional standing</p>
           </CardContent>
         </Card>
         <Card className="dashboard-card border-none bg-cds-ui-01">
@@ -221,11 +221,11 @@ export default function FacultyDashboard() {
         </Card>
         <Card className="dashboard-card border-l-4 border-l-cds-support-02 border-y-0 border-r-0">
           <CardHeader className="pb-2 flex flex-row items-center justify-between space-y-0">
-            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-green-600">Overall Positive</CardTitle>
+            <CardTitle className="text-[11px] font-bold uppercase tracking-widest text-green-700">Overall Positive</CardTitle>
             <Award className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-green-600">+{(stats?.totalPositiveCredit ?? 0).toLocaleString()}</div>
+            <div className="text-3xl font-bold text-green-700">+{(stats?.totalPositiveCredit ?? 0).toLocaleString()}</div>
             <p className="text-[10px] mt-1 text-cds-text-05 italic">{academicYear}: +{(stats?.stats?.currentYearStats?.positivePoints ?? 0).toLocaleString()}</p>
           </CardContent>
         </Card>

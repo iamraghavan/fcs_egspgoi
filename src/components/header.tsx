@@ -85,24 +85,25 @@ export function Header({ user }: { user: User }) {
       </div>
 
       <div className="flex items-center gap-1 sm:gap-2">
+          {/* Icon-only links need a readable name for screen readers (WCAG 4.1.2). */}
           {user.role === 'faculty' && (
-            <Link href={`/u/portal/dashboard/notifications?uid=${uid}`}>
-                <Button variant="ghost" size="icon" className="relative rounded-none hover:bg-cds-ui-01 h-10 w-10">
-                    <Bell className="h-5 w-5 text-cds-text-02" />
-                    {hasUnread && <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-pulse" />}
-                </Button>
-            </Link>
+            <Button asChild variant="ghost" size="icon" className="relative rounded-none hover:bg-cds-ui-01 h-10 w-10">
+                <Link href={`/u/portal/dashboard/notifications?uid=${uid}`} aria-label={hasUnread ? "Notifications (unread)" : "Notifications"}>
+                    <Bell className="h-5 w-5 text-cds-text-02" aria-hidden="true" />
+                    {hasUnread && <span className="absolute top-2 right-2 flex h-2 w-2 rounded-full bg-primary ring-2 ring-background animate-pulse" aria-hidden="true" />}
+                </Link>
+            </Button>
           )}
-          <Link href="/u/portal/help" className="hidden sm:block">
-            <Button variant="ghost" size="icon" className="rounded-none hover:bg-cds-ui-01 h-10 w-10">
-                <HelpCircle className="h-5 w-5 text-cds-text-02" />
-            </Button>
-          </Link>
-          <Link href={settingsHref} className="hidden sm:block">
-            <Button variant="ghost" size="icon" className="rounded-none hover:bg-cds-ui-01 h-10 w-10">
-                <Settings className="h-5 w-5 text-cds-text-02" />
-            </Button>
-          </Link>
+          <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex rounded-none hover:bg-cds-ui-01 h-10 w-10">
+            <Link href="/u/portal/help" aria-label="Help">
+                <HelpCircle className="h-5 w-5 text-cds-text-02" aria-hidden="true" />
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="icon" className="hidden sm:inline-flex rounded-none hover:bg-cds-ui-01 h-10 w-10">
+            <Link href={settingsHref} aria-label="Settings">
+                <Settings className="h-5 w-5 text-cds-text-02" aria-hidden="true" />
+            </Link>
+          </Button>
           <div className="h-8 w-[1px] bg-border mx-1 hidden sm:block" />
           <UserNav user={user} logout={async () => {
               // End the session on the server too, so a copied token stops working (SEC-10).

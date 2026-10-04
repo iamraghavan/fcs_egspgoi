@@ -361,7 +361,7 @@ export default function GoodWorksPage() {
         </div>
         <div className="flex items-center gap-2">
            <Select onValueChange={(value) => { setAcademicYear(value); setPage(1); }} value={academicYear}>
-                <SelectTrigger className="w-full sm:w-auto">
+                <SelectTrigger aria-label="Academic year" className="w-full sm:w-auto">
                     <SelectValue placeholder="Select Academic Year" />
                 </SelectTrigger>
                 <SelectContent>

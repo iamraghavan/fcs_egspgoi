@@ -236,7 +236,7 @@ export default function AdminDashboard() {
           <p className="text-sm text-cds-text-05 mt-1">Institutional overview for Academic Year {academicYear}</p>
         </div>
         <Select value={academicYear} onValueChange={setAcademicYear}>
-          <SelectTrigger className="w-full sm:w-[220px] bg-cds-ui-01 border-none rounded-none">
+          <SelectTrigger aria-label="Academic year" className="w-full sm:w-[220px] bg-cds-ui-01 border-none rounded-none">
             <SelectValue placeholder="Select Academic Year" />
           </SelectTrigger>
           <SelectContent>
@@ -323,7 +323,7 @@ export default function AdminDashboard() {
                         <CardDescription className="text-xs">Activity volume across approved and rejected submissions.</CardDescription>
                     </div>
                      <Select value={trendsTimescale} onValueChange={(v) => setTrendsTimescale(v as any)}>
-                        <SelectTrigger className="w-[120px] h-8 text-xs bg-cds-ui-01 border-none">
+                        <SelectTrigger aria-label="Trend timescale" className="w-[120px] h-8 text-xs bg-cds-ui-01 border-none">
                             <SelectValue />
                         </SelectTrigger>
                         <SelectContent>

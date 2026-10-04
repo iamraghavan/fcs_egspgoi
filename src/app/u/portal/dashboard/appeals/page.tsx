@@ -297,7 +297,7 @@ export default function AppealsPage() {
                 break;
             case 'accepted':
                 icon = 'check_circle';
-                colorClass = 'bg-green-100 text-green-600';
+                colorClass = 'bg-green-100 text-green-700';
                 break;
             case 'rejected':
                 icon = 'cancel';

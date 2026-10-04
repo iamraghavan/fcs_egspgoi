@@ -287,7 +287,7 @@ export default function BulkAddUsersPage() {
                                             <TableCell>{result.email}</TableCell>
                                             <TableCell>
                                                 {result.success ? (
-                                                        <span className="flex items-center text-green-600"><CheckCircle className="mr-2 h-4 w-4" />Success</span>
+                                                        <span className="flex items-center text-green-700"><CheckCircle className="mr-2 h-4 w-4" />Success</span>
                                                 ) : (
                                                         <span className="flex items-center text-red-600"><XCircle className="mr-2 h-4 w-4" />Failed</span>
                                                 )}

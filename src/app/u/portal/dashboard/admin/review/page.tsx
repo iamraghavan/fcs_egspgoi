@@ -301,7 +301,7 @@ export default function ReviewSubmissionsPage() {
                     <div>
                         <Label>Status</Label>
                         <Select value={filters.status.join(',')} onValueChange={v => handleFilterChange('status', v.split(','))}>
-                           <SelectTrigger><SelectValue /></SelectTrigger>
+                           <SelectTrigger aria-label="Status"><SelectValue /></SelectTrigger>
                            <SelectContent>
                                <SelectItem value="pending">Pending</SelectItem>
                                <SelectItem value="approved">Approved</SelectItem>
@@ -312,7 +312,7 @@ export default function ReviewSubmissionsPage() {
                      <div>
                         <Label>Sort By</Label>
                         <Select value={filters.sort} onValueChange={v => handleFilterChange('sort', v)}>
-                           <SelectTrigger><SelectValue /></SelectTrigger>
+                           <SelectTrigger aria-label="Sort by"><SelectValue /></SelectTrigger>
                            <SelectContent>
                                <SelectItem value="-createdAt">Newest</SelectItem>
                                <SelectItem value="createdAt">Oldest</SelectItem>
@@ -408,7 +408,7 @@ export default function ReviewSubmissionsPage() {
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <span>Rows per page</span>
                      <Select value={filters.limit.toString()} onValueChange={v => handleFilterChange('limit', parseInt(v))}>
-                       <SelectTrigger className="w-20"><SelectValue /></SelectTrigger>
+                       <SelectTrigger aria-label="Rows per page" className="w-20"><SelectValue /></SelectTrigger>
                        <SelectContent>
                            <SelectItem value="10">10</SelectItem>
                            <SelectItem value="20">20</SelectItem>

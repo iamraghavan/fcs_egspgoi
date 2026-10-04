@@ -35,7 +35,7 @@ async function open(page: import('@playwright/test').Page, role: Role | null, pa
 
 for (const p of PAGES) {
   test(`@a11y ${p.name}: no critical accessibility violations`, async ({ page }, info) => {
-    test.fail(true, 'Known issue A11Y-1: icon-only buttons have no accessible name on every page');
+    // (A11Y-1 shared header/sidebar fixes applied; remaining issues are page-specific.)
     await open(page, p.role, p.path);
     const results = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa']).analyze();
     const v = results.violations.map((x) => ({ id: x.id, impact: x.impact, help: x.help, count: x.nodes.length, example: x.nodes[0]?.target?.join(' ') }));
