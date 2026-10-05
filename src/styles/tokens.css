@@ -7,6 +7,8 @@
   --primary-50: 213.8 100% 96.9%; /* #EFF6FF */
   --primary-100: 214.3 94.6% 92.7%; /* #DBEAFE */
   --primary-200: 213.3 96.9% 87.3%; /* #BFDBFE */
+  --primary-300: 211.7 96.4% 78.4%; /* #93C5FD */
+  --primary-400: 213.1 93.9% 67.8%; /* #60A5FA */
   --primary-500: 217.2 91.2% 59.8%; /* #3B82F6 */
   --primary-600: 221.2 83.2% 53.3%; /* #2563EB */
   --primary-700: 224.3 76.3% 48%; /* #1D4ED8 */
@@ -16,6 +18,14 @@
   --nav-active: 209.7 59.2% 28.8%; /* #1E4A75 */
   --nav-text: 213.6 28.7% 82.9%; /* #C7D2E0 */
   --nav-text-active: 0 0% 100%; /* #FFFFFF */
+  --rail-bg: 209.4 63.9% 16.3%; /* #0F2A44 */
+  --rail-hover: 209.6 60% 22.5%; /* #173A5C */
+  --rail-icon: 213.6 28.7% 82.9%; /* #C7D2E0 */
+  --rail-icon-active: 0 0% 100%; /* #FFFFFF */
+  --panel-bg: 0 0% 100%; /* #FFFFFF */
+  --panel-border: 214.3 31.8% 91.4%; /* #E2E8F0 */
+  --panel-item-hover: 210 40% 96.1%; /* #F1F5F9 */
+  --row-hover: 210 40% 98%; /* #F8FAFC */
   --accent-400: 43.3 96.4% 56.3%; /* #FBBF24 */
   --accent-500: 37.7 92.1% 50.2%; /* #F59E0B */
   --accent-text: 26 90.5% 37.1%; /* #B45309 */
@@ -29,7 +39,6 @@
   --text-2: 215.3 19.3% 34.5%; /* #475569 */
   --text-muted: 214.1 16.9% 42.9%; /* #5B6B80 */
   --text-on-primary: 0 0% 100%; /* #FFFFFF */
-  --link: 221.2 83.2% 53.3%; /* #2563EB */
   --success: 142.1 76.2% 36.3%; /* #16A34A */
   --success-text: 142.4 71.8% 29.2%; /* #15803D */
   --success-bg: 138.5 76.5% 96.7%; /* #F0FDF4 */
@@ -70,17 +79,23 @@
   --accent-foreground: var(--text);
   --destructive: var(--danger);
   --destructive-foreground: var(--text-on-primary);
-  --border: var(--border);
   --input: var(--control-border);
-  --ring: var(--primary-600);
-  --sidebar-background: var(--surface);
+  --rail-active: var(--primary-600);
+  --sidebar-background: var(--panel-bg);
   --sidebar-foreground: var(--text-2);
   --sidebar-primary: var(--primary-600);
   --sidebar-primary-foreground: var(--text-on-primary);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
-  --sidebar-border: var(--border);
+  --sidebar-border: var(--panel-border);
   --sidebar-ring: var(--primary-600);
+  /* light/dark specific aliases */
+  --primary-text: var(--primary-700);
+  --link: var(--primary-700);
+  --ring: var(--primary-600);
+  --panel-item-active-bg: var(--primary-50);
+  --panel-item-active-text: var(--primary-700);
+  --row-selected: var(--primary-50);
   --radius-control: 6px;
   --radius-card: 8px;
   --radius-modal: 12px;
@@ -116,6 +131,13 @@
   --motion-slow: 250ms;
   --motion-ease: cubic-bezier(0.2, 0, 0, 1);
   --focus-ring: 0 0 0 3px hsl(var(--primary-600) / 0.35);
+  /* accent swatches for the Appearance menu (fixed, not theme-dependent) */
+  --swatch-blue: 221.2 83.2% 53.3%;
+  --swatch-indigo: 243.4 75.4% 58.6%;
+  --swatch-teal: 175.3 77.4% 26.1%;
+  --swatch-purple: 262.1 83.3% 57.8%;
+  --swatch-rose: 346.8 77.2% 49.8%;
+  --swatch-orange: 17.5 88.3% 40.4%;
   color-scheme: light;
 }
 
@@ -124,6 +146,8 @@
   --primary-50: 219.6 62.7% 14.7%; /* #0E1E3D */
   --primary-100: 219 61.2% 19.2%; /* #13284F */
   --primary-200: 218 59.4% 27.1%; /* #1C3A6E */
+  --primary-300: 211.7 96.4% 78.4%; /* #93C5FD */
+  --primary-400: 213.1 93.9% 67.8%; /* #60A5FA */
   --primary-500: 217.2 91.2% 59.8%; /* #3B82F6 */
   --primary-600: 221.2 83.2% 53.3%; /* #2563EB */
   --primary-700: 224.3 76.3% 48%; /* #1D4ED8 */
@@ -133,6 +157,14 @@
   --nav-active: 218.7 49.5% 17.8%; /* #172744 */
   --nav-text: 213.6 28.7% 82.9%; /* #C7D2E0 */
   --nav-text-active: 0 0% 100%; /* #FFFFFF */
+  --rail-bg: 216.5 59% 7.6%; /* #08111F */
+  --rail-hover: 218.7 47.7% 12.7%; /* #111C30 */
+  --rail-icon: 213.6 28.7% 82.9%; /* #C7D2E0 */
+  --rail-icon-active: 0 0% 100%; /* #FFFFFF */
+  --panel-bg: 221.5 48.1% 10.6%; /* #0E1628 */
+  --panel-border: 221.1 38.8% 19.2%; /* #1E2A44 */
+  --panel-item-hover: 221.7 45% 15.7%; /* #16213A */
+  --row-hover: 221.7 45% 15.7%; /* #16213A */
   --accent-400: 43.3 96.4% 56.3%; /* #FBBF24 */
   --accent-500: 37.7 92.1% 50.2%; /* #F59E0B */
   --accent-text: 43.3 96.4% 56.3%; /* #FBBF24 */
@@ -146,7 +178,6 @@
   --text-2: 214.3 24.1% 71.6%; /* #A5B4C8 */
   --text-muted: 215.7 18.8% 61.4%; /* #8A99AF */
   --text-on-primary: 0 0% 100%; /* #FFFFFF */
-  --link: 213.1 93.9% 67.8%; /* #60A5FA */
   --success: 142.1 70.6% 45.3%; /* #22C55E */
   --success-text: 141.9 69.2% 58%; /* #4ADE80 */
   --success-bg: 144.9 80.4% 10%; /* #052E16 */
@@ -187,18 +218,145 @@
   --accent-foreground: var(--text);
   --destructive: var(--danger);
   --destructive-foreground: var(--text-on-primary);
-  --border: var(--border);
   --input: var(--control-border);
-  --ring: var(--primary-600);
-  --sidebar-background: var(--surface);
+  --rail-active: var(--primary-600);
+  --sidebar-background: var(--panel-bg);
   --sidebar-foreground: var(--text-2);
   --sidebar-primary: var(--primary-600);
   --sidebar-primary-foreground: var(--text-on-primary);
   --sidebar-accent: var(--surface-2);
   --sidebar-accent-foreground: var(--text);
-  --sidebar-border: var(--border);
+  --sidebar-border: var(--panel-border);
   --sidebar-ring: var(--primary-600);
+  /* light/dark specific aliases */
+  --primary-text: var(--primary-400);
+  --link: var(--primary-400);
+  --ring: var(--primary-400);
+  --panel-item-active-bg: var(--primary-100);
+  --panel-item-active-text: var(--primary-300);
+  --row-selected: var(--primary-100);
   color-scheme: dark;
+}
+
+/* Accent themes: set data-accent on <html> (Appearance menu). Only primary-* changes. */
+:root[data-accent="indigo"] {
+  --primary-50: 225.9 100% 96.7%; /* #EEF2FF */
+  --primary-100: 226.5 100% 93.9%; /* #E0E7FF */
+  --primary-200: 228 96.5% 88.8%; /* #C7D2FE */
+  --primary-300: 229.7 93.5% 81.8%; /* #A5B4FC */
+  --primary-400: 234.5 89.5% 73.9%; /* #818CF8 */
+  --primary-500: 238.7 83.5% 66.7%; /* #6366F1 */
+  --primary-600: 243.4 75.4% 58.6%; /* #4F46E5 */
+  --primary-700: 244.5 57.9% 50.6%; /* #4338CA */
+  --primary-800: 243.7 54.5% 41.4%; /* #3730A3 */
+}
+
+:root.dark[data-accent="indigo"] {
+  --primary-50: 233.8 48.1% 15.9%; /* #15193C */
+  --primary-100: 236.5 49.1% 20.8%; /* #1B1E4F */
+  --primary-200: 239.1 48.6% 28.2%; /* #25266B */
+  --primary-300: 229.7 93.5% 81.8%; /* #A5B4FC */
+  --primary-400: 234.5 89.5% 73.9%; /* #818CF8 */
+  --primary-500: 238.7 83.5% 66.7%; /* #6366F1 */
+  --primary-600: 243.4 75.4% 58.6%; /* #4F46E5 */
+  --primary-700: 244.5 57.9% 50.6%; /* #4338CA */
+  --primary-800: 243.7 54.5% 41.4%; /* #3730A3 */
+}
+
+:root[data-accent="teal"] {
+  --primary-50: 166.2 76.5% 96.7%; /* #F0FDFA */
+  --primary-100: 167.2 85.5% 89.2%; /* #CCFBF1 */
+  --primary-200: 168.4 83.8% 78.2%; /* #99F6E4 */
+  --primary-300: 170.6 76.9% 64.3%; /* #5EEAD4 */
+  --primary-400: 172.5 66% 50.4%; /* #2DD4BF */
+  --primary-500: 174.7 83.9% 31.6%; /* #0D9488 */
+  --primary-600: 175.3 77.4% 26.1%; /* #0F766E */
+  --primary-700: 176.1 69.4% 21.8%; /* #115E59 */
+  --primary-800: 175.9 60.8% 19%; /* #134E4A */
+}
+
+:root.dark[data-accent="teal"] {
+  --primary-50: 201.3 56.4% 10.8%; /* #0C202B */
+  --primary-100: 193.8 61.9% 12.4%; /* #0C2A33 */
+  --primary-200: 187.3 65.3% 14.7%; /* #0D383E */
+  --primary-300: 170.6 76.9% 64.3%; /* #5EEAD4 */
+  --primary-400: 172.5 66% 50.4%; /* #2DD4BF */
+  --primary-500: 174.7 83.9% 31.6%; /* #0D9488 */
+  --primary-600: 175.3 77.4% 26.1%; /* #0F766E */
+  --primary-700: 176.1 69.4% 21.8%; /* #115E59 */
+  --primary-800: 175.9 60.8% 19%; /* #134E4A */
+}
+
+:root[data-accent="purple"] {
+  --primary-50: 250 100% 97.6%; /* #F5F3FF */
+  --primary-100: 251.4 91.3% 95.5%; /* #EDE9FE */
+  --primary-200: 250.5 95.2% 91.8%; /* #DDD6FE */
+  --primary-300: 252.5 94.7% 85.1%; /* #C4B5FD */
+  --primary-400: 255.1 91.7% 76.3%; /* #A78BFA */
+  --primary-500: 258.3 89.5% 66.3%; /* #8B5CF6 */
+  --primary-600: 262.1 83.3% 57.8%; /* #7C3AED */
+  --primary-700: 263.4 70% 50.4%; /* #6D28D9 */
+  --primary-800: 263.4 69.3% 42.2%; /* #5B21B6 */
+}
+
+:root.dark[data-accent="purple"] {
+  --primary-50: 244.9 43.5% 16.7%; /* #1B183D */
+  --primary-100: 251.3 48.6% 21.4%; /* #261C51 */
+  --primary-200: 256.4 53.8% 28%; /* #36216E */
+  --primary-300: 252.5 94.7% 85.1%; /* #C4B5FD */
+  --primary-400: 255.1 91.7% 76.3%; /* #A78BFA */
+  --primary-500: 258.3 89.5% 66.3%; /* #8B5CF6 */
+  --primary-600: 262.1 83.3% 57.8%; /* #7C3AED */
+  --primary-700: 263.4 70% 50.4%; /* #6D28D9 */
+  --primary-800: 263.4 69.3% 42.2%; /* #5B21B6 */
+}
+
+:root[data-accent="rose"] {
+  --primary-50: 355.7 100% 97.3%; /* #FFF1F2 */
+  --primary-100: 355.6 100% 94.7%; /* #FFE4E6 */
+  --primary-200: 352.7 96.1% 90%; /* #FECDD3 */
+  --primary-300: 352.6 95.7% 81.8%; /* #FDA4AF */
+  --primary-400: 351.3 94.5% 71.4%; /* #FB7185 */
+  --primary-500: 349.7 89.2% 60.2%; /* #F43F5E */
+  --primary-600: 346.8 77.2% 49.8%; /* #E11D48 */
+  --primary-700: 345.3 82.7% 40.8%; /* #BE123C */
+  --primary-800: 343.4 79.7% 34.7%; /* #9F1239 */
+}
+
+:root.dark[data-accent="rose"] {
+  --primary-50: 308.6 34.4% 12%; /* #291426 */
+  --primary-100: 329.3 49.4% 16.3%; /* #3E152A */
+  --primary-200: 338.6 61.4% 22.4%; /* #5C162F */
+  --primary-300: 352.6 95.7% 81.8%; /* #FDA4AF */
+  --primary-400: 351.3 94.5% 71.4%; /* #FB7185 */
+  --primary-500: 349.7 89.2% 60.2%; /* #F43F5E */
+  --primary-600: 346.8 77.2% 49.8%; /* #E11D48 */
+  --primary-700: 345.3 82.7% 40.8%; /* #BE123C */
+  --primary-800: 343.4 79.7% 34.7%; /* #9F1239 */
+}
+
+:root[data-accent="orange"] {
+  --primary-50: 33.3 100% 96.5%; /* #FFF7ED */
+  --primary-100: 34.3 100% 91.8%; /* #FFEDD5 */
+  --primary-200: 32.1 97.7% 83.1%; /* #FED7AA */
+  --primary-300: 30.7 97.2% 72.4%; /* #FDBA74 */
+  --primary-400: 27 96% 61%; /* #FB923C */
+  --primary-500: 20.5 90.2% 48.2%; /* #EA580C */
+  --primary-600: 17.5 88.3% 40.4%; /* #C2410C */
+  --primary-700: 15 79.1% 33.7%; /* #9A3412 */
+  --primary-800: 15.3 74.6% 27.8%; /* #7C2D12 */
+}
+
+:root.dark[data-accent="orange"] {
+  --primary-50: 340 19.4% 12.2%; /* #25191D */
+  --primary-100: 4.3 34.1% 16.1%; /* #371D1B */
+  --primary-200: 12.6 54.3% 20.6%; /* #512418 */
+  --primary-300: 30.7 97.2% 72.4%; /* #FDBA74 */
+  --primary-400: 27 96% 61%; /* #FB923C */
+  --primary-500: 20.5 90.2% 48.2%; /* #EA580C */
+  --primary-600: 17.5 88.3% 40.4%; /* #C2410C */
+  --primary-700: 15 79.1% 33.7%; /* #9A3412 */
+  --primary-800: 15.3 74.6% 27.8%; /* #7C2D12 */
 }
 
 @media (prefers-reduced-motion: reduce) {

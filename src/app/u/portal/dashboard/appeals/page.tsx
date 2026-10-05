@@ -278,13 +278,13 @@ export default function AppealsPage() {
   const getStatusColor = (status: Appeal["appeal"]["status"]) => {
     switch (status) {
       case "accepted":
-        return "bg-green-100 text-green-800";
+        return "bg-success-bg text-success-text";
       case "rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-danger-bg text-danger-text";
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-warning-bg text-warning-text";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-muted text-foreground";
     }
   };
 
@@ -473,13 +473,11 @@ export default function AppealsPage() {
             <div className="space-y-4">
               <Card className="shadow-none bg-muted/30">
                 <CardHeader className="pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                    Original Remark
-                  </CardTitle>
+                  <CardTitle className="text-sm font-semibold text-muted-foreground">Original Remark</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm p-4 pt-0">
                   <p className="font-semibold text-base">
-                    {selectedAppeal.title} (<span className="text-red-600">{selectedAppeal.points}</span> points)
+                    {selectedAppeal.title} (<span className="text-danger-text">{selectedAppeal.points}</span> points)
                   </p>
                   <p className="text-muted-foreground italic line-clamp-3">
                     "{selectedAppeal.notes || "No original notes"}"
@@ -493,9 +491,7 @@ export default function AppealsPage() {
 
               <Card className="shadow-none border-primary/20">
                 <CardHeader className="pb-2 p-4">
-                  <CardTitle className="text-sm font-semibold uppercase tracking-wider text-primary">
-                    Your Rationale
-                  </CardTitle>
+                  <CardTitle className="text-sm font-semibold text-primary">Your Rationale</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 text-sm p-4 pt-0">
                   <p className="text-foreground leading-relaxed whitespace-pre-wrap">
@@ -509,9 +505,7 @@ export default function AppealsPage() {
             </div>
 
             <div className="mt-6 border-t pt-6">
-              <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">
-                Appeal Timeline
-              </h4>
+              <h4 className="font-semibold mb-4 text-sm text-muted-foreground">Appeal Timeline</h4>
               <ul className="space-y-6">
                 <li className="flex gap-4">
                   <div className="flex flex-col items-center">
@@ -563,7 +557,7 @@ export default function AppealsPage() {
 
             {(!selectedAppeal.appeal.status || selectedAppeal.appeal.status === "pending") && (
               <div className="mt-6 border-t pt-6">
-                <h4 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Actions</h4>
+                <h4 className="font-semibold mb-4 text-sm text-muted-foreground">Actions</h4>
                 <div className="flex flex-col gap-2">
                   <Button
                     onClick={() => {
@@ -619,7 +613,7 @@ export default function AppealsPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label htmlFor="reason" className="text-sm font-medium">
-                Reason for Appeal <span className="text-red-500">*</span>
+                Reason for Appeal <span className="text-danger">*</span>
               </label>
               <Textarea
                 id="reason"

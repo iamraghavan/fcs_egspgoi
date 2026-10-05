@@ -1,7 +1,8 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Dev-only badge: keep it away from the account avatar at the bottom of the navigation rail.
+  devIndicators: { position: "bottom-right" },
   async redirects() {
     return [
       {

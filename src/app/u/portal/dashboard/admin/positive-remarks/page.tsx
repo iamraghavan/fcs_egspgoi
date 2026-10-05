@@ -1,16 +1,9 @@
-"use client"
+"use client";
 
-import { API_V1 } from '@/lib/api-url';
+import { API_V1 } from "@/lib/api-url";
 import { useState, useEffect, useMemo, useRef } from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   Select,
   SelectContent,
@@ -19,9 +12,9 @@ import {
   SelectValue,
   SelectGroup,
   SelectLabel,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FileUpload } from "@/components/file-upload";
@@ -35,7 +28,7 @@ import {
   DialogFooter,
   DialogClose,
   DialogTrigger,
-} from "@/components/ui/dialog"
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -72,61 +65,61 @@ type CreditTitle = {
   _id: string;
   title: string;
   points: number;
-  type: 'positive' | 'negative';
+  type: "positive" | "negative";
 };
 
 type PositiveCredit = {
-    _id: string;
-    academicYear: string;
-    createdAt: string;
-    creditTitle?: string;
-    faculty: string;
-    facultySnapshot: {
-        name: string;
-        college: string;
-        facultyID: string;
-        department: string;
-        profileImage?: string;
-    };
-    issuedBy: string;
-    notes?: string;
-    points: number;
-    proofMeta?: {
-        fileName: string;
-        size: string;
-    };
-    proofUrl?: string;
-    status: 'pending' | 'approved' | 'rejected' | 'appealed';
-    title: string;
-    type: 'positive';
-    updatedAt: string;
+  _id: string;
+  academicYear: string;
+  createdAt: string;
+  creditTitle?: string;
+  faculty: string;
+  facultySnapshot: {
+    name: string;
+    college: string;
+    facultyID: string;
+    department: string;
+    profileImage?: string;
+  };
+  issuedBy: string;
+  notes?: string;
+  points: number;
+  proofMeta?: {
+    fileName: string;
+    size: string;
+  };
+  proofUrl?: string;
+  status: "pending" | "approved" | "rejected" | "appealed";
+  title: string;
+  type: "positive";
+  updatedAt: string;
 };
 
 type Departments = {
-    [key: string]: string[];
+  [key: string]: string[];
 };
 
 const getCurrentAcademicYear = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    if (currentMonth >= 5) {
-      return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-    }
-    return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  if (currentMonth >= 5) {
+    return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
+  }
+  return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
 };
 
 const generateYearOptions = () => {
-    const currentYearString = getCurrentAcademicYear();
-    const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-        const startYear = startCurrentYear - i;
-        const endYear = (startYear + 1).toString().slice(-2);
-        years.push(`${startYear}-${endYear}`);
-    }
-    return years;
+  const currentYearString = getCurrentAcademicYear();
+  const [startCurrentYear] = currentYearString.split("-").map(Number);
+
+  const years = [];
+  for (let i = 0; i < 5; i++) {
+    const startYear = startCurrentYear - i;
+    const endYear = (startYear + 1).toString().slice(-2);
+    years.push(`${startYear}-${endYear}`);
+  }
+  return years;
 };
 
 export default function ManagePositiveCreditsPage() {
@@ -160,7 +153,7 @@ export default function ManagePositiveCreditsPage() {
   const [collegeFilter, setCollegeFilter] = useState("all");
   const [departmentFilter, setDepartmentFilter] = useState("all");
   const [filteredDepartments, setFilteredDepartments] = useState<Departments>({});
-  
+
   const [selectedCreditDetails, setSelectedCreditDetails] = useState<PositiveCredit | null>(null);
   const [isDetailsOpen, setIsDetailsOpen] = useState(false);
   const [shortProofUrl, setShortProofUrl] = useState<string | null>(null);
@@ -172,7 +165,7 @@ export default function ManagePositiveCreditsPage() {
   const [editProof, setEditProof] = useState<File | null>(null);
   const [isSubmittingEdit, setIsSubmittingEdit] = useState(false);
 
-  const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+  const adminToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
   const totalPages = Math.ceil(total / limit);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
@@ -181,24 +174,25 @@ export default function ManagePositiveCreditsPage() {
     setSelectedFaculty(null);
     if (!showSuggestions) setShowSuggestions(true);
   };
-  
+
   const handleFacultySelect = (faculty: User) => {
     setSelectedFaculty(faculty);
-    setFacultySearch(`${faculty.name} (${faculty.department || 'N/A'})`);
+    setFacultySearch(`${faculty.name} (${faculty.department || "N/A"})`);
     setShowSuggestions(false);
   };
-  
+
   const suggestedFaculty = useMemo(() => {
     if (!facultySearch) return [];
     return facultyList
-      .filter(f => 
-        f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
-        (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
+      .filter(
+        (f) =>
+          f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
+          (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase())),
       )
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 10);
   }, [facultySearch, facultyList]);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
@@ -214,64 +208,78 @@ export default function ManagePositiveCreditsPage() {
     try {
       const [facultyResponse, creditTitlesResponse] = await Promise.all([
         fetch(`${API_BASE_URL}/users?limit=1000`, { headers: { Authorization: `Bearer ${adminToken}` } }),
-        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } })
+        fetch(`${API_BASE_URL}/admin/credit-title`, { headers: { Authorization: `Bearer ${adminToken}` } }),
       ]);
       const facultyData = await facultyResponse.json();
       if (facultyData.success) setFacultyList(facultyData.items);
       const creditTitlesData = await creditTitlesResponse.json();
-      if (creditTitlesData.success) setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'positive'));
+      if (creditTitlesData.success)
+        setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === "positive"));
     } catch (error: any) {}
   };
 
   const fetchCredits = async (currentPage: number) => {
-      setIsLoadingCredits(true);
-      if (!adminToken) return;
-  
-      try {
-          const params = new URLSearchParams({ page: currentPage.toString(), limit: limit.toString(), sort: '-createdAt' });
-          if (searchTerm) params.append('search', searchTerm);
-          if (academicYearFilter !== 'all') params.append('academicYear', academicYearFilter);
-          if (creditTitleFilter !== 'all') params.append('templateId', creditTitleFilter);
-          if (collegeFilter !== 'all') params.append('college', collegeFilter);
-          if (departmentFilter !== 'all') params.append('department', departmentFilter);
+    setIsLoadingCredits(true);
+    if (!adminToken) return;
 
-          const response = await fetch(`${API_BASE_URL}/admin/credits/positive?${params.toString()}`, { headers: { Authorization: `Bearer ${adminToken}` } });
-          const resData = await response.json();
-          if (resData.success) {
-              setCredits(resData.data || resData.items || []);
-              setTotal(resData.total || resData.meta?.total || 0);
-          }
-      } catch (error: any) {
-          setCredits([]);
-      } finally {
-          setIsLoadingCredits(false);
+    try {
+      const params = new URLSearchParams({ page: currentPage.toString(), limit: limit.toString(), sort: "-createdAt" });
+      if (searchTerm) params.append("search", searchTerm);
+      if (academicYearFilter !== "all") params.append("academicYear", academicYearFilter);
+      if (creditTitleFilter !== "all") params.append("templateId", creditTitleFilter);
+      if (collegeFilter !== "all") params.append("college", collegeFilter);
+      if (departmentFilter !== "all") params.append("department", departmentFilter);
+
+      const response = await fetch(`${API_BASE_URL}/admin/credits/positive?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const resData = await response.json();
+      if (resData.success) {
+        setCredits(resData.data || resData.items || []);
+        setTotal(resData.total || resData.meta?.total || 0);
       }
+    } catch (error: any) {
+      setCredits([]);
+    } finally {
+      setIsLoadingCredits(false);
+    }
   };
 
-  useEffect(() => { if (adminToken) fetchDropdownData(); }, [adminToken]);
+  useEffect(() => {
+    if (adminToken) fetchDropdownData();
+  }, [adminToken]);
 
   useEffect(() => {
-    const timer = setTimeout(() => { if (adminToken) fetchCredits(page); }, 500);
+    const timer = setTimeout(() => {
+      if (adminToken) fetchCredits(page);
+    }, 500);
     return () => clearTimeout(timer);
   }, [page, adminToken, searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
-  
-  useEffect(() => { setPage(1); }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
-  
+
   useEffect(() => {
-    const selectedTitle = creditTitles.find(ct => ct._id === creditTitleId);
-    if (selectedTitle) { setTitle(selectedTitle.title); setPoints(selectedTitle.points); }
+    setPage(1);
+  }, [searchTerm, academicYearFilter, creditTitleFilter, collegeFilter, departmentFilter]);
+
+  useEffect(() => {
+    const selectedTitle = creditTitles.find((ct) => ct._id === creditTitleId);
+    if (selectedTitle) {
+      setTitle(selectedTitle.title);
+      setPoints(selectedTitle.points);
+    }
   }, [creditTitleId, creditTitles]);
 
   const getProofUrl = (url: string) => {
-    if (!url) return '';
-    return url.startsWith('http') ? url : `${API_V1}/credits/credits${url.startsWith('/') ? '' : '/'}${url}`;
+    if (!url) return "";
+    return url.startsWith("http") ? url : `${API_V1}/credits/credits${url.startsWith("/") ? "" : "/"}${url}`;
   };
 
   useEffect(() => {
     if (selectedCreditDetails?.proofUrl) {
       setShortProofUrl(null);
       const proofUrl = getProofUrl(selectedCreditDetails.proofUrl);
-      shortenUrl(proofUrl).then(setShortProofUrl).catch(() => setShortProofUrl(proofUrl));
+      shortenUrl(proofUrl)
+        .then(setShortProofUrl)
+        .catch(() => setShortProofUrl(proofUrl));
     }
   }, [selectedCreditDetails]);
 
@@ -290,7 +298,9 @@ export default function ManagePositiveCreditsPage() {
 
     try {
       const response = await fetch(`${API_V1}/admin/credits/positive`, {
-        method: "POST", headers: { "Authorization": `Bearer ${adminToken}` }, body: formData,
+        method: "POST",
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: formData,
       });
       const responseData = await response.json();
       if (!response.ok || !responseData.success) throw new Error(responseData.message || "Failed to issue");
@@ -303,7 +313,7 @@ export default function ManagePositiveCreditsPage() {
       setIsLoading(false);
     }
   };
-  
+
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCredit) return;
@@ -314,33 +324,39 @@ export default function ManagePositiveCreditsPage() {
     if (editProof) formData.append("proof", editProof);
 
     try {
-        const response = await fetch(`${API_V1}/credits/credits/positive/${editingCredit._id}`, {
-            method: 'PUT', headers: { 'Authorization': `Bearer ${adminToken}` }, body: formData,
-        });
-        const data = await response.json();
-        if (!response.ok || !data.success) throw new Error(data.message || "Failed to update");
-        toast({ title: "Credit Updated", description: "Record synchronized successfully." });
-        setIsEditDialogOpen(false);
-        fetchCredits(page);
+      const response = await fetch(`${API_V1}/credits/credits/positive/${editingCredit._id}`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${adminToken}` },
+        body: formData,
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || "Failed to update");
+      toast({ title: "Credit Updated", description: "Record synchronized successfully." });
+      setIsEditDialogOpen(false);
+      fetchCredits(page);
     } catch (error: any) {
-        showAlert("Update Failed", error.message);
+      showAlert("Update Failed", error.message);
     } finally {
-        setIsSubmittingEdit(false);
+      setIsSubmittingEdit(false);
     }
   };
 
   const handleDeleteCredit = async (creditId: string) => {
-      try {
-          const response = await fetch(`${API_V1}/admin/credits/positive/${creditId}`, {
-              method: "DELETE", headers: { "Authorization": `Bearer ${adminToken}` },
-          });
-          const data = await response.json();
-          if (!response.ok || !data.success) throw new Error(data.message || "Failed to void credit");
-          toast({ title: "Credit voided", description: "The credit was removed from the balance; its record and audit history were preserved." });
-          fetchCredits(page);
-      } catch (error: any) {
-          showAlert("Void failed", error.message);
-      }
+    try {
+      const response = await fetch(`${API_V1}/admin/credits/positive/${creditId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${adminToken}` },
+      });
+      const data = await response.json();
+      if (!response.ok || !data.success) throw new Error(data.message || "Failed to void credit");
+      toast({
+        title: "Credit voided",
+        description: "The credit was removed from the balance; its record and audit history were preserved.",
+      });
+      fetchCredits(page);
+    } catch (error: any) {
+      showAlert("Void failed", error.message);
+    }
   };
 
   return (
@@ -348,75 +364,177 @@ export default function ManagePositiveCreditsPage() {
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Manage Positive Credits</h1>
-          <p className="mt-1 text-muted-foreground">Issue and monitor positive credit adjustments for faculty members.</p>
+          <p className="mt-1 text-muted-foreground">
+            Issue and monitor positive credit adjustments for faculty members.
+          </p>
         </div>
         <Dialog open={isFormOpen} onOpenChange={setIsFormOpen}>
-            <DialogTrigger asChild><Button><PlusCircle className="mr-2 h-4 w-4" /> Issue New Credit</Button></DialogTrigger>
-            <DialogContent className="sm:max-w-4xl border-cds-ui-03 rounded-none">
-                 <DialogHeader><DialogTitle>Issue New Positive Credit</DialogTitle></DialogHeader>
-                <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
-                    <div className="md:col-span-2 space-y-4">
-                        <div ref={suggestionRef} className="relative">
-                            <Label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">Faculty Member</Label>
-                            <Input id="faculty" placeholder="Type to search..." value={facultySearch} onChange={handleFacultySearch} onFocus={() => setShowSuggestions(true)} autoComplete="off" className="rounded-none" />
-                             {showSuggestions && suggestedFaculty.length > 0 && (
-                              <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                                {suggestedFaculty.map(f => (
-                                  <div key={f._id} className="cursor-pointer p-3 hover:bg-accent" onClick={() => handleFacultySelect(f)}>
-                                    <p className="font-semibold text-sm">{f.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{f.department || 'N/A'}</p>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
+          <DialogTrigger asChild>
+            <Button>
+              <PlusCircle className="mr-2 h-4 w-4" /> Issue New Credit
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-4xl border-border ">
+            <DialogHeader>
+              <DialogTitle>Issue New Positive Credit</DialogTitle>
+            </DialogHeader>
+            <form className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4" onSubmit={handleSubmit}>
+              <div className="md:col-span-2 space-y-4">
+                <div ref={suggestionRef} className="relative">
+                  <Label className="block text-sm font-medium text-muted-foreground mb-1" htmlFor="faculty">
+                    Faculty Member
+                  </Label>
+                  <Input
+                    id="faculty"
+                    placeholder="Type to search..."
+                    value={facultySearch}
+                    onChange={handleFacultySearch}
+                    onFocus={() => setShowSuggestions(true)}
+                    autoComplete="off"
+                    className=""
+                  />
+                  {showSuggestions && suggestedFaculty.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                      {suggestedFaculty.map((f) => (
+                        <div
+                          key={f._id}
+                          className="cursor-pointer p-3 hover:bg-accent"
+                          onClick={() => handleFacultySelect(f)}
+                        >
+                          <p className="font-semibold text-sm">{f.name}</p>
+                          <p className="text-caption text-muted-foreground">{f.department || "N/A"}</p>
                         </div>
-                        <div>
-                            <Label className="block text-sm font-medium text-muted-foreground mb-1">Credit Template (Optional)</Label>
-                             <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                                <SelectTrigger className="rounded-none"><SelectValue placeholder="Select template..." /></SelectTrigger>
-                                <SelectContent className="rounded-none">
-                                    {creditTitles.map(ct => (<SelectItem key={ct._id} value={ct._id}>{ct.title} ({ct.points} pts)</SelectItem>))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                        <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="title">Title</Label><Input id="title" placeholder="e.g., Guest Lecture" value={title} onChange={(e) => setTitle(e.target.value)} required className="rounded-none" /></div>
-                        <div className="grid grid-cols-2 gap-4">
-                  <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="points">Points</Label><Input id="points" type="number" min="0.01" max="10000" step="0.01" value={points} onChange={(e) => setPoints(Number(e.target.value))} readOnly={!!creditTitleId} required className="rounded-none" />{creditTitleId && <p className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>}</div>
-                            <div><Label className="block text-sm font-medium text-muted-foreground">Academic Year</Label><Input value={getCurrentAcademicYear()} readOnly className="bg-muted rounded-none" /></div>
-                        </div>
-                        <div><Label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">Notes</Label><Textarea id="notes" placeholder="Rationale..." rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} className="rounded-none" /></div>
-                        <div><Label className="block text-sm font-medium text-muted-foreground mb-1">Upload Proof (Optional)</Label><FileUpload onFileSelect={setProof} /></div>
+                      ))}
                     </div>
-                    <div className="md:col-span-1">
-                        {selectedFaculty ? (
-                             <Card className="rounded-none shadow-none">
-                                <CardHeader className="flex flex-row items-center gap-4 p-4">
-                                    <Avatar className="h-12 w-12"><AvatarImage src={selectedFaculty.profileImage} /><AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback></Avatar>
-                                    <div><CardTitle className="text-sm">{selectedFaculty.name}</CardTitle><CardDescription className="text-xs">{selectedFaculty.facultyID}</CardDescription></div>
-                                </CardHeader>
-                                <CardContent className="text-xs p-4 pt-0">
-                                    <p><strong className="text-muted-foreground">Department:</strong> {selectedFaculty.department || 'N/A'}</p>
-                                </CardContent>
-                            </Card>
-                        ) : (<div className="flex items-center justify-center h-full border-2 border-dashed rounded-none bg-muted/50 p-4"><p className="text-muted-foreground text-xs text-center">Select faculty.</p></div>)}
-                    </div>
-                     <DialogFooter className="pt-4 md:col-span-3">
-                        <DialogClose asChild><Button type="button" variant="secondary" className="rounded-none">Cancel</Button></DialogClose>
-                        <Button type="submit" disabled={isLoading} className="rounded-none">{isLoading ? "Submitting..." : "Issue Credit"}</Button>
-                    </DialogFooter>
-                </form>
-            </DialogContent>
+                  )}
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-muted-foreground mb-1">
+                    Credit Template (Optional)
+                  </Label>
+                  <Select value={creditTitleId} onValueChange={setCreditTitleId}>
+                    <SelectTrigger className="">
+                      <SelectValue placeholder="Select template..." />
+                    </SelectTrigger>
+                    <SelectContent className="">
+                      {creditTitles.map((ct) => (
+                        <SelectItem key={ct._id} value={ct._id}>
+                          {ct.title} ({ct.points} pts)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-muted-foreground" htmlFor="title">
+                    Title
+                  </Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g., Guest Lecture"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
+                    className=""
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label className="block text-sm font-medium text-muted-foreground" htmlFor="points">
+                      Points
+                    </Label>
+                    <Input
+                      id="points"
+                      type="number"
+                      min="0.01"
+                      max="10000"
+                      step="0.01"
+                      value={points}
+                      onChange={(e) => setPoints(Number(e.target.value))}
+                      readOnly={!!creditTitleId}
+                      required
+                      className=""
+                    />
+                    {creditTitleId && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Points come from the selected credit template.
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <Label className="block text-sm font-medium text-muted-foreground">Academic Year</Label>
+                    <Input value={getCurrentAcademicYear()} readOnly className="bg-muted " />
+                  </div>
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-muted-foreground" htmlFor="notes">
+                    Notes
+                  </Label>
+                  <Textarea
+                    id="notes"
+                    placeholder="Rationale..."
+                    rows={3}
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    className=""
+                  />
+                </div>
+                <div>
+                  <Label className="block text-sm font-medium text-muted-foreground mb-1">
+                    Upload Proof (Optional)
+                  </Label>
+                  <FileUpload onFileSelect={setProof} />
+                </div>
+              </div>
+              <div className="md:col-span-1">
+                {selectedFaculty ? (
+                  <Card className="shadow-none">
+                    <CardHeader className="flex flex-row items-center gap-4 p-4">
+                      <Avatar className="h-12 w-12">
+                        <AvatarImage src={selectedFaculty.profileImage} />
+                        <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <CardTitle className="text-sm">{selectedFaculty.name}</CardTitle>
+                        <CardDescription className="text-xs">{selectedFaculty.facultyID}</CardDescription>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="text-xs p-4 pt-0">
+                      <p>
+                        <strong className="text-muted-foreground">Department:</strong>{" "}
+                        {selectedFaculty.department || "N/A"}
+                      </p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <div className="flex items-center justify-center h-full border-2 border-dashed bg-muted/50 p-4">
+                    <p className="text-muted-foreground text-xs text-center">Select faculty.</p>
+                  </div>
+                )}
+              </div>
+              <DialogFooter className="pt-4 md:col-span-3">
+                <DialogClose asChild>
+                  <Button type="button" variant="secondary" className="">
+                    Cancel
+                  </Button>
+                </DialogClose>
+                <Button type="submit" disabled={isLoading} className="">
+                  {isLoading ? "Submitting..." : "Issue Credit"}
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
         </Dialog>
       </header>
-        
-      <Card className="rounded-none shadow-none border-cds-ui-03">
-        <CardHeader className="bg-cds-ui-01/50 border-b">
-            <CardTitle>Issued Credits History</CardTitle>
+
+      <Card className="shadow-none border-border">
+        <CardHeader className="bg-muted/50 border-b">
+          <CardTitle>Issued Credits History</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
           <div className="overflow-x-auto">
             <Table>
-              <TableHeader className="bg-cds-ui-01">
+              <TableHeader className="bg-muted">
                 <TableRow>
                   <TableHead>Faculty</TableHead>
                   <TableHead>Activity</TableHead>
@@ -427,44 +545,95 @@ export default function ManagePositiveCreditsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {isLoadingCredits ? (<TableRow><TableCell colSpan={6} className="text-center h-24">Loading history...</TableCell></TableRow>) : credits.length > 0 ? (
-                  credits.map((c) => (
-                  <TableRow key={c._id}>
-                    <TableCell>
-                        <div className="flex flex-col">
-                            <span className="font-medium text-[13px]">{c.facultySnapshot?.name || 'N/A'}</span>
-                            <span className="text-[10px] text-muted-foreground uppercase font-mono">{c.facultySnapshot?.facultyID}</span>
-                        </div>
-                    </TableCell>
-                    <TableCell className="text-[12px] truncate max-w-[200px]">{c.title}</TableCell>
-                    <TableCell className="text-center"><Badge variant="secondary" className="rounded-none uppercase text-[10px]">{c.status}</Badge></TableCell>
-                    <TableCell className="text-[12px] text-muted-foreground">{new Date(c.createdAt).toLocaleDateString()}</TableCell>
-                    <TableCell className="text-right font-bold text-cds-support-02">+{c.points}</TableCell>
-                    <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setSelectedCreditDetails(c)} aria-label="View Audit"><Eye className="h-4 w-4" /></Button>
-                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setEditingCredit(c)} aria-label="Edit Record"><Edit className="h-4 w-4" /></Button>
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:bg-destructive/10"><Trash2 className="h-4 w-4" /></Button></AlertDialogTrigger>
-                                <AlertDialogContent className="rounded-none border-cds-ui-03">
-                                    <AlertDialogHeader>
-                                        <div className="flex items-center gap-3 text-destructive mb-2">
-                                          <AlertCircle className="h-6 w-6" />
-                                          <AlertDialogTitle>Void credit adjustment?</AlertDialogTitle>
-                                        </div>
-                                        <AlertDialogDescription>The credit will be removed from the balance. Its record will be preserved for audit.</AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel className="rounded-none">Cancel</AlertDialogCancel>
-                                        <AlertDialogAction onClick={() => handleDeleteCredit(c._id)} className="bg-destructive hover:bg-destructive/90 rounded-none">Confirm</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </div>
+                {isLoadingCredits ? (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24">
+                      Loading history...
                     </TableCell>
                   </TableRow>
-                ))
-                ) : (<TableRow><TableCell colSpan={6} className="text-center h-24 italic text-muted-foreground">No records matched.</TableCell></TableRow>)}
+                ) : credits.length > 0 ? (
+                  credits.map((c) => (
+                    <TableRow key={c._id}>
+                      <TableCell>
+                        <div className="flex flex-col">
+                          <span className="font-medium text-body">{c.facultySnapshot?.name || "N/A"}</span>
+                          <span className="text-caption text-muted-foreground uppercase font-mono">
+                            {c.facultySnapshot?.facultyID}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-caption truncate max-w-[200px]">{c.title}</TableCell>
+                      <TableCell className="text-center">
+                        <Badge variant="secondary" className="text-caption capitalize">
+                          {c.status}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-caption text-muted-foreground">
+                        {new Date(c.createdAt).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell className="text-right font-bold text-success-text">+{c.points}</TableCell>
+                      <TableCell className="text-center">
+                        <div className="flex items-center justify-center gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setSelectedCreditDetails(c)}
+                            aria-label="View Audit"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => setEditingCredit(c)}
+                            aria-label="Edit Record"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-destructive hover:bg-destructive/10"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent className="border-border">
+                              <AlertDialogHeader>
+                                <div className="flex items-center gap-3 text-destructive mb-2">
+                                  <AlertCircle className="h-6 w-6" />
+                                  <AlertDialogTitle>Void credit adjustment?</AlertDialogTitle>
+                                </div>
+                                <AlertDialogDescription>
+                                  The credit will be removed from the balance. Its record will be preserved for audit.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel className="">Cancel</AlertDialogCancel>
+                                <AlertDialogAction
+                                  onClick={() => handleDeleteCredit(c._id)}
+                                  className="bg-destructive hover:bg-destructive/90 "
+                                >
+                                  Confirm
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="text-center h-24 italic text-muted-foreground">
+                      No records matched.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -472,30 +641,61 @@ export default function ManagePositiveCreditsPage() {
       </Card>
 
       <Dialog open={!!selectedCreditDetails} onOpenChange={(o) => !o && setSelectedCreditDetails(null)}>
-        <DialogContent className="max-w-3xl rounded-none border-cds-ui-03">
-            <DialogHeader><DialogTitle>Credit Transaction Audit</DialogTitle></DialogHeader>
-            {selectedCreditDetails && (
+        <DialogContent className="max-w-3xl border-border">
+          <DialogHeader>
+            <DialogTitle>Credit Transaction Audit</DialogTitle>
+          </DialogHeader>
+          {selectedCreditDetails && (
             <div className="space-y-6 py-4 text-sm">
-                <div className="bg-cds-ui-01 p-4 border border-cds-ui-03">
-                    <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Faculty Associate</p>
-                    <p className="font-bold text-base">{selectedCreditDetails.facultySnapshot?.name}</p>
-                    <p className="text-xs font-mono text-muted-foreground uppercase">{selectedCreditDetails.facultySnapshot?.facultyID}</p>
+              <div className="bg-muted p-4 border border-border">
+                <p className="text-caption font-bold text-muted-foreground mb-1">Faculty Associate</p>
+                <p className="font-bold text-base">{selectedCreditDetails.facultySnapshot?.name}</p>
+                <p className="text-xs font-mono text-muted-foreground uppercase">
+                  {selectedCreditDetails.facultySnapshot?.facultyID}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-6">
+                <div>
+                  <p className="text-caption font-bold text-muted-foreground mb-1">Impact</p>
+                  <p className="text-2xl font-bold text-success-text tabular-nums">+{selectedCreditDetails.points}</p>
                 </div>
-                <div className="grid grid-cols-2 gap-6">
-                    <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Impact</p><p className="text-2xl font-bold text-cds-support-02 tabular-nums">+{selectedCreditDetails.points}</p></div>
-                    <div className="text-right"><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Status</p><Badge variant="secondary" className="rounded-none uppercase">{selectedCreditDetails.status}</Badge></div>
+                <div className="text-right">
+                  <p className="text-caption font-bold text-muted-foreground mb-1">Status</p>
+                  <Badge variant="secondary" className="capitalize">
+                    {selectedCreditDetails.status}
+                  </Badge>
                 </div>
-                <div><p className="text-[10px] uppercase font-bold text-muted-foreground tracking-widest mb-1">Rationale</p><div className="p-3 bg-cds-ui-01 border-l-4 border-cds-support-02 italic">{selectedCreditDetails.notes || 'No notes provided.'}</div></div>
-                {selectedCreditDetails.proofUrl && (
-                    <div className="p-4 border border-dashed border-cds-ui-03 bg-cds-ui-01/30 text-center">
-                        {shortProofUrl ? (<Button asChild variant="link" className="text-primary font-bold"><a href={shortProofUrl} target="_blank" rel="noopener noreferrer">Download Evidence</a></Button>) : <span className="text-xs animate-pulse">authorizing...</span>}
-                    </div>
-                )}
+              </div>
+              <div>
+                <p className="text-caption font-bold text-muted-foreground mb-1">Rationale</p>
+                <div className="p-3 bg-muted border-l-4 border-success italic">
+                  {selectedCreditDetails.notes || "No notes provided."}
+                </div>
+              </div>
+              {selectedCreditDetails.proofUrl && (
+                <div className="p-4 border border-dashed border-border bg-muted/30 text-center">
+                  {shortProofUrl ? (
+                    <Button asChild variant="link" className="text-primary font-bold">
+                      <a href={shortProofUrl} target="_blank" rel="noopener noreferrer">
+                        Download Evidence
+                      </a>
+                    </Button>
+                  ) : (
+                    <span className="text-xs animate-pulse">authorizing...</span>
+                  )}
+                </div>
+              )}
             </div>
-            )}
-            <DialogFooter><DialogClose asChild><Button variant="secondary" className="rounded-none px-8">Close Audit</Button></DialogClose></DialogFooter>
+          )}
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary" className="px-8">
+                Close Audit
+              </Button>
+            </DialogClose>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }

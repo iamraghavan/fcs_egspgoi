@@ -10,6 +10,8 @@ export const palette = {
     "primary-50": "#EFF6FF",
     "primary-100": "#DBEAFE",
     "primary-200": "#BFDBFE",
+    "primary-300": "#93C5FD",
+    "primary-400": "#60A5FA",
     "primary-500": "#3B82F6",
     "primary-600": "#2563EB",
     "primary-700": "#1D4ED8",
@@ -20,6 +22,15 @@ export const palette = {
     "nav-active": "#1E4A75",
     "nav-text": "#C7D2E0",
     "nav-text-active": "#FFFFFF",
+    // App shell (Phase 2): primary rail, secondary panel, list rows
+    "rail-bg": "#0F2A44",
+    "rail-hover": "#173A5C",
+    "rail-icon": "#C7D2E0",
+    "rail-icon-active": "#FFFFFF",
+    "panel-bg": "#FFFFFF",
+    "panel-border": "#E2E8F0",
+    "panel-item-hover": "#F1F5F9",
+    "row-hover": "#F8FAFC",
     // Accent: credits & achievements
     "accent-400": "#FBBF24",
     "accent-500": "#F59E0B",
@@ -36,8 +47,6 @@ export const palette = {
     "text-2": "#475569",
     "text-muted": "#5B6B80",
     "text-on-primary": "#FFFFFF", // brief #64748B is 4.3:1 on surface-2; darkened to pass 4.5:1
-    // Links / primary-coloured text (same as primary-600 in light)
-    link: "#2563EB",
     // Semantic
     success: "#16A34A",
     "success-text": "#15803D",
@@ -67,6 +76,8 @@ export const palette = {
     "primary-50": "#0E1E3D",
     "primary-100": "#13284F",
     "primary-200": "#1C3A6E",
+    "primary-300": "#93C5FD",
+    "primary-400": "#60A5FA",
     "primary-500": "#3B82F6",
     // Button background stays #2563EB in dark: white text on the brief's #3B82F6 is 3.7:1 (fails AA).
     "primary-600": "#2563EB",
@@ -77,6 +88,14 @@ export const palette = {
     "nav-active": "#172744",
     "nav-text": "#C7D2E0",
     "nav-text-active": "#FFFFFF",
+    "rail-bg": "#08111F",
+    "rail-hover": "#111C30",
+    "rail-icon": "#C7D2E0",
+    "rail-icon-active": "#FFFFFF",
+    "panel-bg": "#0E1628",
+    "panel-border": "#1E2A44",
+    "panel-item-hover": "#16213A",
+    "row-hover": "#16213A",
     "accent-400": "#FBBF24",
     "accent-500": "#F59E0B",
     "accent-text": "#FBBF24",
@@ -90,7 +109,6 @@ export const palette = {
     "text-2": "#A5B4C8",
     "text-muted": "#8A99AF",
     "text-on-primary": "#FFFFFF",
-    link: "#60A5FA",
     success: "#22C55E",
     "success-text": "#4ADE80",
     "success-bg": "#052E16",
@@ -137,17 +155,116 @@ export const shadcn = {
   "destructive-foreground": "text-on-primary",
   border: "border",
   input: "control-border",
-  ring: "primary-600",
-  // Sidebar keeps the current light look until the shell is redesigned (Phase 2).
-  "sidebar-background": "surface",
+  // ring: see themeAliases (lighter in dark mode)
+  // App shell: these follow the accent theme
+  "rail-active": "primary-600",
+  // shadcn sidebar component (mobile sheet) uses the light panel look
+  "sidebar-background": "panel-bg",
   "sidebar-foreground": "text-2",
   "sidebar-primary": "primary-600",
   "sidebar-primary-foreground": "text-on-primary",
   "sidebar-accent": "surface-2",
   "sidebar-accent-foreground": "text",
-  "sidebar-border": "border",
+  "sidebar-border": "panel-border",
   "sidebar-ring": "primary-600",
 };
+
+// ---- Aliases that differ between light and dark ----
+// primary-text: primary-coloured text/links (dark mode needs a lighter shade to stay readable).
+export const themeAliases = {
+  light: {
+    "primary-text": "primary-700",
+    link: "primary-700",
+    ring: "primary-600",
+    "panel-item-active-bg": "primary-50",
+    "panel-item-active-text": "primary-700",
+    "row-selected": "primary-50",
+  },
+  dark: {
+    "primary-text": "primary-400",
+    link: "primary-400",
+    ring: "primary-400",
+    "panel-item-active-bg": "primary-100",
+    "panel-item-active-text": "primary-300",
+    "row-selected": "primary-100",
+  },
+};
+
+// ---- Accent themes (Appearance menu). Override ONLY primary-* (and therefore rail-active, links,
+// active panel items). Status/semantic colours never change. 600/700 values from the brief amendment.
+// Dark 50/100/200 tints are mixed from the 600 value onto the dark background by the build script.
+export const accents = {
+  blue: null, // default palette above
+  indigo: {
+    50: "#EEF2FF",
+    100: "#E0E7FF",
+    200: "#C7D2FE",
+    300: "#A5B4FC",
+    400: "#818CF8",
+    500: "#6366F1",
+    600: "#4F46E5",
+    700: "#4338CA",
+    800: "#3730A3",
+  },
+  teal: {
+    50: "#F0FDFA",
+    100: "#CCFBF1",
+    200: "#99F6E4",
+    300: "#5EEAD4",
+    400: "#2DD4BF",
+    500: "#0D9488",
+    600: "#0F766E",
+    700: "#115E59",
+    800: "#134E4A",
+  },
+  purple: {
+    50: "#F5F3FF",
+    100: "#EDE9FE",
+    200: "#DDD6FE",
+    300: "#C4B5FD",
+    400: "#A78BFA",
+    500: "#8B5CF6",
+    600: "#7C3AED",
+    700: "#6D28D9",
+    800: "#5B21B6",
+  },
+  rose: {
+    50: "#FFF1F2",
+    100: "#FFE4E6",
+    200: "#FECDD3",
+    300: "#FDA4AF",
+    400: "#FB7185",
+    500: "#F43F5E",
+    600: "#E11D48",
+    700: "#BE123C",
+    800: "#9F1239",
+  },
+  orange: {
+    50: "#FFF7ED",
+    100: "#FFEDD5",
+    200: "#FED7AA",
+    300: "#FDBA74",
+    400: "#FB923C",
+    500: "#EA580C",
+    600: "#C2410C",
+    700: "#9A3412",
+    800: "#7C2D12",
+  },
+};
+
+// Pairs re-checked for every accent in both modes (names resolve through themeAliases).
+export const accentContrastPairs = [
+  ["text-on-primary", "primary-600", 4.5],
+  ["text-on-primary", "primary-700", 4.5],
+  ["rail-icon-active", "primary-600", 4.5],
+  ["primary-text", "surface", 4.5],
+  ["primary-text", "bg", 4.5],
+  ["primary-text", "panel-bg", 4.5],
+  ["panel-item-active-text", "panel-item-active-bg", 4.5],
+  ["text", "primary-50", 4.5],
+  ["text", "row-selected", 4.5],
+  ["ring", "surface", 3], // focus ring / primary UI outlines
+];
 
 // ---- Non-colour tokens ----
 export const scales = {
@@ -186,8 +303,6 @@ export const contrastPairs = [
   ["text", "primary-50", 4.5],
   ["text-on-primary", "primary-600", 4.5],
   ["text-on-primary", "primary-700", 4.5],
-  ["link", "surface", 4.5],
-  ["link", "bg", 4.5],
   ["text-on-primary", "danger", 4.5],
   ["success-text", "success-bg", 4.5],
   ["success-text", "surface", 4.5],
@@ -203,9 +318,16 @@ export const contrastPairs = [
   ["nav-text", "nav-bg", 4.5],
   ["nav-text-active", "nav-active", 4.5],
   ["nav-text", "nav-hover", 4.5],
+  ["rail-icon", "rail-bg", 4.5],
+  ["rail-icon", "rail-hover", 4.5],
+  ["text", "panel-bg", 4.5],
+  ["text-2", "panel-bg", 4.5],
+  ["text-muted", "panel-bg", 4.5],
+  ["text", "panel-item-hover", 4.5],
+  ["text-2", "row-hover", 4.5],
   ["control-border", "surface", 3],
   ["control-border", "bg", 3],
-  ["primary-600", "surface", 3], // focus ring / primary UI elements
+  ["ring", "surface", 3], // focus ring / primary UI outlines
   ["chart-1", "surface", 3],
   ["chart-2", "surface", 2],
   ["chart-3", "surface", 3],

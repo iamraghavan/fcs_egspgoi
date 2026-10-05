@@ -39,17 +39,6 @@ export default {
         8: "var(--space-6)",
         12: "var(--space-7)",
         16: "var(--space-8)",
-        // Temporary Carbon aliases (removed as screens are migrated)
-        "cds-01": "var(--cds-spacing-01)",
-        "cds-02": "var(--cds-spacing-02)",
-        "cds-03": "var(--cds-spacing-03)",
-        "cds-04": "var(--cds-spacing-04)",
-        "cds-05": "var(--cds-spacing-05)",
-        "cds-06": "var(--cds-spacing-06)",
-        "cds-07": "var(--cds-spacing-07)",
-        "cds-08": "var(--cds-spacing-08)",
-        "cds-09": "var(--cds-spacing-09)",
-        "cds-10": "var(--cds-spacing-10)",
       },
       colors: {
         background: tok("background"),
@@ -64,7 +53,8 @@ export default {
           DEFAULT: tok("primary"),
           foreground: tok("primary-foreground"),
           hover: tok("primary-hover"),
-          ...shades("primary", ["50", "100", "200", "500", "600", "700", "800"]),
+          ...shades("primary", ["50", "100", "200", "300", "400", "500", "600", "700", "800"]),
+          text: tok("primary-text"),
         },
         link: tok("link"),
         secondary: { DEFAULT: tok("secondary"), foreground: tok("secondary-foreground") },
@@ -88,6 +78,22 @@ export default {
           text: tok("nav-text"),
           "text-active": tok("nav-text-active"),
         },
+        // App shell (Phase 2)
+        rail: {
+          bg: tok("rail-bg"),
+          hover: tok("rail-hover"),
+          active: tok("rail-active"),
+          icon: tok("rail-icon"),
+          "icon-active": tok("rail-icon-active"),
+        },
+        panel: {
+          bg: tok("panel-bg"),
+          border: tok("panel-border"),
+          hover: tok("panel-item-hover"),
+          "active-bg": tok("panel-item-active-bg"),
+          "active-text": tok("panel-item-active-text"),
+        },
+        row: { hover: tok("row-hover"), selected: tok("row-selected") },
         chart: shades("chart", ["1", "2", "3", "4", "5", "6", "7"]),
         sidebar: {
           DEFAULT: tok("sidebar-background"),
@@ -98,35 +104,6 @@ export default {
           "accent-foreground": tok("sidebar-accent-foreground"),
           border: tok("sidebar-border"),
           ring: tok("sidebar-ring"),
-        },
-        // Temporary Carbon aliases (removed as screens are migrated)
-        cds: {
-          interactive: {
-            "01": "var(--cds-interactive-01)",
-            "02": "var(--cds-interactive-02)",
-            "03": "var(--cds-interactive-03)",
-            "04": "var(--cds-interactive-04)",
-          },
-          ui: {
-            "01": "var(--cds-ui-01)",
-            "02": "var(--cds-ui-02)",
-            "03": "var(--cds-ui-03)",
-            "04": "var(--cds-ui-04)",
-            "05": "var(--cds-ui-05)",
-          },
-          text: {
-            "01": "var(--cds-text-01)",
-            "02": "var(--cds-text-02)",
-            "03": "var(--cds-text-03)",
-            "04": "var(--cds-text-04)",
-            "05": "var(--cds-text-05)",
-          },
-          support: {
-            "01": "var(--cds-support-01)",
-            "02": "var(--cds-support-02)",
-            "03": "var(--cds-support-03)",
-            "04": "var(--cds-support-04)",
-          },
         },
       },
       borderRadius: {
@@ -146,6 +123,8 @@ export default {
         slow: "var(--motion-slow)",
       },
       ringColor: { DEFAULT: tok("ring") },
+      // `text-primary` must stay readable in dark mode, so text uses primary-text (lighter in dark).
+      textColor: { primary: { DEFAULT: tok("primary-text"), foreground: tok("primary-foreground") } },
     },
   },
   plugins: [require("tailwindcss-animate"), require("@tailwindcss/forms")],

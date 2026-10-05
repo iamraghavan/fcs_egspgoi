@@ -38,6 +38,7 @@ import { FileUpload } from "@/components/file-upload";
 import { Textarea } from "@/components/ui/textarea";
 import { shortenUrl } from "@/lib/url-shortener";
 import { cn } from "@/lib/utils";
+import { useAcademicYear } from "@/components/shell/academic-year";
 
 const API_BASE_URL = API_ORIGIN;
 
@@ -86,7 +87,8 @@ export default function GoodWorksPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [academicYear, setAcademicYear] = useState(getCurrentAcademicYear());
+  // Workspace academic year (switcher in the navigation panel; "All years" is supported here).
+  const { year: academicYear, setYear: setAcademicYear } = useAcademicYear();
   const [page, setPage] = useState(1);
   const [limit] = useState(10);
   const [total, setTotal] = useState(0);
@@ -350,6 +352,7 @@ export default function GoodWorksPage() {
               <SelectValue placeholder="Select Academic Year" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="all">All years</SelectItem>
               {yearOptions.map((year) => (
                 <SelectItem key={year} value={year}>
                   {year}
@@ -413,19 +416,19 @@ export default function GoodWorksPage() {
                         }
                         className={
                           work.status === "approved"
-                            ? "bg-green-100 text-green-800"
+                            ? "bg-success-bg text-success-text"
                             : work.status === "pending"
-                              ? "bg-yellow-100 text-yellow-800"
-                              : "bg-red-100 text-red-800"
+                              ? "bg-warning-bg text-warning-text"
+                              : "bg-danger-bg text-danger-text"
                         }
                       >
                         <span
                           className={`h-1.5 w-1.5 rounded-full mr-1.5 ${
                             work.status === "approved"
-                              ? "bg-green-500"
+                              ? "bg-success"
                               : work.status === "pending"
-                                ? "bg-yellow-500"
-                                : "bg-red-500"
+                                ? "bg-warning"
+                                : "bg-danger"
                           }`}
                         ></span>
                         {work.status}
@@ -536,7 +539,7 @@ export default function GoodWorksPage() {
                   key={p}
                   variant={page === p ? "outline" : "ghost"}
                   size="icon"
-                  className="rounded-none h-8 w-8"
+                  className="h-8 w-8"
                   onClick={() => setPage(p)}
                 >
                   {p}
@@ -646,7 +649,9 @@ export default function GoodWorksPage() {
                 <Badge
                   variant={detailedWork.status === "approved" ? "default" : "destructive"}
                   className={
-                    detailedWork.status === "approved" ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                    detailedWork.status === "approved"
+                      ? "bg-success-bg text-success-text"
+                      : "bg-danger-bg text-danger-text"
                   }
                 >
                   {detailedWork.status}

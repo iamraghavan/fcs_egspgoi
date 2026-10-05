@@ -525,8 +525,8 @@ export default function FacultyAccountsPage() {
                     <TableCell className="text-right font-semibold">{account.currentCredit ?? 0}</TableCell>
                     <TableCell className="text-center">
                       <span
-                        className={`px-2 py-1 text-[10px] font-bold tracking-wider rounded-full ${
-                          account.isActive ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"
+                        className={`px-2 py-1 text-caption font-bold tracking-wider rounded-full ${
+                          account.isActive ? "bg-success-bg text-success-text" : "bg-danger-bg text-danger-text"
                         }`}
                       >
                         {account.isActive ? "Active" : "Inactive"}
@@ -591,7 +591,7 @@ export default function FacultyAccountsPage() {
                                       <div>
                                         <span className="text-muted-foreground font-medium block">Status</span>
                                         <span
-                                          className={`font-medium ${selectedFaculty.isActive ? "text-green-700" : "text-red-600"}`}
+                                          className={`font-medium ${selectedFaculty.isActive ? "text-success-text" : "text-danger-text"}`}
                                         >
                                           {selectedFaculty.isActive ? "Active" : "Inactive"}
                                         </span>
@@ -885,7 +885,7 @@ export default function FacultyAccountsPage() {
 
             <DialogFooter className="pt-4 border-t">
               <DialogClose asChild>
-                <Button type="button" variant="secondary" className="rounded-none">
+                <Button type="button" variant="secondary" className="">
                   Cancel
                 </Button>
               </DialogClose>

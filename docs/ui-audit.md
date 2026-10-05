@@ -204,3 +204,50 @@ Backend-dependent items are listed in `docs/backend-requests.md`.
 3. **Branch:** create `ui-redesign` from `audit-and-testing` (recommended, keeps the security fixes), or from `main`?
 4. **Admissions microsite:** leave untouched (recommended) or move out?
 5. **Visual direction:** the brief's Freshworks-style navy sidebar + rounded 6–8 px corners replaces today's IBM Carbon square look. Confirm this change of brand feel.
+
+---
+
+## 9. Amendment — "Zoho CRM NextGen" interaction model (replaces the Phase 2 shell spec)
+
+Decided after Phase 1: the user was not satisfied with the remaining IBM Carbon look. **All Carbon styling is
+removed in Phase 2** (not gradually): square corners (`rounded-none`), underline inputs, `cds-*` classes.
+The new shell follows Zoho-style patterns: **primary rail → secondary panel → workspace**.
+Inspiration is interaction patterns only. No Zoho logos, icons, wording or brand colours; Lucide icons and our tokens only.
+
+### 9.1 Phase 2 plan (as implemented)
+
+| Area                   | What gets built                                                                                                                                         | Data source (existing API only)                                                           |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Primary rail           | Role-aware, ≤ 7 items, icon + 12 px label, active pill in the accent colour, tooltip. Bottom: Quick Create "+", Appearance, avatar menu                 | static config (`src/components/shell/nav-config.ts`)                                      |
+| Secondary panel        | 240 px, collapsible (remembered), academic-year switcher on top, grouped sub-pages                                                                      | static config + URL                                                                       |
+| Top bar                | 56 px: breadcrumb + page title · ⌘K palette (navigation + actions + existing `/search` API) · notifications with unread count · help · institution name | `/notifications` (all roles), `/search`                                                   |
+| Academic-year switcher | URL param `ay` + localStorage. Wired into the pages that already filter by year (faculty Home, Good Works, admin Home)                                  | year list computed client side (same rule the pages use: AY starts in June, last 5 years) |
+| Quick Create           | Role-aware popover. Links to the existing create pages                                                                                                  | existing routes                                                                           |
+| Appearance menu        | Mode (light/dark/system) + 6 accent themes; `data-accent` on `<html>`; contrast checked for every accent × mode                                         | tokens                                                                                    |
+| Role guard (G11)       | Wrong-role URL → own Home + toast                                                                                                                       | `/auth/profile` role                                                                      |
+| Mobile (< 768 px)      | Rail + panel hidden; top-bar menu button opens a bottom sheet with the same navigation                                                                  | —                                                                                         |
+| Carbon removal         | Codemod `cds-*` → semantic token classes, drop `rounded-none`, bordered 6 px inputs; `--cds-*` aliases deleted outside admissions                       | —                                                                                         |
+
+### 9.2 Rail items per role (≤ 7)
+
+- **Faculty:** Home · Good Works · Remarks & Appeals · Notifications · Help
+- **OA:** Issue · History · People · Notifications · Help
+- **Admin:** Home · Review · Credits · People · Reports · Setup · Help
+
+### 9.3 Conflicts with the current code / API (and how they are resolved)
+
+| #   | Amendment says                                                    | Reality                                                                                          | Resolution in Phase 2                                                                                                                                 |
+| --- | ----------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------- |
+| C1  | Rail 64 px with labels under icons                                | 12 px labels such as "Notifications" do not fit in 64 px                                         | Rail is **88 px** ("Notifications" at 12 px needs it; 80 px clipped it). Labels wrap to 2 lines (`Remarks & Appeals`)                                 |
+| C2  | OA rail starts with **Home**                                      | There is no OA home page (OA lands on "Issue Remark")                                            | OA rail starts with **Issue**. OA Home is built in Phase 7 (Home pages)                                                                               |
+| C3  | OA rail has no **People**                                         | OA uses Faculty Accounts today (`/admin/users`, allowed by the API)                              | Kept as **People** so no current feature disappears (5 items, still ≤ 7)                                                                              |
+| C4  | Panel items with counts ("Under review (n)") and status sub-views | Lists don't read a status from the URL yet, and counts would need extra list calls on every page | Phase 2 panel links to real pages only, with **no counts**. Status sub-views + counts arrive with the view system in Phase 4                          |
+| C5  | Academic years "from data"                                        | No endpoint lists years; each page computes the same rule                                        | Client-side list (current + 4 previous AYs, June start) + "All years" where the page supports it. BR-5 stays open                                     |
+| C6  | Year switcher passed as a filter everywhere                       | Only some pages filter by year                                                                   | Wired into faculty Home, Good Works and admin Home in Phase 2; other lists in Phases 4–6. "All years" is offered only where the API accepts "no year" |
+| C7  | Quick Create opens forms in a 560 px drawer with "Create another" | Forms are full pages today                                                                       | Phase 2 Quick Create **navigates to the existing form pages**. Drawer forms come with the component library (Phase 3)                                 |
+| C8  | Setup: Account, Security, Notifications                           | Admin settings is one page; there is no OA settings page                                         | Setup → existing admin settings page. Sub-tabs in Phase 7                                                                                             |
+| C9  | Reports sub-views: Department, Faculty, College, Exports          | Reports page has in-page controls, not URL routes                                                | Single "Reports" panel link in Phase 2. Sub-views in Phase 6                                                                                          |
+| C10 | Brief uses `[data-theme="dark"]`                                  | next-themes is configured with the `dark` class                                                  | Same tokens under `.dark`                                                                                                                             |
+| C11 | Tests open the account menu with "last button in `<header>`"      | The avatar moves to the rail                                                                     | Tests now use the accessible name ("Account menu …"), which is more robust                                                                            |
+| C12 | Admin "Notifications" not in the rail                             | Admin had no notifications UI before either                                                      | Unchanged: admins have no notifications item; the bell shows for faculty and OA                                                                       |
+| C13 | Carbon to be removed "as screens are migrated"                    | User asked to remove Carbon now                                                                  | Global codemod in Phase 2. Page layouts themselves are still redesigned in Phases 4–7                                                                 |

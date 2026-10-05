@@ -10,44 +10,6 @@
  * those tokens (see tailwind.config.ts). No hard-coded colours below.
  */
 
-/* ---- Temporary aliases: IBM Carbon (--cds-*) -> new tokens. Removed once screens are migrated. ---- */
-:root,
-.dark {
-  --cds-interactive-01: hsl(var(--primary-600));
-  --cds-interactive-02: hsl(var(--text-2));
-  --cds-interactive-03: hsl(var(--primary-600));
-  --cds-interactive-04: hsl(var(--primary-600));
-
-  --cds-ui-background: hsl(var(--surface));
-  --cds-ui-01: hsl(var(--surface-2));
-  --cds-ui-02: hsl(var(--surface));
-  --cds-ui-03: hsl(var(--border));
-  --cds-ui-04: hsl(var(--control-border));
-  --cds-ui-05: hsl(var(--text));
-
-  --cds-text-01: hsl(var(--text));
-  --cds-text-02: hsl(var(--text-2));
-  --cds-text-03: hsl(var(--text-muted));
-  --cds-text-04: hsl(var(--text-on-primary));
-  --cds-text-05: hsl(var(--text-muted));
-
-  --cds-support-01: hsl(var(--danger));
-  --cds-support-02: hsl(var(--success));
-  --cds-support-03: hsl(var(--accent-500));
-  --cds-support-04: hsl(var(--info));
-
-  --cds-spacing-01: 2px;
-  --cds-spacing-02: var(--space-1);
-  --cds-spacing-03: var(--space-2);
-  --cds-spacing-04: var(--space-3);
-  --cds-spacing-05: var(--space-4);
-  --cds-spacing-06: var(--space-5);
-  --cds-spacing-07: var(--space-6);
-  --cds-spacing-08: 40px;
-  --cds-spacing-09: var(--space-7);
-  --cds-spacing-10: var(--space-8);
-}
-
 /*
  * ---- Legacy theme (pre-redesign look) ----
  * Applied to the admissions microsite (src/app/admissions/layout.tsx), which is
@@ -87,25 +49,6 @@
   --text-2: 0 0% 32.2%;
   --text-muted: 215.4 16.3% 46.9%;
   --control-border: 0 0% 55.3%;
-  --cds-interactive-01: #0f62fe;
-  --cds-interactive-02: #393939;
-  --cds-interactive-03: #0f62fe;
-  --cds-interactive-04: #0f62fe;
-  --cds-ui-background: #ffffff;
-  --cds-ui-01: #f4f4f4;
-  --cds-ui-02: #ffffff;
-  --cds-ui-03: #e0e0e0;
-  --cds-ui-04: #8d8d8d;
-  --cds-ui-05: #161616;
-  --cds-text-01: #161616;
-  --cds-text-02: #525252;
-  --cds-text-03: #a8a8a8;
-  --cds-text-04: #ffffff;
-  --cds-text-05: #6f6f6f;
-  --cds-support-01: #da1e28;
-  --cds-support-02: #198038;
-  --cds-support-03: #f1c21b;
-  --cds-support-04: #0043ce;
   color-scheme: light;
   font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
   background-color: hsl(var(--background));
@@ -165,15 +108,33 @@
   }
 
   .ui-input {
-    @apply flex h-10 w-full border-0 border-b border-input bg-muted px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-b-2 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all;
+    @apply flex h-10 w-full rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground hover:border-border-strong focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 transition-colors;
   }
 
   .ui-select-trigger {
-    @apply flex h-10 w-full items-center justify-between border-0 border-b border-input bg-muted px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer;
+    @apply flex h-10 w-full items-center justify-between rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground shadow-sm ring-offset-background placeholder:text-muted-foreground hover:border-border-strong focus:outline-none focus:border-primary focus:ring-2 focus:ring-ring/30 disabled:cursor-not-allowed disabled:opacity-50 transition-colors cursor-pointer;
+  }
+
+  /* Admissions keeps the previous base text size (browser default 16 px). */
+  .legacy-theme {
+    font-size: 1rem;
+  }
+
+  /* Admissions keeps the previous underline fields (out of scope for the redesign). */
+  .legacy-theme .ui-input,
+  .legacy-theme .ui-select-trigger {
+    @apply rounded-none border-0 border-b shadow-none;
+    /* previous Carbon field colours (#f4f4f4 / #8d8d8d) */
+    background-color: hsl(0 0% 95.7%);
+    border-bottom-color: hsl(0 0% 55.3%);
+  }
+  .legacy-theme .ui-input:focus-visible,
+  .legacy-theme .ui-select-trigger:focus {
+    @apply border-b-2 border-primary ring-0;
   }
 
   .ui-select-item {
-    @apply relative flex w-full cursor-default select-none items-center py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
+    @apply relative flex rounded-sm w-full cursor-default select-none items-center py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
   }
 
   .ui-dialog-content {
@@ -192,23 +153,6 @@
 
   .ui-menubar-item {
     @apply relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50;
-  }
-
-  .cds-grid {
-    @apply grid gap-4 w-full;
-    grid-template-columns: repeat(4, 1fr);
-  }
-
-  @media (min-width: 768px) {
-    .cds-grid {
-      grid-template-columns: repeat(8, 1fr);
-    }
-  }
-
-  @media (min-width: 1056px) {
-    .cds-grid {
-      grid-template-columns: repeat(16, 1fr);
-    }
   }
 
   .dashboard-card {

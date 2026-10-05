@@ -1,7 +1,15 @@
 // Builds src/styles/tokens.css from tokens.config.mjs and checks WCAG contrast.
 // Usage: node scripts/tokens/build-tokens.mjs [--check]   (--check: no write, exit 1 on contrast failure)
 import fs from "fs";
-import { palette, shadcn, scales, contrastPairs } from "./tokens.config.mjs";
+import {
+  palette,
+  shadcn,
+  themeAliases,
+  accents,
+  accentContrastPairs,
+  scales,
+  contrastPairs,
+} from "./tokens.config.mjs";
 
 const OUT = "src/styles/tokens.css";
 
@@ -47,13 +55,57 @@ export function contrast(a, b) {
   return (l1 + 0.05) / (l2 + 0.05);
 }
 
+function mix(hexA, hexB, t) {
+  const a = hexToRgb(hexA);
+  const b = hexToRgb(hexB);
+  return (
+    "#" +
+    a
+      .map((v, i) =>
+        Math.round(v * t + b[i] * (1 - t))
+          .toString(16)
+          .padStart(2, "0"),
+      )
+      .join("")
+      .toUpperCase()
+  );
+}
+
+// primary-* values of an accent in a theme (null accent = default palette)
+function accentShades(accent, theme) {
+  const def = accents[accent];
+  if (!def) return {};
+  const out = {};
+  for (const [k, hex] of Object.entries(def)) out[`primary-${k}`] = hex;
+  if (theme === "dark") {
+    out["primary-50"] = mix(def[600], palette.dark.bg, 0.14);
+    out["primary-100"] = mix(def[600], palette.dark.bg, 0.24);
+    out["primary-200"] = mix(def[600], palette.dark.bg, 0.38);
+  }
+  return out;
+}
+
+// Resolve a token name to hex in a theme, following aliases and accent overrides.
+function resolve(theme, name, accent = "blue", depth = 0) {
+  if (depth > 5) throw new Error(`alias loop at ${name}`);
+  const acc = accentShades(accent, theme);
+  if (acc[name]) return acc[name];
+  if (palette[theme][name]) return palette[theme][name];
+  const ref = themeAliases[theme][name] || shadcn[name];
+  if (!ref) throw new Error(`unknown token ${name}`);
+  return resolve(theme, ref, accent, depth + 1);
+}
+
 function themeBlock(theme) {
   const p = palette[theme];
   const lines = [];
   lines.push("  /* palette (HSL channels; use as hsl(var(--name))) */");
   for (const [name, hex] of Object.entries(p)) lines.push(`  --${name}: ${hexToHslChannels(hex)}; /* ${hex} */`);
   lines.push("  /* shadcn semantic names */");
-  for (const [name, ref] of Object.entries(shadcn)) lines.push(`  --${name}: var(--${ref});`);
+  // Skip identity aliases (e.g. border → border): `--x: var(--x)` is a cycle and makes the value invalid.
+  for (const [name, ref] of Object.entries(shadcn)) if (name !== ref) lines.push(`  --${name}: var(--${ref});`);
+  lines.push("  /* light/dark specific aliases */");
+  for (const [name, ref] of Object.entries(themeAliases[theme])) lines.push(`  --${name}: var(--${ref});`);
   return lines.join("\n");
 }
 
@@ -67,15 +119,39 @@ function staticBlock() {
   for (const [k, v] of Object.entries(scales.space)) lines.push(`  --space-${k}: ${v};`);
   for (const [k, v] of Object.entries(scales.motion)) lines.push(`  --motion-${k}: ${v};`);
   lines.push("  --focus-ring: 0 0 0 3px hsl(var(--primary-600) / 0.35);");
+  lines.push("  /* accent swatches for the Appearance menu (fixed, not theme-dependent) */");
+  for (const [name, def] of Object.entries(accents))
+    lines.push(`  --swatch-${name}: ${hexToHslChannels(def ? def[600] : palette.light["primary-600"])};`);
   return lines.join("\n");
+}
+
+function accentBlocks() {
+  const out = [];
+  for (const accent of Object.keys(accents)) {
+    if (!accents[accent]) continue;
+    for (const theme of ["light", "dark"]) {
+      const sel = theme === "light" ? `:root[data-accent="${accent}"]` : `:root.dark[data-accent="${accent}"]`;
+      const lines = Object.entries(accentShades(accent, theme)).map(
+        ([n, hex]) => `  --${n}: ${hexToHslChannels(hex)}; /* ${hex} */`,
+      );
+      out.push(`${sel} {\n${lines.join("\n")}\n}`);
+    }
+  }
+  return out.join("\n\n");
 }
 
 function checkContrast() {
   const results = [];
   for (const theme of ["light", "dark"]) {
     for (const [fg, bg, min] of contrastPairs) {
-      const ratio = contrast(palette[theme][fg], palette[theme][bg]);
-      results.push({ theme, fg, bg, min, ratio: Math.round(ratio * 100) / 100, pass: ratio >= min });
+      const ratio = contrast(resolve(theme, fg), resolve(theme, bg));
+      results.push({ accent: "base", theme, fg, bg, min, ratio: Math.round(ratio * 100) / 100, pass: ratio >= min });
+    }
+    for (const accent of Object.keys(accents)) {
+      for (const [fg, bg, min] of accentContrastPairs) {
+        const ratio = contrast(resolve(theme, fg, accent), resolve(theme, bg, accent));
+        results.push({ accent, theme, fg, bg, min, ratio: Math.round(ratio * 100) / 100, pass: ratio >= min });
+      }
     }
   }
   return results;
@@ -96,6 +172,9 @@ ${themeBlock("dark")}
   color-scheme: dark;
 }
 
+/* Accent themes: set data-accent on <html> (Appearance menu). Only primary-* changes. */
+${accentBlocks()}
+
 @media (prefers-reduced-motion: reduce) {
   :root { --motion-fast: 0ms; --motion-base: 0ms; --motion-slow: 0ms; }
 }
@@ -111,7 +190,7 @@ if (!process.argv.includes("--check")) {
 }
 for (const r of results) {
   console.log(
-    `${r.pass ? "PASS" : "FAIL"}  ${r.theme.padEnd(5)}  ${r.fg.padEnd(16)} on ${r.bg.padEnd(13)} ${String(r.ratio).padStart(5)}:1  (min ${r.min})`,
+    `${r.pass ? "PASS" : "FAIL"}  ${r.accent.padEnd(6)} ${r.theme.padEnd(5)}  ${r.fg.padEnd(16)} on ${r.bg.padEnd(13)} ${String(r.ratio).padStart(5)}:1  (min ${r.min})`,
   );
 }
 console.log(`\n${results.length - failures.length}/${results.length} pairs pass`);

@@ -13,7 +13,9 @@ const THEMES = (process.env.SCREEN_THEMES || "light,dark").split(",") as ("light
 const PAGES: { name: string; role: Role | null; path: string }[] = [
   { name: "faculty-dashboard", role: "faculty", path: "/u/portal/dashboard" },
   { name: "good-works-list", role: "faculty", path: "/u/portal/dashboard/good-works" },
+  { name: "admin-home", role: "admin", path: "/u/portal/dashboard/admin" },
   { name: "admin-review-queue", role: "admin", path: "/u/portal/dashboard/admin/review" },
+  { name: "oa-issue", role: "oa", path: "/u/portal/dashboard/oa" },
   { name: "login", role: null, path: "/u/portal/auth?faculty_login" },
   { name: "admissions-bnys", role: null, path: "/admissions/bnys/2025-2026" },
 ];
