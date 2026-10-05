@@ -1,46 +1,62 @@
+@import "../styles/tokens.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* IBM Carbon Design System Tokens */
-:root {
-  /* Color Tokens - Blue 60 Theme (Productive) */
-  --cds-interactive-01: #0f62fe;
-  --cds-interactive-02: #393939;
-  --cds-interactive-03: #0f62fe;
-  --cds-interactive-04: #0f62fe;
-  
-  --cds-ui-background: #ffffff;
-  --cds-ui-01: #f4f4f4;
-  --cds-ui-02: #ffffff;
-  --cds-ui-03: #e0e0e0;
-  --cds-ui-04: #8d8d8d;
-  --cds-ui-05: #161616;
+/*
+ * Design tokens live in src/styles/tokens.css (generated from
+ * scripts/tokens/tokens.config.mjs). Components use Tailwind classes that read
+ * those tokens (see tailwind.config.ts). No hard-coded colours below.
+ */
 
-  --cds-text-01: #161616;
-  --cds-text-02: #525252;
-  --cds-text-03: #a8a8a8;
-  --cds-text-04: #ffffff;
-  --cds-text-05: #6f6f6f;
+/* ---- Temporary aliases: IBM Carbon (--cds-*) -> new tokens. Removed once screens are migrated. ---- */
+:root,
+.dark {
+  --cds-interactive-01: hsl(var(--primary-600));
+  --cds-interactive-02: hsl(var(--text-2));
+  --cds-interactive-03: hsl(var(--primary-600));
+  --cds-interactive-04: hsl(var(--primary-600));
 
-  --cds-support-01: #da1e28;
-  --cds-support-02: #198038;
-  --cds-support-03: #f1c21b;
-  --cds-support-04: #0043ce;
+  --cds-ui-background: hsl(var(--surface));
+  --cds-ui-01: hsl(var(--surface-2));
+  --cds-ui-02: hsl(var(--surface));
+  --cds-ui-03: hsl(var(--border));
+  --cds-ui-04: hsl(var(--control-border));
+  --cds-ui-05: hsl(var(--text));
 
-  /* Carbon Spacing Scale */
-  --cds-spacing-01: 0.125rem;
-  --cds-spacing-02: 0.25rem;
-  --cds-spacing-03: 0.5rem;
-  --cds-spacing-04: 0.75rem;
-  --cds-spacing-05: 1rem;
-  --cds-spacing-06: 1.5rem;
-  --cds-spacing-07: 2rem;
-  --cds-spacing-08: 2.5rem;
-  --cds-spacing-09: 3rem;
-  --cds-spacing-10: 4rem;
+  --cds-text-01: hsl(var(--text));
+  --cds-text-02: hsl(var(--text-2));
+  --cds-text-03: hsl(var(--text-muted));
+  --cds-text-04: hsl(var(--text-on-primary));
+  --cds-text-05: hsl(var(--text-muted));
 
-  /* Mapping ShadCN UI variables to Carbon Vibe */
+  --cds-support-01: hsl(var(--danger));
+  --cds-support-02: hsl(var(--success));
+  --cds-support-03: hsl(var(--accent-500));
+  --cds-support-04: hsl(var(--info));
+
+  --cds-spacing-01: 2px;
+  --cds-spacing-02: var(--space-1);
+  --cds-spacing-03: var(--space-2);
+  --cds-spacing-04: var(--space-3);
+  --cds-spacing-05: var(--space-4);
+  --cds-spacing-06: var(--space-5);
+  --cds-spacing-07: var(--space-6);
+  --cds-spacing-08: 40px;
+  --cds-spacing-09: var(--space-7);
+  --cds-spacing-10: var(--space-8);
+}
+
+/*
+ * ---- Legacy theme (pre-redesign look) ----
+ * Applied to the admissions microsite (src/app/admissions/layout.tsx), which is
+ * out of scope for the redesign and must look exactly as before: old colours,
+ * square corners, IBM Plex font, always light. These are the previous values.
+ */
+.legacy-theme,
+.dark .legacy-theme,
+.legacy-theme.dark {
   --background: 0 0% 100%;
   --foreground: 224 71.4% 4.1%;
   --card: 0 0% 100%;
@@ -49,6 +65,7 @@
   --popover-foreground: 224 71.4% 4.1%;
   --primary: 221.2 83.2% 53.3%;
   --primary-foreground: 210 40% 98%;
+  --primary-hover: 221.2 83.2% 48%;
   --secondary: 210 40% 96.1%;
   --secondary-foreground: 222.2 47.4% 11.2%;
   --muted: 210 40% 96.1%;
@@ -60,64 +77,99 @@
   --border: 214.3 31.8% 91.4%;
   --input: 214.3 31.8% 91.4%;
   --ring: 221.2 83.2% 53.3%;
-  --radius: 0rem; /* Carbon Productive UI uses sharp corners */
-
-  /* Sidebar Tokens */
-  --sidebar-background: 0 0% 98%;
-  --sidebar-foreground: 240 5.3% 26.1%;
-  --sidebar-primary: 221.2 83.2% 53.3%;
-  --sidebar-primary-foreground: 0 0% 98%;
-  --sidebar-accent: 240 4.8% 95.9%;
-  --sidebar-accent-foreground: 240 5.9% 10%;
-  --sidebar-border: 240 5.9% 90%;
-  --sidebar-ring: 221.2 83.2% 53.3%;
-}
-
-.dark {
-  --background: 222.2 84% 4.9%;
-  --foreground: 210 40% 98%;
-  --card: 222.2 84% 4.9%;
-  --card-foreground: 210 40% 98%;
-  --popover: 222.2 84% 4.9%;
-  --popover-foreground: 210 40% 98%;
-  --primary: 217.2 91.2% 59.8%;
-  --primary-foreground: 222.2 47.4% 11.2%;
-  --secondary: 217.2 32.6% 17.5%;
-  --secondary-foreground: 210 40% 98%;
-  --muted: 217.2 32.6% 17.5%;
-  --muted-foreground: 215 20.2% 65.1%;
-  --accent: 217.2 32.6% 17.5%;
-  --accent-foreground: 210 40% 98%;
-  --destructive: 0 62.8% 30.6%;
-  --destructive-foreground: 210 40% 98%;
-  --border: 217.2 32.6% 17.5%;
-  --input: 217.2 32.6% 17.5%;
-  --ring: 224.3 76.3% 48%;
+  --radius: 0rem;
+  --radius-control: 0px;
+  --radius-card: 0px;
+  --radius-modal: 0px;
+  --surface: 0 0% 100%;
+  --surface-2: 0 0% 95.7%;
+  --text: 224 71.4% 4.1%;
+  --text-2: 0 0% 32.2%;
+  --text-muted: 215.4 16.3% 46.9%;
+  --control-border: 0 0% 55.3%;
+  --cds-interactive-01: #0f62fe;
+  --cds-interactive-02: #393939;
+  --cds-interactive-03: #0f62fe;
+  --cds-interactive-04: #0f62fe;
+  --cds-ui-background: #ffffff;
+  --cds-ui-01: #f4f4f4;
+  --cds-ui-02: #ffffff;
+  --cds-ui-03: #e0e0e0;
+  --cds-ui-04: #8d8d8d;
+  --cds-ui-05: #161616;
+  --cds-text-01: #161616;
+  --cds-text-02: #525252;
+  --cds-text-03: #a8a8a8;
+  --cds-text-04: #ffffff;
+  --cds-text-05: #6f6f6f;
+  --cds-support-01: #da1e28;
+  --cds-support-02: #198038;
+  --cds-support-03: #f1c21b;
+  --cds-support-04: #0043ce;
+  color-scheme: light;
+  font-family: var(--font-plex-sans), "IBM Plex Sans", sans-serif;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 @layer base {
   * {
     @apply border-border;
   }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'IBM Plex Sans', sans-serif;
+    font-family:
+      var(--font-inter),
+      Inter,
+      system-ui,
+      -apple-system,
+      "Segoe UI",
+      Roboto,
+      sans-serif;
+    font-size: var(--font-size-body);
+    line-height: 1.5;
+  }
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    line-height: 1.25;
+  }
+  /* Numbers line up in tables and KPIs */
+  table,
+  [data-numeric] {
+    font-variant-numeric: tabular-nums;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
 @layer components {
   .ui-button {
-    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50;
-    border-radius: 0;
+    @apply inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background disabled:pointer-events-none disabled:opacity-50;
+    border-radius: var(--radius-control);
+    transition-duration: var(--motion-fast);
   }
 
   .ui-input {
-    @apply flex h-10 w-full border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-b-2 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all;
+    @apply flex h-10 w-full border-0 border-b border-input bg-muted px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:border-b-2 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all;
   }
 
   .ui-select-trigger {
-    @apply flex h-10 w-full items-center justify-between border-0 border-b border-cds-ui-04 bg-cds-ui-01 px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer;
-    border-radius: 0;
+    @apply flex h-10 w-full items-center justify-between border-0 border-b border-input bg-muted px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:border-b-2 focus:border-primary disabled:cursor-not-allowed disabled:opacity-50 transition-all cursor-pointer;
   }
 
   .ui-select-item {
@@ -125,11 +177,13 @@
   }
 
   .ui-dialog-content {
-    @apply fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-none;
+    @apply fixed left-[50%] top-[50%] z-[100] grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95;
+    border-radius: var(--radius-modal);
   }
 
   .ui-dropdown-item {
     @apply relative flex cursor-default select-none items-center gap-2 px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&>svg]:size-4 [&>svg]:shrink-0;
+    border-radius: calc(var(--radius-control) - 2px);
   }
 
   .ui-menubar-trigger {
@@ -158,8 +212,9 @@
   }
 
   .dashboard-card {
-    @apply bg-card border border-border shadow-none transition-all hover:border-primary/20;
-    border-radius: 0;
+    @apply bg-card border border-border transition-all hover:border-primary/20;
+    border-radius: var(--radius-card);
+    box-shadow: var(--shadow-sm);
   }
 
   .btn-filter-active {
@@ -172,5 +227,5 @@
 }
 
 .font-maintenance {
-  font-family: 'Inter', sans-serif !important;
+  font-family: var(--font-inter), Inter, sans-serif !important;
 }

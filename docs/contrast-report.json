@@ -1,0 +1,626 @@
+[
+  {
+    "theme": "light",
+    "fg": "text",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 17.06,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 17.85,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 16.3,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-2",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 7.58,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-2",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 7.24,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-2",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 6.92,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-muted",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.44,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-muted",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 5.2,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-muted",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 4.97,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text",
+    "bg": "primary-50",
+    "min": 4.5,
+    "ratio": 16.4,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-on-primary",
+    "bg": "primary-600",
+    "min": 4.5,
+    "ratio": 5.17,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-on-primary",
+    "bg": "primary-700",
+    "min": 4.5,
+    "ratio": 6.7,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "link",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.17,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "link",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 4.94,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "text-on-primary",
+    "bg": "danger",
+    "min": 4.5,
+    "ratio": 4.83,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "success-text",
+    "bg": "success-bg",
+    "min": 4.5,
+    "ratio": 4.79,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "success-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.02,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "warning-text",
+    "bg": "warning-bg",
+    "min": 4.5,
+    "ratio": 4.84,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "warning-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.02,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "danger-text",
+    "bg": "danger-bg",
+    "min": 4.5,
+    "ratio": 5.91,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "danger-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 6.47,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "info-text",
+    "bg": "info-bg",
+    "min": 4.5,
+    "ratio": 5.57,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "info-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.93,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "violet-text",
+    "bg": "violet-bg",
+    "min": 4.5,
+    "ratio": 6.48,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "violet-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 7.1,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "accent-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.02,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "nav-text",
+    "bg": "nav-bg",
+    "min": 4.5,
+    "ratio": 9.56,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "nav-text-active",
+    "bg": "nav-active",
+    "min": 4.5,
+    "ratio": 9.16,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "nav-text",
+    "bg": "nav-hover",
+    "min": 4.5,
+    "ratio": 7.64,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "control-border",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 3.47,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "control-border",
+    "bg": "bg",
+    "min": 3,
+    "ratio": 3.32,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "primary-600",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 5.17,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-1",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 5.17,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-2",
+    "bg": "surface",
+    "min": 2,
+    "ratio": 2.15,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-3",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 3.3,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-4",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 5.7,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-5",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 3.68,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-6",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 4.6,
+    "pass": true
+  },
+  {
+    "theme": "light",
+    "fg": "chart-7",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 4.76,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 15.19,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 14.07,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 12.98,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-2",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 8.23,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-2",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 8.88,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-2",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 7.59,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-muted",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 5.99,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-muted",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 6.47,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-muted",
+    "bg": "surface-2",
+    "min": 4.5,
+    "ratio": 5.53,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text",
+    "bg": "primary-50",
+    "min": 4.5,
+    "ratio": 13.39,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-on-primary",
+    "bg": "primary-600",
+    "min": 4.5,
+    "ratio": 5.17,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-on-primary",
+    "bg": "primary-700",
+    "min": 4.5,
+    "ratio": 6.7,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "link",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 6.82,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "link",
+    "bg": "bg",
+    "min": 4.5,
+    "ratio": 7.36,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "text-on-primary",
+    "bg": "danger",
+    "min": 4.5,
+    "ratio": 4.83,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "success-text",
+    "bg": "success-bg",
+    "min": 4.5,
+    "ratio": 8.55,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "success-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 9.95,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "warning-text",
+    "bg": "warning-bg",
+    "min": 4.5,
+    "ratio": 10.08,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "warning-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 10.39,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "danger-text",
+    "bg": "danger-bg",
+    "min": 4.5,
+    "ratio": 6.59,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "danger-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 6.27,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "info-text",
+    "bg": "info-bg",
+    "min": 4.5,
+    "ratio": 9.97,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "info-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 10.4,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "violet-text",
+    "bg": "violet-bg",
+    "min": 4.5,
+    "ratio": 9.44,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "violet-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 9.39,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "accent-text",
+    "bg": "surface",
+    "min": 4.5,
+    "ratio": 10.39,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "nav-text",
+    "bg": "nav-bg",
+    "min": 4.5,
+    "ratio": 12.36,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "nav-text-active",
+    "bg": "nav-active",
+    "min": 4.5,
+    "ratio": 14.89,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "nav-text",
+    "bg": "nav-hover",
+    "min": 4.5,
+    "ratio": 11.13,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "control-border",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 3.41,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "control-border",
+    "bg": "bg",
+    "min": 3,
+    "ratio": 3.68,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "primary-600",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 3.35,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-1",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 6.82,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-2",
+    "bg": "surface",
+    "min": 2,
+    "ratio": 10.39,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-3",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 9.95,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-4",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 6.37,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-5",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 9.6,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-6",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 6.55,
+    "pass": true
+  },
+  {
+    "theme": "dark",
+    "fg": "chart-7",
+    "bg": "surface",
+    "min": 3,
+    "ratio": 6.76,
+    "pass": true
+  }
+]
