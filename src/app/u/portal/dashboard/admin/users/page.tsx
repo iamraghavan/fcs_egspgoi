@@ -1,7 +1,7 @@
 "use client";
 
 import { API_ORIGIN } from "@/lib/api-url";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,7 +14,10 @@ import {
   SelectGroup,
   SelectLabel,
 } from "@/components/ui/select";
-import { colleges } from "@/lib/colleges";
+import { managedColleges, useApplicationSettings } from "@/lib/application-settings";
+import { UserTransfer } from "@/components/admin/user-transfer";
+import { UserBulkActions } from "@/components/admin/user-bulk-actions";
+import Link from "next/link";
 import {
   Edit,
   Eye,
@@ -66,6 +69,7 @@ type FacultyAccount = {
   whatsappNumber?: string;
   profileImage?: string;
   facultyID?: string;
+  updatedAt?: string;
 };
 
 type Departments = {
@@ -73,17 +77,14 @@ type Departments = {
 };
 
 export default function FacultyAccountsPage() {
+  const { settings, error: settingsError } = useApplicationSettings();
+  const [canManage, setCanManage] = useState(false);
+  const colleges = useMemo(() => (settings ? managedColleges(settings) : {}), [settings]);
+  const [institutionFilter, setInstitutionFilter] = useState("all");
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const { toast } = useToast();
   const { showAlert } = useAlert();
 
-  // Create Account Form state
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [college, setCollege] = useState("");
-  const [department, setDepartment] = useState("");
-  const [role, setRole] = useState<"faculty" | "oa" | "admin">("faculty");
-  const [departments, setDepartments] = useState<Departments>({});
   const [isLoading, setIsLoading] = useState(false);
 
   // Edit state
@@ -122,6 +123,10 @@ export default function FacultyAccountsPage() {
 
   const tableRef = useRef(null);
 
+  useEffect(() => {
+    setCanManage(["admin", "superadmin"].includes(localStorage.getItem("userRole") || ""));
+  }, []);
+
   const fetchAllUsers = async (signal?: AbortSignal) => {
     setIsLoadingUsers(true);
     const token = localStorage.getItem("token");
@@ -137,6 +142,7 @@ export default function FacultyAccountsPage() {
       if (statusFilter !== "all") params.set("isActive", String(statusFilter === "active"));
       if (collegeFilter !== "all") params.set("college", collegeFilter);
       if (departmentFilter !== "all") params.set("department", departmentFilter);
+      if (institutionFilter !== "all") params.set("institutionId", institutionFilter);
       const response = await fetch(`${API_BASE_URL}/api/v1/users?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
         signal,
@@ -148,6 +154,7 @@ export default function FacultyAccountsPage() {
       }
       if (signal?.aborted) return;
       setAllFaculty(responseData.items || []);
+      setSelectedIds([]);
       setTotalUsers(responseData.total ?? 0);
       const lastPage = Math.max(1, Math.ceil((responseData.total ?? 0) / limit));
       if (page > lastPage) setPage(lastPage);
@@ -171,7 +178,7 @@ export default function FacultyAccountsPage() {
       window.clearTimeout(timer);
       controller.abort();
     };
-  }, [page, limit, searchTerm, roleFilter, statusFilter, collegeFilter, departmentFilter]);
+  }, [page, limit, searchTerm, roleFilter, statusFilter, collegeFilter, departmentFilter, institutionFilter]);
 
   useEffect(() => {
     if (!isLoadingUsers && tableRef.current) {
@@ -184,21 +191,12 @@ export default function FacultyAccountsPage() {
   }, [isLoadingUsers, page]);
 
   useEffect(() => {
-    if (college && colleges[college as keyof typeof colleges]) {
-      setDepartments(colleges[college as keyof typeof colleges]);
-      setDepartment("");
-    } else {
-      setDepartments({});
-    }
-  }, [college]);
-
-  useEffect(() => {
     if (editCollege && colleges[editCollege as keyof typeof colleges]) {
       setEditDepartments(colleges[editCollege as keyof typeof colleges]);
     } else {
       setEditDepartments({});
     }
-  }, [editCollege]);
+  }, [editCollege, colleges]);
 
   useEffect(() => {
     if (collegeFilter !== "all" && colleges[collegeFilter as keyof typeof colleges]) {
@@ -208,74 +206,7 @@ export default function FacultyAccountsPage() {
       setFilteredDepartments({});
       setDepartmentFilter("all");
     }
-  }, [collegeFilter]);
-
-  const handleCreateAccount = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-
-    const adminToken = localStorage.getItem("token");
-    if (!adminToken) {
-      showAlert("Authentication Error", "Admin token not found. Please log in again.");
-      setIsLoading(false);
-      return;
-    }
-
-    const payload: any = {
-      name,
-      email,
-      password,
-      role,
-    };
-
-    if (role === "faculty") {
-      if (!college || !department) {
-        showAlert("Incomplete Form", "College and Department are required for faculty accounts.");
-        setIsLoading(false);
-        return;
-      }
-      payload.college = college;
-      payload.department = department;
-    } else if (role === "oa" || role === "admin") {
-      payload.college = "EGS Pillay Group of Institutions";
-      payload.department = "Academics / Administrative";
-    }
-
-    try {
-      const formData = new FormData();
-      Object.entries(payload).forEach(([key, value]) => formData.append(key, String(value)));
-      const response = await fetch(`${API_BASE_URL}/api/v1/users`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
-        body: formData,
-      });
-
-      const responseData = await response.json();
-
-      if (!response.ok || !responseData.success) {
-        throw new Error(responseData.message || "Failed to create account.");
-      }
-
-      toast({
-        title: "Account Created",
-        description: `Account for ${name} has been successfully created.`,
-      });
-
-      setName("");
-      setEmail("");
-      setPassword("");
-      setCollege("");
-      setDepartment("");
-      setRole("faculty");
-      fetchAllUsers();
-    } catch (error: any) {
-      showAlert("Creation Failed", error.message || "An unexpected error occurred.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  }, [collegeFilter, colleges]);
 
   const handleEditClick = (account: FacultyAccount) => {
     setEditingFaculty(account);
@@ -343,8 +274,11 @@ export default function FacultyAccountsPage() {
   };
 
   const handleResetPassword = async () => {
-    if (!editingFaculty || resetPasswordValue.length < 12) {
-      showAlert("Password too short", "Use at least 12 characters for the new password.");
+    if (!editingFaculty || resetPasswordValue.length < (settings?.passwordMinLength || 12)) {
+      showAlert(
+        "Password too short",
+        `Use at least ${settings?.passwordMinLength || 12} characters for the new password.`,
+      );
       return;
     }
     setIsResettingPassword(true);
@@ -398,9 +332,57 @@ export default function FacultyAccountsPage() {
       <header className="mb-8">
         <h2 className="text-3xl font-bold text-foreground">User Management</h2>
         <p className="text-muted-foreground mt-1">
-          Create and manage faculty, office assistant, and administrator accounts. Inactive accounts retain all records.
+          {canManage
+            ? "Create and manage faculty, office assistant, and administrator accounts. Inactive accounts retain all records."
+            : "Search the faculty directory and view account details."}
         </p>
       </header>
+      {settingsError && (
+        <p role="alert" className="mb-4 text-destructive">
+          {settingsError}
+        </p>
+      )}
+      <div className="mb-6 flex flex-wrap items-end justify-between gap-4 rounded-xl border bg-card p-4">
+        <div className="min-w-64 space-y-2">
+          <Label htmlFor="user-institution-filter">Institution</Label>
+          <select
+            id="user-institution-filter"
+            className="h-10 w-full rounded-md border bg-background px-3 text-sm"
+            value={institutionFilter}
+            onChange={(event) => {
+              setInstitutionFilter(event.target.value);
+              setCollegeFilter("all");
+              setDepartmentFilter("all");
+              setPage(1);
+            }}
+          >
+            <option value="all">All institutions</option>
+            {settings?.institutions.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+                {!item.active ? " (archived)" : ""}
+              </option>
+            ))}
+          </select>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {totalUsers} matching users · {settings?.institutions.length ?? 0} institutions ·{" "}
+          {settings?.colleges.length ?? 0} colleges
+        </p>
+        {canManage && (
+          <>
+            <Button variant="outline" asChild>
+              <Link href="/u/portal/dashboard/admin/setup/organization">Manage institutions and settings</Link>
+            </Button>
+            <Button variant="outline" asChild>
+              <Link href="/u/portal/dashboard/admin/users/bulk-add">Import users from spreadsheet</Link>
+            </Button>
+            <Button asChild>
+              <Link href="/u/portal/dashboard/admin/users/new">Add single user</Link>
+            </Button>
+          </>
+        )}
+      </div>
       <div className="bg-card p-6 rounded-xl shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
           <div className="relative lg:col-span-1">
@@ -422,11 +404,17 @@ export default function FacultyAccountsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Colleges</SelectItem>
-              {Object.keys(colleges).map((col) => (
-                <SelectItem key={col} value={col}>
-                  {col}
-                </SelectItem>
-              ))}
+              {Object.keys(colleges)
+                .filter(
+                  (col) =>
+                    institutionFilter === "all" ||
+                    settings?.colleges.some((item) => item.name === col && item.institutionId === institutionFilter),
+                )
+                .map((col) => (
+                  <SelectItem key={col} value={col}>
+                    {col}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           <Select
@@ -479,10 +467,37 @@ export default function FacultyAccountsPage() {
             </SelectContent>
           </Select>
         </div>
+        {canManage && (
+          <UserBulkActions
+            users={allFaculty.filter((user) => selectedIds.includes(user._id))}
+            onComplete={() => void fetchAllUsers()}
+          />
+        )}
         <div className="overflow-x-auto border rounded-lg">
           <Table>
             <TableHeader>
               <TableRow>
+                {canManage && (
+                  <TableHead>
+                    <input
+                      type="checkbox"
+                      aria-label="Select all accounts on this page"
+                      checked={
+                        allFaculty.some((user) => user.role !== "superadmin") &&
+                        allFaculty
+                          .filter((user) => user.role !== "superadmin")
+                          .every((user) => selectedIds.includes(user._id))
+                      }
+                      onChange={(event) =>
+                        setSelectedIds(
+                          event.target.checked
+                            ? allFaculty.filter((user) => user.role !== "superadmin").map((user) => user._id)
+                            : [],
+                        )
+                      }
+                    />
+                  </TableHead>
+                )}
                 <TableHead>Account</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
@@ -495,13 +510,28 @@ export default function FacultyAccountsPage() {
             <TableBody ref={tableRef}>
               {isLoadingUsers ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
+                  <TableCell colSpan={canManage ? 8 : 7} className="text-center h-24">
                     Loading accounts...
                   </TableCell>
                 </TableRow>
               ) : paginatedItems.length > 0 ? (
                 paginatedItems.map((account) => (
                   <TableRow key={account._id}>
+                    {canManage && (
+                      <TableCell>
+                        <input
+                          type="checkbox"
+                          aria-label={`Select ${account.name}`}
+                          disabled={account.role === "superadmin"}
+                          checked={selectedIds.includes(account._id)}
+                          onChange={(event) =>
+                            setSelectedIds((ids) =>
+                              event.target.checked ? [...ids, account._id] : ids.filter((id) => id !== account._id),
+                            )
+                          }
+                        />
+                      </TableCell>
+                    )}
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-8 w-8">
@@ -521,7 +551,10 @@ export default function FacultyAccountsPage() {
                     <TableCell className="capitalize">
                       {account.role === "oa" ? "Office assistant" : account.role}
                     </TableCell>
-                    <TableCell>{account.college || "N/A"}</TableCell>
+                    <TableCell>
+                      <p>{account.college || "N/A"}</p>
+                      <p className="text-xs text-muted-foreground">{account.department || "No department"}</p>
+                    </TableCell>
                     <TableCell className="text-right font-semibold">{account.currentCredit ?? 0}</TableCell>
                     <TableCell className="text-center">
                       <span
@@ -534,6 +567,9 @@ export default function FacultyAccountsPage() {
                     </TableCell>
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-1">
+                        {canManage && (
+                          <UserTransfer user={account} settings={settings} onTransferred={() => void fetchAllUsers()} />
+                        )}
                         <Dialog>
                           <DialogTrigger asChild>
                             <Button
@@ -619,23 +655,25 @@ export default function FacultyAccountsPage() {
                           </DialogContent>
                         </Dialog>
 
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8"
-                          onClick={() => handleEditClick(account)}
-                          disabled={account.role === "superadmin"}
-                          aria-label={`Edit ${account.name}`}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
+                        {canManage && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => handleEditClick(account)}
+                            disabled={account.role === "superadmin"}
+                            aria-label={`Edit ${account.name}`}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center h-24">
+                  <TableCell colSpan={canManage ? 8 : 7} className="text-center h-24">
                     No accounts found.
                   </TableCell>
                 </TableRow>
@@ -673,7 +711,10 @@ export default function FacultyAccountsPage() {
         <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Faculty Profile</DialogTitle>
-            <DialogDescription>Update the professional profile and account settings for this user.</DialogDescription>
+            <DialogDescription>
+              Update the profile, role, and account status. Use the transfer action in the user list to change college
+              or department.
+            </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleUpdateFaculty} className="space-y-6 pt-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -817,7 +858,7 @@ export default function FacultyAccountsPage() {
                   <Label htmlFor="edit-college">College</Label>
                   <div className="relative">
                     <School className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                    <Select value={editCollege} onValueChange={setEditCollege}>
+                    <Select value={editCollege} onValueChange={setEditCollege} disabled>
                       <SelectTrigger aria-label="College" className="pl-10">
                         <SelectValue placeholder="Select College" />
                       </SelectTrigger>
@@ -835,7 +876,7 @@ export default function FacultyAccountsPage() {
                   <Label htmlFor="edit-department">Department</Label>
                   <div className="relative">
                     <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
-                    <Select value={editDepartment} onValueChange={setEditDepartment} disabled={!editCollege}>
+                    <Select value={editDepartment} onValueChange={setEditDepartment} disabled>
                       <SelectTrigger aria-label="Department" className="pl-10">
                         <SelectValue placeholder="Select Department" />
                       </SelectTrigger>
@@ -864,17 +905,19 @@ export default function FacultyAccountsPage() {
                   id="reset-account-password"
                   type="password"
                   autoComplete="new-password"
-                  minLength={12}
+                  minLength={settings?.passwordMinLength || 12}
                   value={resetPasswordValue}
                   onChange={(event) => setResetPasswordValue(event.target.value)}
-                  placeholder="New password, at least 12 characters"
+                  placeholder={`New password, at least ${settings?.passwordMinLength || 12} characters`}
                 />
                 <Button
                   type="button"
                   variant="outline"
                   onClick={handleResetPassword}
                   disabled={
-                    isResettingPassword || resetPasswordValue.length < 12 || editingFaculty?.role === "superadmin"
+                    isResettingPassword ||
+                    resetPasswordValue.length < (settings?.passwordMinLength || 12) ||
+                    editingFaculty?.role === "superadmin"
                   }
                 >
                   {isResettingPassword ? "Resetting..." : "Reset password"}
@@ -896,126 +939,6 @@ export default function FacultyAccountsPage() {
           </form>
         </DialogContent>
       </Dialog>
-
-      <div className="mt-10">
-        <h3 className="text-2xl font-bold text-foreground mb-6">Create New Account</h3>
-        <div className="bg-card p-6 rounded-xl shadow-sm max-w-2xl border">
-          <form className="space-y-6" onSubmit={handleCreateAccount}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="name" className="block text-sm font-medium text-foreground mb-2">
-                  Name
-                </Label>
-                <Input
-                  id="name"
-                  placeholder="Enter full name"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="email" className="block text-sm font-medium text-foreground mb-2">
-                  Email
-                </Label>
-                <Input
-                  id="email"
-                  placeholder="Enter email address"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-              <div>
-                <Label htmlFor="password" className="block text-sm font-medium text-foreground mb-2">
-                  Password
-                </Label>
-                <Input
-                  id="password"
-                  placeholder="At least 12 characters"
-                  type="password"
-                  minLength={12}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-              <div>
-                <Label htmlFor="role" className="block text-sm font-medium text-foreground mb-2">
-                  Role
-                </Label>
-                <Select onValueChange={(value) => setRole(value as any)} value={role}>
-                  <SelectTrigger id="role">
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="faculty">Faculty</SelectItem>
-                    <SelectItem value="oa">Office Assistant (OA)</SelectItem>
-                    <SelectItem value="admin">Administrator</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {role === "faculty" && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                <div>
-                  <Label htmlFor="college" className="block text-sm font-medium text-foreground mb-2">
-                    College
-                  </Label>
-                  <Select onValueChange={setCollege} value={college}>
-                    <SelectTrigger id="college">
-                      <SelectValue placeholder="Select college" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.keys(colleges).map((collegeName) => (
-                        <SelectItem key={collegeName} value={collegeName}>
-                          {collegeName}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div>
-                  <Label htmlFor="department" className="block text-sm font-medium text-foreground mb-2">
-                    Department
-                  </Label>
-                  <Select
-                    onValueChange={setDepartment}
-                    value={department}
-                    disabled={!college || Object.keys(departments).length === 0}
-                  >
-                    <SelectTrigger id="department">
-                      <SelectValue placeholder="Select department" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(departments).map(([group, courses]) => (
-                        <SelectGroup key={group}>
-                          <SelectLabel>{group}</SelectLabel>
-                          {courses.map((course) => (
-                            <SelectItem key={course} value={course}>
-                              {course}
-                            </SelectItem>
-                          ))}
-                        </SelectGroup>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            )}
-
-            <div>
-              <Button type="submit" className="w-full sm:w-auto" disabled={isLoading}>
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-            </div>
-          </form>
-        </div>
-      </div>
     </div>
   );
 }

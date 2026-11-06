@@ -6,11 +6,11 @@ import {
   FilePlus2,
   History,
   House,
-  LifeBuoy,
   MessageSquareWarning,
   PieChart,
   Settings2,
   Users,
+  UserRound,
   type LucideIcon,
 } from "lucide-react";
 
@@ -34,14 +34,24 @@ export type RailItem = {
 const D = "/u/portal/dashboard";
 export const HELP_PATH = "/u/portal/help";
 
-const help: RailItem = {
-  id: "help",
-  label: "Help",
-  icon: LifeBuoy,
-  path: HELP_PATH,
-  match: [HELP_PATH],
-  groups: [],
-  external: true,
+const account: RailItem = {
+  id: "account",
+  label: "My account",
+  icon: UserRound,
+  path: `${D}/account/profile`,
+  match: [`${D}/account`, `${D}/notifications`],
+  groups: [
+    {
+      label: "Personal settings",
+      items: [
+        { label: "My profile", path: `${D}/account/profile` },
+        { label: "Password", path: `${D}/account/password` },
+        { label: "Appearance", path: `${D}/account/preferences` },
+        { label: "Security & sessions", path: `${D}/account/security` },
+      ],
+    },
+    { label: "Inbox", items: [{ label: "Notifications", path: `${D}/notifications` }] },
+  ],
 };
 
 /**
@@ -60,10 +70,7 @@ export const NAV: Record<Role, RailItem[]> = {
         { label: "Overview", items: [{ label: "Dashboard", path: D }] },
         {
           label: "Account",
-          items: [
-            { label: "Professional profile", path: `${D}/profile` },
-            { label: "Settings", path: `${D}/settings` },
-          ],
+          items: [{ label: "Professional profile", path: `${D}/profile` }],
         },
       ],
     },
@@ -102,7 +109,7 @@ export const NAV: Record<Role, RailItem[]> = {
       match: [`${D}/notifications`],
       groups: [{ label: "Inbox", items: [{ label: "All notifications", path: `${D}/notifications` }] }],
     },
-    help,
+    account,
   ],
   oa: [
     {
@@ -145,7 +152,7 @@ export const NAV: Record<Role, RailItem[]> = {
       match: [`${D}/notifications`],
       groups: [{ label: "Inbox", items: [{ label: "All notifications", path: `${D}/notifications` }] }],
     },
-    help,
+    account,
   ],
   admin: [
     {
@@ -213,6 +220,7 @@ export const NAV: Record<Role, RailItem[]> = {
           label: "People",
           items: [
             { label: "Faculty accounts", path: `${D}/admin/users` },
+            { label: "Add single user", path: `${D}/admin/users/new` },
             { label: "Bulk import", path: `${D}/admin/users/bulk-add` },
           ],
         },
@@ -230,11 +238,26 @@ export const NAV: Record<Role, RailItem[]> = {
       id: "setup",
       label: "Setup",
       icon: Settings2,
-      path: `${D}/admin/settings`,
-      match: [`${D}/admin/settings`],
-      groups: [{ label: "Setup", items: [{ label: "Account & security", path: `${D}/admin/settings` }] }],
+      path: `${D}/admin/setup/organization`,
+      match: [`${D}/admin/setup`],
+      groups: [
+        {
+          label: "Organization",
+          items: [
+            { label: "Institutions & departments", path: `${D}/admin/setup/organization` },
+            { label: "Academic years", path: `${D}/admin/setup/academic-years` },
+          ],
+        },
+        {
+          label: "Application",
+          items: [
+            { label: "Application controls", path: `${D}/admin/setup/administration` },
+            { label: "Change history", path: `${D}/admin/setup/history` },
+          ],
+        },
+      ],
     },
-    help,
+    account,
   ],
 };
 
@@ -274,6 +297,7 @@ export function activePanelItem(item: RailItem | undefined, pathname: string): P
 export function isAllowed(role: Role, pathname: string): boolean {
   if (!pathname.startsWith(D)) return true;
   const under = (p: string) => pathname === p || pathname.startsWith(`${p}/`);
+  if (under(`${D}/account`) || under(`${D}/notifications`) || pathname === `${D}/settings`) return true;
   if (role === "admin") return under(`${D}/admin`);
   if (role === "oa") return under(`${D}/oa`) || pathname === `${D}/admin/users` || under(`${D}/notifications`);
   return !under(`${D}/admin`) && !under(`${D}/oa`);

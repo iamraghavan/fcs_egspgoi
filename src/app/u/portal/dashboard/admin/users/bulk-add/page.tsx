@@ -1,12 +1,12 @@
 "use client";
 
 import { API_ORIGIN } from "@/lib/api-url";
+import { useApplicationSettings } from "@/lib/application-settings";
 import { useState } from "react";
 import * as XLSX from "xlsx";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { FileUpload } from "@/components/file-upload";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { useAlert } from "@/context/alert-context";
 import { Download, UploadCloud, FileCheck, FileX, CheckCircle, XCircle, ArrowRight } from "lucide-react";
@@ -37,7 +37,7 @@ export default function BulkAddUsersPage() {
   const { showAlert } = useAlert();
   const [file, setFile] = useState<File | null>(null);
   const [previewData, setPreviewData] = useState<any[]>([]);
-  const [sendEmails, setSendEmails] = useState(true);
+  const { settings } = useApplicationSettings();
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<UploadResult[] | null>(null);
   const [summary, setSummary] = useState<UploadSummary | null>(null);
@@ -90,7 +90,7 @@ export default function BulkAddUsersPage() {
     const formData = new FormData();
     formData.append("file", file);
 
-    const url = `${API_BASE_URL}/api/v1/auth/users/bulk-upload?sendEmails=${sendEmails}`;
+    const url = `${API_BASE_URL}/api/v1/auth/users/bulk-upload`;
 
     try {
       const response = await fetch(url, {
@@ -132,14 +132,24 @@ export default function BulkAddUsersPage() {
   };
 
   const handleDownloadTemplate = () => {
+    const college = settings?.colleges.find(
+      (item) =>
+        item.active &&
+        item.departments.some((department) => department.active) &&
+        settings.institutions.some((parent) => parent.id === item.institutionId && parent.active),
+    );
+    if (!college) {
+      showAlert("No active departments", "Add an active college and department in Application settings first.");
+      return;
+    }
     const templateData = [
       {
         name: "Dr. Example",
         email: "dr.example@egspec.org",
-        password: "TemporaryPassword123",
+        password: "TemporaryPassword123".padEnd(settings?.passwordMinLength || 12, "!"),
         role: "faculty",
-        college: "EGS Pillay Engineering College",
-        department: "B.E - Computer Science & Engineering",
+        college: college.name,
+        department: college.departments.find((item) => item.active)?.name || "",
       },
     ];
     const worksheet = XLSX.utils.json_to_sheet(templateData);
@@ -201,20 +211,10 @@ export default function BulkAddUsersPage() {
                 accept=".xlsx, .xls, .csv"
                 description="Excel or CSV files only"
               />
-              <div className="flex items-center space-x-2">
-                <Checkbox
-                  id="send-emails"
-                  checked={sendEmails}
-                  onCheckedChange={(checked) => setSendEmails(checked as boolean)}
-                  disabled={isLoading}
-                />
-                <Label
-                  htmlFor="send-emails"
-                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                >
-                  Send welcome email to new users
-                </Label>
-              </div>
+              <p className="text-sm text-muted-foreground">
+                Use active college and department names from Application settings. Distribute account credentials
+                separately.
+              </p>
               {previewData.length > 0 && !results && (
                 <div className="space-y-2">
                   <h4 className="font-medium">File Preview (First 10 Rows)</h4>

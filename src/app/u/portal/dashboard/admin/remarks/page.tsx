@@ -1,4 +1,5 @@
 "use client";
+import { useApplicationSettings } from "@/lib/application-settings";
 
 import { API_V1 } from "@/lib/api-url";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -99,6 +100,8 @@ const getCurrentAcademicYear = () => {
 };
 
 export default function ManageRemarksPage() {
+  const { settings: applicationSettings } = useApplicationSettings();
+  const currentAcademicYear = applicationSettings?.currentAcademicYear || getCurrentAcademicYear();
   const { toast } = useToast();
   const { showAlert } = useAlert();
   const searchParams = useSearchParams();
@@ -275,7 +278,7 @@ export default function ManageRemarksPage() {
     const formData = new FormData();
     formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
-    formData.append("academicYear", getCurrentAcademicYear());
+    formData.append("academicYear", currentAcademicYear);
     formData.append("title", title);
     formData.append("creditTitleId", creditTitleId);
     if (notes) formData.append("notes", notes);
@@ -465,7 +468,7 @@ export default function ManageRemarksPage() {
                   </div>
                   <div>
                     <Label className="mb-1">Academic Year</Label>
-                    <Input value={getCurrentAcademicYear()} readOnly className="bg-muted cursor-not-allowed " />
+                    <Input value={currentAcademicYear} readOnly className="bg-muted cursor-not-allowed " />
                   </div>
                 </div>
                 <div>

@@ -20,12 +20,15 @@ const D = "/u/portal/dashboard";
 const PAGES: Record<string, Role[]> = {
   [D]: ["faculty"],
   [`${D}/profile`]: ["faculty"],
-  [`${D}/settings`]: ["faculty"],
   [`${D}/good-works`]: ["faculty"],
   [`${D}/good-works/submit`]: ["faculty"],
   [`${D}/remarks`]: ["faculty"],
   [`${D}/appeals`]: ["faculty"],
-  [`${D}/notifications`]: ["faculty", "oa"],
+  [`${D}/notifications`]: ["faculty", "oa", "admin"],
+  [`${D}/account/profile`]: ["faculty", "oa", "admin"],
+  [`${D}/account/password`]: ["faculty", "oa", "admin"],
+  [`${D}/account/preferences`]: ["faculty", "oa", "admin"],
+  [`${D}/account/security`]: ["faculty", "oa", "admin"],
   [`${D}/oa`]: ["oa"],
   [`${D}/oa/positive`]: ["oa"],
   [`${D}/oa/history`]: ["oa"],
@@ -40,7 +43,10 @@ const PAGES: Record<string, Role[]> = {
   [`${D}/admin/users`]: ["admin", "oa"],
   [`${D}/admin/users/bulk-add`]: ["admin"],
   [`${D}/admin/reports`]: ["admin"],
-  [`${D}/admin/settings`]: ["admin"],
+  [`${D}/admin/setup/organization`]: ["admin"],
+  [`${D}/admin/setup/academic-years`]: ["admin"],
+  [`${D}/admin/setup/administration`]: ["admin"],
+  [`${D}/admin/setup/history`]: ["admin"],
 };
 const ROLES: Role[] = ["faculty", "oa", "admin"];
 

@@ -1,17 +1,12 @@
-"use client"
+"use client";
+import { useApplicationSettings } from "@/lib/application-settings";
 
-import { API_ORIGIN } from '@/lib/api-url';
+import { API_ORIGIN } from "@/lib/api-url";
 import { useState, useEffect, useMemo, useRef } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { FileUpload } from "@/components/file-upload";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
@@ -22,7 +17,6 @@ import { useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Label } from "@/components/ui/label";
 import { OAIssuedSummary } from "@/components/oa-issued-summary";
-
 
 const API_BASE_URL = API_ORIGIN;
 
@@ -41,33 +35,35 @@ type CreditTitle = {
   _id: string;
   title: string;
   points: number;
-  type: 'positive' | 'negative';
+  type: "positive" | "negative";
 };
 
 const getCurrentAcademicYear = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    if (currentMonth >= 5) {
-      return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-    }
-    return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
+  const today = new Date();
+  const currentMonth = today.getMonth();
+  const currentYear = today.getFullYear();
+  if (currentMonth >= 5) {
+    return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
+  }
+  return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
 };
 
 const generateYearOptions = () => {
-    const currentYearString = getCurrentAcademicYear();
-    const [startCurrentYear] = currentYearString.split('-').map(Number);
-    
-    const years = [];
-    for (let i = 0; i < 5; i++) {
-        const startYear = startCurrentYear - i;
-        const endYear = (startYear + 1).toString().slice(-2);
-        years.push(`${startYear}-${endYear}`);
-    }
-    return years;
+  const currentYearString = getCurrentAcademicYear();
+  const [startCurrentYear] = currentYearString.split("-").map(Number);
+
+  const years = [];
+  for (let i = 0; i < 5; i++) {
+    const startYear = startCurrentYear - i;
+    const endYear = (startYear + 1).toString().slice(-2);
+    years.push(`${startYear}-${endYear}`);
+  }
+  return years;
 };
 
 export default function OADashboardPage() {
+  const { settings: applicationSettings } = useApplicationSettings();
+  const currentAcademicYear = applicationSettings?.currentAcademicYear || getCurrentAcademicYear();
   const { toast } = useToast();
   const { showAlert } = useAlert();
   const searchParams = useSearchParams();
@@ -88,9 +84,8 @@ export default function OADashboardPage() {
   const [creditTitles, setCreditTitles] = useState<CreditTitle[]>([]);
   const suggestionRef = useRef<HTMLDivElement>(null);
 
-
-  const adminToken = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
-  const uid = searchParams.get('uid');
+  const adminToken = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+  const uid = searchParams.get("uid");
 
   const handleFacultySearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFacultySearch(e.target.value);
@@ -99,24 +94,25 @@ export default function OADashboardPage() {
       setShowSuggestions(true);
     }
   };
-  
+
   const handleFacultySelect = (faculty: User) => {
     setSelectedFaculty(faculty);
-    setFacultySearch(`${faculty.name} (${faculty.department || 'n/a'})`);
+    setFacultySearch(`${faculty.name} (${faculty.department || "n/a"})`);
     setShowSuggestions(false);
   };
-  
+
   const suggestedFaculty = useMemo(() => {
     if (!facultySearch) return [];
     return facultyList
-      .filter(f => 
-        f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
-        (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase()))
+      .filter(
+        (f) =>
+          f.name.toLowerCase().includes(facultySearch.toLowerCase()) ||
+          (f.department && f.department.toLowerCase().includes(facultySearch.toLowerCase())),
       )
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 10);
   }, [facultySearch, facultyList]);
-  
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (suggestionRef.current && !suggestionRef.current.contains(event.target as Node)) {
@@ -141,7 +137,7 @@ export default function OADashboardPage() {
         }),
         fetch(`${API_BASE_URL}/api/v1/admin/credit-title`, {
           headers: { Authorization: `Bearer ${adminToken}` },
-        })
+        }),
       ]);
 
       const facultyData = await facultyResponse.json();
@@ -151,13 +147,12 @@ export default function OADashboardPage() {
 
       const creditTitlesData = await creditTitlesResponse.json();
       if (creditTitlesData.success) {
-        setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === 'negative'));
+        setCreditTitles(creditTitlesData.items.filter((ct: CreditTitle) => ct.type === "negative"));
       }
     } catch (error: any) {
       showAlert("Error fetching initial data", error.message);
     }
   };
-
 
   useEffect(() => {
     if (adminToken) {
@@ -165,9 +160,8 @@ export default function OADashboardPage() {
     }
   }, [adminToken]);
 
-  
   useEffect(() => {
-    const selectedTitle = creditTitles.find(ct => ct._id === creditTitleId);
+    const selectedTitle = creditTitles.find((ct) => ct._id === creditTitleId);
     if (selectedTitle) {
       setTitle(selectedTitle.title);
       setPoints(selectedTitle.points);
@@ -191,7 +185,7 @@ export default function OADashboardPage() {
     const formData = new FormData();
     formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
-    formData.append("academicYear", getCurrentAcademicYear());
+    formData.append("academicYear", currentAcademicYear);
     formData.append("title", title);
     formData.append("creditTitleId", creditTitleId);
     if (notes) formData.append("notes", notes);
@@ -201,7 +195,7 @@ export default function OADashboardPage() {
       // Corrected to restored API path /credits/credits/negative
       const response = await fetch(`${API_BASE_URL}/api/v1/credits/credits/negative`, {
         method: "POST",
-        headers: { "Authorization": `Bearer ${adminToken}` },
+        headers: { Authorization: `Bearer ${adminToken}` },
         body: formData,
       });
 
@@ -226,166 +220,219 @@ export default function OADashboardPage() {
 
       // notify server
       fetch(`${API_BASE_URL}/api/v1/notifications/remark`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${adminToken}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${adminToken}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           facultyId: selectedFaculty._id,
           title: title,
           points: Number(points),
           notes: notes,
-          academicYear: getCurrentAcademicYear()
+          academicYear: currentAcademicYear,
         }),
       }).catch(console.error);
-
     } catch (error: any) {
       showAlert("Submission failed", error.message);
     } finally {
       setIsLoading(false);
     }
   };
-  
-  const creditTitleOptions = useMemo(() =>
-    creditTitles
-      .slice()
-      .sort((a, b) => a.title.localeCompare(b.title))
-      .map(ct => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })),
-    [creditTitles]
+
+  const creditTitleOptions = useMemo(
+    () =>
+      creditTitles
+        .slice()
+        .sort((a, b) => a.title.localeCompare(b.title))
+        .map((ct) => ({ value: ct._id, label: `${ct.title} (${ct.points} pts)` })),
+    [creditTitles],
   );
-  
 
   return (
     <div className="mx-auto max-w-7xl space-y-8">
       <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">
-            Issue Remark
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            Issue negative credit adjustments for faculty members.
-          </p>
+          <h1 className="text-3xl font-bold text-foreground">Issue Remark</h1>
+          <p className="mt-1 text-muted-foreground">Issue negative credit adjustments for faculty members.</p>
         </div>
-         <Button variant="outline" asChild>
-            <Link href={`/u/portal/dashboard/oa/history?uid=${uid}`}>
-                <History className="mr-2 h-4 w-4" />
-                View Issued History
-            </Link>
+        <Button variant="outline" asChild>
+          <Link href={`/u/portal/dashboard/oa/history?uid=${uid}`}>
+            <History className="mr-2 h-4 w-4" />
+            View Issued History
+          </Link>
         </Button>
       </header>
       <OAIssuedSummary />
-        
+
       <form onSubmit={handleSubmit}>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <Card className="md:col-span-2">
-                <CardHeader>
-                    <CardTitle>New Negative Remark Form</CardTitle>
-                    <CardDescription>Fill out the details below to issue a negative credit to a faculty member.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                    <div ref={suggestionRef} className="relative">
-                      <Label className="mb-1" htmlFor="faculty">Faculty Member <span className="text-destructive">*</span></Label>
-                      <Input
-                        id="faculty"
-                        placeholder="Type to search for faculty..."
-                        value={facultySearch}
-                        onChange={handleFacultySearch}
-                        onFocus={() => setShowSuggestions(true)}
-                        autoComplete="off"
-                      />
-                      {showSuggestions && suggestedFaculty.length > 0 && (
-                        <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
-                          {suggestedFaculty.map(faculty => (
-                            <div
-                              key={faculty._id}
-                              className="cursor-pointer p-3 hover:bg-accent"
-                              onClick={() => handleFacultySelect(faculty)}
-                            >
-                              <p className="font-semibold">{faculty.name}</p>
-                              <p className="text-sm text-muted-foreground">{faculty.department || 'n/a'} - {faculty.college || 'n/a'}</p>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                    <div>
-                        <Label className="mb-1" htmlFor="creditTitle">Remark Template <span className="text-destructive">*</span></Label>
-                        <Select value={creditTitleId} onValueChange={setCreditTitleId}>
-                            <SelectTrigger id="creditTitle">
-                                <SelectValue placeholder="Select a template..." />
-                            </SelectTrigger>
-                            <SelectContent className="z-[150]">
-                                {creditTitleOptions.map(option => (
-                                    <SelectItem key={option.value} value={option.value}>
-                                        {option.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div>
-                        <Label className="mb-1" htmlFor="title">Title <span className="text-destructive">*</span></Label>
-                        <Input id="title" placeholder="e.g., 'Missed department meeting'" value={title} onChange={(e) => setTitle(e.target.value)} required />
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div>
-                            <Label className="mb-1" htmlFor="points">Points <span className="text-destructive">*</span></Label>
-                            <Input id="points" type="number" value={points} readOnly aria-describedby="oa-negative-points-help" required />
-                            <p id="oa-negative-points-help" className="mt-1 text-xs text-muted-foreground">Points come from the selected credit template.</p>
-                        </div>
-                        <div>
-                        <Label className="mb-1" htmlFor="academicYear">Academic Year</Label>
-                        <Select value={getCurrentAcademicYear()} disabled>
-                            <SelectTrigger id="academicYear"><SelectValue placeholder="Select Year" /></SelectTrigger>
-                            <SelectContent className="z-[150]">{generateYearOptions().map(year => (<SelectItem key={year} value={year}>{year}</SelectItem>))}</SelectContent>
-                        </Select>
-                        </div>
-                    </div>
-                    <div>
-                    <Label className="mb-1" htmlFor="notes">Notes / Rationale</Label>
-                    <Textarea id="notes" placeholder="Enter detailed notes about the incident" rows={3} value={notes} onChange={(e) => setNotes(e.target.value)} />
-                    </div>
-                    <div>
-                    <Label className="mb-1">Upload Proof (Optional)</Label>
-                    <FileUpload onFileSelect={setProof} />
-                    </div>
-                </CardContent>
-                 <CardFooter className="flex justify-end">
-                    <Button type="submit" disabled={isLoading}>
-                        <PlusCircle className="mr-2 h-4 w-4" />
-                        {isLoading ? "Submitting..." : "Issue Remark"}
-                    </Button>
-                </CardFooter>
-            </Card>
-
-            <div className="md:col-span-1">
-                {selectedFaculty ? (
-                     <Card className="sticky top-24">
-                        <CardHeader className="flex flex-row items-center gap-4">
-                            <Avatar className="h-16 w-16">
-                                <AvatarImage src={selectedFaculty.profileImage} />
-                                <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                                <CardTitle>{selectedFaculty.name}</CardTitle>
-                                <CardDescription>{selectedFaculty.facultyID}</CardDescription>
-                            </div>
-                        </CardHeader>
-                        <CardContent className="text-sm space-y-3">
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Role:</strong> <span className="capitalize">{selectedFaculty.role || 'n/a'}</span></p>
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Dept:</strong> {selectedFaculty.department || 'n/a'}</p>
-                            <p><strong className="font-medium text-muted-foreground w-20 inline-block">Email:</strong> {selectedFaculty.email || 'n/a'}</p>
-                        </CardContent>
-                    </Card>
-                ) : (
-                    <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50 sticky top-24">
-                        <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
-                    </div>
+          <Card className="md:col-span-2">
+            <CardHeader>
+              <CardTitle>New Negative Remark Form</CardTitle>
+              <CardDescription>
+                Fill out the details below to issue a negative credit to a faculty member.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div ref={suggestionRef} className="relative">
+                <Label className="mb-1" htmlFor="faculty">
+                  Faculty Member <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="faculty"
+                  placeholder="Type to search for faculty..."
+                  value={facultySearch}
+                  onChange={handleFacultySearch}
+                  onFocus={() => setShowSuggestions(true)}
+                  autoComplete="off"
+                />
+                {showSuggestions && suggestedFaculty.length > 0 && (
+                  <div className="absolute z-[150] w-full mt-1 bg-card border border-border rounded-md shadow-lg max-h-60 overflow-y-auto">
+                    {suggestedFaculty.map((faculty) => (
+                      <div
+                        key={faculty._id}
+                        className="cursor-pointer p-3 hover:bg-accent"
+                        onClick={() => handleFacultySelect(faculty)}
+                      >
+                        <p className="font-semibold">{faculty.name}</p>
+                        <p className="text-sm text-muted-foreground">
+                          {faculty.department || "n/a"} - {faculty.college || "n/a"}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 )}
-            </div>
+              </div>
+              <div>
+                <Label className="mb-1" htmlFor="creditTitle">
+                  Remark Template <span className="text-destructive">*</span>
+                </Label>
+                <Select value={creditTitleId} onValueChange={setCreditTitleId}>
+                  <SelectTrigger id="creditTitle">
+                    <SelectValue placeholder="Select a template..." />
+                  </SelectTrigger>
+                  <SelectContent className="z-[150]">
+                    {creditTitleOptions.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="mb-1" htmlFor="title">
+                  Title <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="title"
+                  placeholder="e.g., 'Missed department meeting'"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="mb-1" htmlFor="points">
+                    Points <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="points"
+                    type="number"
+                    value={points}
+                    readOnly
+                    aria-describedby="oa-negative-points-help"
+                    required
+                  />
+                  <p id="oa-negative-points-help" className="mt-1 text-xs text-muted-foreground">
+                    Points come from the selected credit template.
+                  </p>
+                </div>
+                <div>
+                  <Label className="mb-1" htmlFor="academicYear">
+                    Academic Year
+                  </Label>
+                  <Select value={currentAcademicYear} disabled>
+                    <SelectTrigger id="academicYear">
+                      <SelectValue placeholder="Select Year" />
+                    </SelectTrigger>
+                    <SelectContent className="z-[150]">
+                      {(
+                        applicationSettings?.academicYears
+                          .filter((year) => year.status === "open")
+                          .map((year) => year.id) || generateYearOptions()
+                      ).map((year) => (
+                        <SelectItem key={year} value={year}>
+                          {year}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div>
+                <Label className="mb-1" htmlFor="notes">
+                  Notes / Rationale
+                </Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Enter detailed notes about the incident"
+                  rows={3}
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                />
+              </div>
+              <div>
+                <Label className="mb-1">Upload Proof (Optional)</Label>
+                <FileUpload onFileSelect={setProof} />
+              </div>
+            </CardContent>
+            <CardFooter className="flex justify-end">
+              <Button type="submit" disabled={isLoading}>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                {isLoading ? "Submitting..." : "Issue Remark"}
+              </Button>
+            </CardFooter>
+          </Card>
+
+          <div className="md:col-span-1">
+            {selectedFaculty ? (
+              <Card className="sticky top-24">
+                <CardHeader className="flex flex-row items-center gap-4">
+                  <Avatar className="h-16 w-16">
+                    <AvatarImage src={selectedFaculty.profileImage} />
+                    <AvatarFallback>{selectedFaculty.name.charAt(0)}</AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <CardTitle>{selectedFaculty.name}</CardTitle>
+                    <CardDescription>{selectedFaculty.facultyID}</CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="text-sm space-y-3">
+                  <p>
+                    <strong className="font-medium text-muted-foreground w-20 inline-block">Role:</strong>{" "}
+                    <span className="capitalize">{selectedFaculty.role || "n/a"}</span>
+                  </p>
+                  <p>
+                    <strong className="font-medium text-muted-foreground w-20 inline-block">Dept:</strong>{" "}
+                    {selectedFaculty.department || "n/a"}
+                  </p>
+                  <p>
+                    <strong className="font-medium text-muted-foreground w-20 inline-block">Email:</strong>{" "}
+                    {selectedFaculty.email || "n/a"}
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="flex items-center justify-center h-full border-2 border-dashed rounded-lg bg-muted/50 sticky top-24">
+                <p className="text-muted-foreground text-center p-4">Select a faculty member to see their details.</p>
+              </div>
+            )}
+          </div>
         </div>
       </form>
     </div>
-  )
+  );
 }

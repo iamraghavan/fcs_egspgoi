@@ -4,6 +4,9 @@
 Faculty submit "good works" and track their credits; Office Assistants (OA) record remarks and awards;
 administrators review submissions, decide appeals, manage users and produce reports.
 
+For a role-based Android and iOS app proposal, screen inventory, component plan, and Claude-ready design brief, see [MOBILE_APP_README.md](MOBILE_APP_README.md).
+For the detailed screen-by-screen role and component map, see [MOBILE_SCREENS_COMPONENTS_README.md](MOBILE_SCREENS_COMPONENTS_README.md).
+
 |                 |                                                                                    |
 | --------------- | ---------------------------------------------------------------------------------- |
 | Framework       | Next.js 15 (App Router), React 18, TypeScript                                      |
@@ -97,6 +100,10 @@ Everything starting with `NEXT_PUBLIC_` is visible to anyone in the browser — 
 Vercel builds from `main` with `pnpm-lock.yaml`. Production builds **fail on type or lint errors**
 (by design). Set the variables in §3 in the Vercel project, and deploy backend and frontend changes
 that belong together at the same time.
+
+On Vercel production, `NEXT_PUBLIC_API_URL` and the API rewrite resolve to
+`https://faculty-credit-system.vercel.app/api/v1`. The local test URL
+`http://127.0.0.1:5050/api/v1` is only for development and browser tests.
 
 Audit reports are in `../docs/audit/` in the project folder.
 

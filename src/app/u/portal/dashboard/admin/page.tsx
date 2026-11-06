@@ -1,560 +1,726 @@
 "use client";
 
-import { API_ORIGIN } from "@/lib/api-url";
-import { chartTooltipStyle } from "@/lib/chart-theme";
-import { useState, useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
+import Link from "next/link";
 import {
-  Bar,
-  BarChart,
-  ResponsiveContainer,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Line,
-  LineChart,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  CartesianGrid,
+  Activity,
+  ArrowRight,
+  BarChart3,
+  Building2,
+  Clock3,
+  FileCheck2,
+  Megaphone,
+  RefreshCw,
+  Send,
+  ShieldAlert,
+  TrendingUp,
+  UserRoundCheck,
+  Users,
+} from "lucide-react";
+import {
   Area,
   AreaChart,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from "recharts";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Skeleton } from "@/components/ui/skeleton";
-import { useAlert } from "@/context/alert-context";
-import { gsap } from "gsap";
-import {
-  Users,
-  FolderKanban,
-  ShieldAlert,
-  BarChartHorizontal,
-  Megaphone,
-  Send,
-  Activity,
-  TrendingUp,
-  Clock,
-} from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { cn } from "@/lib/utils";
-import _ from "lodash";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { apiFetch, describeApiError } from "@/lib/api";
+import { chartTooltipStyle } from "@/lib/chart-theme";
 import { useAcademicYear } from "@/components/shell/academic-year";
+import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = API_ORIGIN;
+const D = "/u/portal/dashboard/admin";
+const colors = {
+  submitted: "hsl(var(--chart-1))",
+  approved: "hsl(var(--success))",
+  rejected: "hsl(var(--danger))",
+  pending: "hsl(var(--warning))",
+  records: "hsl(var(--chart-5))",
+};
+const formatNumber = new Intl.NumberFormat("en-IN");
+const monthLabel = (value: string) =>
+  new Date(`${value}-01T00:00:00Z`).toLocaleDateString("en-IN", { month: "short", year: "2-digit", timeZone: "UTC" });
 
-type AnalyticsData = {
-  totalUsers: number;
-  totalCredits: number;
-  pendingSubmissions: number;
-  activeAppeals: number;
+type Overview = {
+  generatedAt: string;
+  summary: {
+    totalUsers: number;
+    activeUsers: number;
+    facultyUsers: number;
+    colleges: number;
+    totalRecords: number;
+    pendingReview: number;
+    openAppeals: number;
+    netPoints: number;
+    approvalRate: number;
+  };
+  status: { pending: number; approved: number; rejected: number };
+  trends: { month: string; submitted: number; approved: number; rejected: number; negative: number }[];
+  colleges: { name: string; users: number; records: number }[];
   userGrowth: { month: string; users: number }[];
-  recentActivities: { id: string; description: string; user: string; date: string }[];
-  creditStatus: { name: string; value: number; color: string }[];
+  recent: {
+    id: string;
+    title: string;
+    faculty: string;
+    college: string;
+    type: string;
+    status: string;
+    points: number;
+    impact: number;
+    createdAt: string;
+  }[];
 };
 
-type CreditTrendData = {
-  daily: { date: string; pending: number; approved: number; rejected: number }[];
-  weekly: { week: string; pending: number; approved: number; rejected: number }[];
-  monthly: { month: string; pending: number; approved: number; rejected: number }[];
-};
-
-const getCurrentAcademicYear = () => {
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  if (currentMonth >= 5) {
-    // June or later
-    return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-  }
-  return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
-};
-
-const generateYearOptions = () => {
-  const currentYearString = getCurrentAcademicYear();
-  const [startCurrentYear] = currentYearString.split("-").map(Number);
-
-  const years = [];
-  for (let i = 0; i < 5; i++) {
-    const startYear = startCurrentYear - i;
-    const endYear = (startYear + 1).toString().slice(-2);
-    years.push(`${startYear}-${endYear}`);
-  }
-  return years;
-};
+function EmptyChart({ children }: { children: string }) {
+  return (
+    <div className="flex min-h-48 items-center justify-center rounded-lg border border-dashed p-6 text-center text-sm text-muted-foreground">
+      {children}
+    </div>
+  );
+}
 
 export default function AdminDashboard() {
-  // Workspace academic year (switcher in the navigation panel); the select below stays in sync.
-  const { year: academicYear, setYear: setAcademicYear } = useAcademicYear();
-  const yearOptions = generateYearOptions();
-  const containerRef = useRef(null);
-  const [loading, setLoading] = useState(true);
-  const { showAlert } = useAlert();
+  const { year, setYear, options } = useAcademicYear();
   const { toast } = useToast();
-
-  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
-  const [creditTrends, setCreditTrends] = useState<CreditTrendData | null>(null);
-  const [trendsTimescale, setTrendsTimescale] = useState<"daily" | "weekly" | "monthly">("monthly");
-
-  // Announcement state
+  const [data, setData] = useState<Overview | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [refreshKey, setRefreshKey] = useState(0);
   const [announcementTitle, setAnnouncementTitle] = useState("");
   const [announcementBody, setAnnouncementBody] = useState("");
-  const [isBroadcasting, setIsBroadcasting] = useState(false);
+  const [broadcasting, setBroadcasting] = useState(false);
 
   useEffect(() => {
-    const fetchAnalytics = async () => {
-      setLoading(true);
-      const token = localStorage.getItem("token");
-      if (!token) {
-        showAlert("Authentication Error", "Admin token not found.");
-        setLoading(false);
-        return;
-      }
-      try {
-        const [usersRes, creditsRes, recentActivitiesRes, trendsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/v1/analytics/users`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/api/v1/analytics/credits`, { headers: { Authorization: `Bearer ${token}` } }),
-          fetch(`${API_BASE_URL}/api/v1/admin/credits/positive?limit=8&sort=-createdAt`, {
-            headers: { Authorization: `Bearer ${token}` },
-          }),
-          fetch(`${API_BASE_URL}/api/v1/analytics/credit-trends`, { headers: { Authorization: `Bearer ${token}` } }),
-        ]);
-
-        const usersData = await usersRes.json();
-        const creditsData = await creditsRes.json();
-        const recentActivitiesData = await recentActivitiesRes.json();
-        const trendsData = await trendsRes.json();
-
-        if (!usersData.success || !creditsData.success || !trendsData.success) {
-          throw new Error(
-            usersData.message || creditsData.message || trendsData.message || "Failed to fetch analytics",
-          );
-        }
-
-        // Optimized formatting using Lodash
-        const formattedUserGrowth = _.map(usersData.userGrowth, (users, month) => ({ month, users: Number(users) }));
-
-        const formattedCreditStatus = _.map(creditsData.byStatus, (value, name) => {
-          let color = "hsl(var(--primary))";
-          if (name === "pending") color = "hsl(var(--warning))";
-          if (name === "rejected") color = "hsl(var(--danger))";
-          if (name === "approved") color = "hsl(var(--success))";
-          return { name, value: Number(value), color };
-        });
-
-        const rawActivities = recentActivitiesData.items || recentActivitiesData.data || [];
-        const formattedRecentActivities = _.map(rawActivities, (item: any) => ({
-          id: item._id,
-          description: `Submission: "${item.title}"`,
-          user: item.facultySnapshot?.name || item.faculty?.name || "N/A",
-          date: new Date(item.createdAt).toLocaleDateString(),
-        }));
-
-        setAnalytics({
-          totalUsers: usersData.totalUsers,
-          totalCredits: creditsData.totalCredits,
-          pendingSubmissions: creditsData.byStatus?.pending || 0,
-          activeAppeals: creditsData.appealStats?.totalAppeals || 0,
-          userGrowth: formattedUserGrowth,
-          creditStatus: formattedCreditStatus,
-          recentActivities: formattedRecentActivities,
-        });
-
-        setCreditTrends(trendsData.data);
-      } catch (error: any) {
-        showAlert("Failed to load dashboard data", error.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchAnalytics();
-  }, [academicYear, showAlert]);
-
-  useEffect(() => {
-    if (!loading && containerRef.current) {
-      gsap.fromTo(
-        ".dashboard-card",
-        { opacity: 0, y: 15 },
-        { opacity: 1, y: 0, stagger: 0.05, duration: 0.4, ease: "power2.out" },
-      );
-    }
-  }, [loading]);
-
-  const overviewCards = [
-    { title: "Total Users", value: analytics?.totalUsers ?? 0, icon: Users, accent: "primary" },
-    { title: "Submitted Work", value: analytics?.totalCredits ?? 0, icon: BarChartHorizontal, accent: "blue" },
-    { title: "Pending Review", value: analytics?.pendingSubmissions ?? 0, icon: Clock, accent: "yellow" },
-    { title: "Active Appeals", value: analytics?.activeAppeals ?? 0, icon: ShieldAlert, accent: "red" },
-  ];
-
-  const trendData = useMemo(() => {
-    if (!creditTrends) return [];
-    const data = creditTrends[trendsTimescale];
-    if (!data) return [];
-    const key = trendsTimescale === "daily" ? "date" : trendsTimescale === "weekly" ? "week" : "month";
-    return data.map((item) => ({ ...item, name: item[key as keyof typeof item] }));
-  }, [creditTrends, trendsTimescale]);
-
-  const handleBroadcast = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!announcementTitle || !announcementBody) {
-      showAlert("Incomplete Form", "Title and message are required.");
-      return;
-    }
-
-    setIsBroadcasting(true);
-    const token = localStorage.getItem("token");
-
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/v1/notifications/broadcast`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          title: announcementTitle,
-          body: announcementBody,
-          role: "faculty",
-        }),
+    const controller = new AbortController();
+    setLoading(true);
+    setData(null);
+    setError("");
+    apiFetch<Overview>(`/analytics/dashboard?academicYear=${encodeURIComponent(year)}`, {
+      signal: controller.signal,
+      cache: "no-store",
+    })
+      .then((result) => {
+        if (!controller.signal.aborted) setData(result);
+      })
+      .catch((cause) => {
+        if (!controller.signal.aborted) setError(describeApiError(cause));
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
       });
+    return () => controller.abort();
+  }, [year, refreshKey]);
 
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to send broadcast.");
-      }
+  const status = useMemo(
+    () => [
+      { name: "Approved", value: data?.status.approved || 0, color: colors.approved },
+      { name: "Pending", value: data?.status.pending || 0, color: colors.pending },
+      { name: "Rejected", value: data?.status.rejected || 0, color: colors.rejected },
+    ],
+    [data],
+  );
+  const submissionCount = status.reduce((total, item) => total + item.value, 0);
+  const summary = data?.summary;
+  const metrics = summary
+    ? [
+        {
+          label: "Faculty accounts",
+          value: summary.facultyUsers,
+          detail: `${formatNumber.format(summary.totalUsers)} users across all roles`,
+          icon: Users,
+          href: `${D}/users`,
+          tone: "text-primary bg-primary/10",
+        },
+        {
+          label: "Active users",
+          value: summary.activeUsers,
+          detail: `${summary.totalUsers ? Math.round((summary.activeUsers / summary.totalUsers) * 100) : 0}% of all accounts`,
+          icon: UserRoundCheck,
+          href: `${D}/users`,
+          tone: "text-success-text bg-success-bg",
+        },
+        {
+          label: "Credit records",
+          value: summary.totalRecords,
+          detail: `AY ${year} · positive and negative`,
+          icon: BarChart3,
+          href: `${D}/reports`,
+          tone: "text-info-text bg-info-bg",
+        },
+        {
+          label: "Awaiting review",
+          value: summary.pendingReview,
+          detail: "Positive submissions pending",
+          icon: Clock3,
+          href: `${D}/review`,
+          tone: "text-warning-text bg-warning-bg",
+        },
+        {
+          label: "Open appeals",
+          value: summary.openAppeals,
+          detail: "Decisions needed",
+          icon: ShieldAlert,
+          href: `${D}/appeals`,
+          tone: "text-danger-text bg-danger-bg",
+        },
+        {
+          label: "Net credit impact",
+          value: summary.netPoints,
+          detail: `Effective points · AY ${year}`,
+          icon: TrendingUp,
+          href: `${D}/reports`,
+          tone: "text-violet-text bg-violet-bg",
+        },
+      ]
+    : [];
 
-      toast({ title: "Broadcast Sent", description: "Announcement sent to all faculty members." });
+  async function broadcast(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!announcementTitle.trim() || !announcementBody.trim()) return;
+    setBroadcasting(true);
+    try {
+      await apiFetch("/notifications/broadcast", {
+        method: "POST",
+        body: { title: announcementTitle.trim(), body: announcementBody.trim(), role: "faculty" },
+      });
+      toast({ title: "Announcement sent", description: "The faculty broadcast was submitted." });
       setAnnouncementTitle("");
       setAnnouncementBody("");
-    } catch (err: any) {
-      showAlert("Broadcast Failed", err.message);
+    } catch (cause) {
+      toast({ title: "Could not send announcement", description: describeApiError(cause), variant: "destructive" });
     } finally {
-      setIsBroadcasting(false);
+      setBroadcasting(false);
     }
-  };
+  }
 
   return (
-    <div className="space-y-8" ref={containerRef}>
-      <header className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-sidebar-border pb-6">
+    <div className="space-y-6 pb-8">
+      <header className="flex flex-col gap-5 border-b pb-6 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-foreground">System Administrator</h2>
-          <p className="text-sm text-muted-foreground mt-1">Institutional overview for Academic Year {academicYear}</p>
+          <p className="mb-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">Administration</p>
+          <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Overview</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Live account, review, and credit activity for the selected academic year.
+          </p>
+          {data && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Updated {new Date(data.generatedAt).toLocaleString("en-IN")}
+            </p>
+          )}
         </div>
-        <Select value={academicYear} onValueChange={setAcademicYear}>
-          <SelectTrigger aria-label="Academic year" className="w-full sm:w-[220px] bg-muted border-none ">
-            <SelectValue placeholder="Select Academic Year" />
-          </SelectTrigger>
-          <SelectContent>
-            {yearOptions.map((year) => (
-              <SelectItem key={year} value={year}>
-                AY {year}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <div className="flex flex-wrap items-center gap-2">
+          <Select value={year} onValueChange={setYear}>
+            <SelectTrigger aria-label="Dashboard academic year" className="w-[180px] bg-card">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {options.map((item) => (
+                <SelectItem key={item} value={item}>
+                  AY {item}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button variant="outline" onClick={() => setRefreshKey((value) => value + 1)} disabled={loading}>
+            <RefreshCw className={`mr-2 h-4 w-4 ${loading ? "animate-spin" : ""}`} />
+            Refresh
+          </Button>
+        </div>
       </header>
 
-      {/* Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {overviewCards.map((card, index) => (
-          <Card key={card.title} className="dashboard-card border-none bg-muted hover:bg-border transition-colors ">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-caption font-bold text-muted-foreground">{card.title}</CardTitle>
-              <card.icon
-                className={cn(
-                  "h-4 w-4",
-                  card.accent === "primary" && "text-primary",
-                  card.accent === "blue" && "text-primary",
-                  card.accent === "yellow" && "text-warning",
-                  card.accent === "red" && "text-danger-text",
-                )}
-              />
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-8 w-20 bg-border" />
-              ) : (
-                <div className="text-3xl font-bold tracking-tighter text-foreground tabular-nums">{card.value}</div>
-              )}
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-16 gap-6">
-        {/* Main Action Area */}
-        <div className="lg:col-span-10 space-y-6">
-          <Card className="dashboard-card border shadow-none">
-            <CardHeader className="bg-muted/50 border-b border-sidebar-border">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-primary/10 ">
-                  <Megaphone className="h-5 w-5 text-primary" />
+      {error && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 px-4 py-3 text-sm text-destructive"
+        >
+          <span>{error}</span>
+          <Button size="sm" variant="outline" onClick={() => setRefreshKey((value) => value + 1)}>
+            Try again
+          </Button>
+        </div>
+      )}
+      {loading && !data ? (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {Array.from({ length: 6 }, (_, index) => (
+              <Skeleton key={index} className="h-36 rounded-xl" />
+            ))}
+          </div>
+          <Skeleton className="h-80 rounded-xl" />
+        </div>
+      ) : data && summary ? (
+        <>
+          <section aria-label="Key statistics" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {metrics.map((item) => (
+              <Link
+                key={item.label}
+                href={item.href}
+                className="group rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-medium text-muted-foreground">{item.label}</p>
+                  <span className={`rounded-lg p-2 ${item.tone}`}>
+                    <item.icon className="h-4 w-4" aria-hidden="true" />
+                  </span>
                 </div>
+                <p className="mt-3 text-3xl font-bold tabular-nums tracking-tight">{formatNumber.format(item.value)}</p>
+                <div className="mt-2 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <span>{item.detail}</span>
+                  <ArrowRight
+                    className="h-4 w-4 shrink-0 transition-transform group-hover:translate-x-0.5"
+                    aria-hidden="true"
+                  />
+                </div>
+              </Link>
+            ))}
+          </section>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.8fr)_minmax(300px,1fr)]">
+            <Card className="min-w-0 rounded-xl shadow-sm">
+              <CardHeader className="gap-1 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <CardTitle className="text-base font-semibold">Broadcast Announcement</CardTitle>
-                  <CardDescription className="text-xs">
-                    Publish institutional updates to all faculty members via push notifications.
+                  <CardTitle className="flex items-center gap-2 text-lg">
+                    <Activity className="h-5 w-5 text-primary" />
+                    Credit activity
+                  </CardTitle>
+                  <CardDescription className="mt-1">
+                    Records created by month in AY {year}. Lines show current decisions.
                   </CardDescription>
                 </div>
-              </div>
+                <Link
+                  href={`${D}/reports`}
+                  className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline"
+                >
+                  Full reports <ArrowRight className="h-4 w-4" />
+                </Link>
+              </CardHeader>
+              <CardContent>
+                {data.trends.length ? (
+                  <div
+                    className="h-72 w-full"
+                    role="img"
+                    aria-label="Monthly credit submissions, approvals and negative remarks"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={data.trends} margin={{ top: 10, right: 6, left: -18, bottom: 0 }}>
+                        <defs>
+                          <linearGradient id="dashboard-submissions" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor={colors.submitted} stopOpacity={0.22} />
+                            <stop offset="100%" stopColor={colors.submitted} stopOpacity={0} />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid vertical={false} stroke="hsl(var(--border))" strokeDasharray="3 4" />
+                        <XAxis
+                          dataKey="month"
+                          tickFormatter={monthLabel}
+                          tickLine={false}
+                          axisLine={false}
+                          fontSize={11}
+                          stroke="hsl(var(--muted-foreground))"
+                        />
+                        <YAxis
+                          allowDecimals={false}
+                          tickLine={false}
+                          axisLine={false}
+                          fontSize={11}
+                          stroke="hsl(var(--muted-foreground))"
+                        />
+                        <Tooltip
+                          contentStyle={chartTooltipStyle}
+                          labelFormatter={(label) => monthLabel(String(label))}
+                        />
+                        <Area
+                          type="monotone"
+                          name="Submissions"
+                          dataKey="submitted"
+                          stroke={colors.submitted}
+                          fill="url(#dashboard-submissions)"
+                          strokeWidth={2.5}
+                        />
+                        <Area
+                          type="monotone"
+                          name="Approved"
+                          dataKey="approved"
+                          stroke={colors.approved}
+                          fill="transparent"
+                          strokeWidth={2}
+                        />
+                        <Area
+                          type="monotone"
+                          name="Negative remarks"
+                          dataKey="negative"
+                          stroke={colors.rejected}
+                          fill="transparent"
+                          strokeWidth={2}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <EmptyChart>No credit activity is recorded for this academic year.</EmptyChart>
+                )}
+                <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 border-t pt-4 text-xs text-muted-foreground">
+                  <span>
+                    <i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-primary" />
+                    Submissions
+                  </span>
+                  <span>
+                    <i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-success" />
+                    Approved
+                  </span>
+                  <span>
+                    <i className="mr-2 inline-block h-2.5 w-2.5 rounded-full bg-danger" />
+                    Negative remarks
+                  </span>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Clock3 className="h-5 w-5 text-warning" />
+                  Needs attention
+                </CardTitle>
+                <CardDescription>Current work queues for AY {year}.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <Link
+                  href={`${D}/review`}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-4 hover:bg-muted/40"
+                >
+                  <span>
+                    <span className="block text-sm font-medium">Review submissions</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Positive work awaiting a decision</span>
+                  </span>
+                  <strong className="text-2xl tabular-nums text-warning-text">
+                    {formatNumber.format(summary.pendingReview)}
+                  </strong>
+                </Link>
+                <Link
+                  href={`${D}/appeals`}
+                  className="flex items-center justify-between gap-3 rounded-lg border p-4 hover:bg-muted/40"
+                >
+                  <span>
+                    <span className="block text-sm font-medium">Decide appeals</span>
+                    <span className="mt-1 block text-xs text-muted-foreground">Faculty appeals still open</span>
+                  </span>
+                  <strong className="text-2xl tabular-nums text-danger-text">
+                    {formatNumber.format(summary.openAppeals)}
+                  </strong>
+                </Link>
+                <div className="rounded-lg bg-muted/50 p-4">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Decision rate</p>
+                  <p className="mt-1 text-2xl font-semibold tabular-nums">{summary.approvalRate}%</p>
+                  <p className="text-xs text-muted-foreground">
+                    Positive submissions approved among decided submissions
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader>
+                <CardTitle className="text-lg">Submission decisions</CardTitle>
+                <CardDescription>Positive submissions in AY {year}, grouped by current status.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {submissionCount ? (
+                  <div className="grid items-center gap-4 sm:grid-cols-[minmax(0,1fr)_130px]">
+                    <div
+                      className="relative h-52 min-w-0"
+                      role="img"
+                      aria-label={`${submissionCount} submissions: ${status.map((item) => `${item.value} ${item.name.toLowerCase()}`).join(", ")}`}
+                    >
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={status.filter((item) => item.value > 0)}
+                            dataKey="value"
+                            nameKey="name"
+                            innerRadius={65}
+                            outerRadius={88}
+                            paddingAngle={3}
+                            stroke="none"
+                          >
+                            {status
+                              .filter((item) => item.value > 0)
+                              .map((item) => (
+                                <Cell key={item.name} fill={item.color} />
+                              ))}
+                          </Pie>
+                          <Tooltip contentStyle={chartTooltipStyle} />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                        <strong className="text-2xl tabular-nums">{formatNumber.format(submissionCount)}</strong>
+                        <span className="text-xs text-muted-foreground">submissions</span>
+                      </div>
+                    </div>
+                    <ul className="space-y-3 text-sm">
+                      {status.map((item) => (
+                        <li key={item.name} className="flex items-center justify-between gap-3">
+                          <span className="flex items-center gap-2">
+                            <span className="h-2.5 w-2.5 rounded-full" style={{ background: item.color }} />
+                            {item.name}
+                          </span>
+                          <strong className="tabular-nums">{formatNumber.format(item.value)}</strong>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <EmptyChart>No positive submissions are recorded for this academic year.</EmptyChart>
+                )}
+              </CardContent>
+            </Card>
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Building2 className="h-5 w-5 text-primary" />
+                  College activity
+                </CardTitle>
+                <CardDescription>
+                  Credit records by college in AY {year}. Placements follow the record snapshot.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {data.colleges.some((item) => item.records) ? (
+                  <div className="h-64 w-full" role="img" aria-label="Credit records by college">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart
+                        data={data.colleges.filter((item) => item.records)}
+                        layout="vertical"
+                        margin={{ top: 0, right: 16, bottom: 0, left: 0 }}
+                      >
+                        <CartesianGrid horizontal={false} stroke="hsl(var(--border))" strokeDasharray="3 4" />
+                        <XAxis
+                          type="number"
+                          allowDecimals={false}
+                          axisLine={false}
+                          tickLine={false}
+                          fontSize={11}
+                          stroke="hsl(var(--muted-foreground))"
+                        />
+                        <YAxis
+                          type="category"
+                          dataKey="name"
+                          width={126}
+                          axisLine={false}
+                          tickLine={false}
+                          fontSize={11}
+                          stroke="hsl(var(--muted-foreground))"
+                          tickFormatter={(name) =>
+                            String(name).length > 19 ? `${String(name).slice(0, 18)}…` : String(name)
+                          }
+                        />
+                        <Tooltip contentStyle={chartTooltipStyle} />
+                        <Bar
+                          name="Records"
+                          dataKey="records"
+                          fill={colors.records}
+                          radius={[0, 4, 4, 0]}
+                          maxBarSize={22}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                ) : (
+                  <EmptyChart>No college credit records are available for this academic year.</EmptyChart>
+                )}
+                <div className="mt-3 flex items-center justify-between border-t pt-3 text-xs text-muted-foreground">
+                  <span>{summary.colleges} colleges with user accounts</span>
+                  <Link href={`${D}/users`} className="font-medium text-primary hover:underline">
+                    Manage people
+                  </Link>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <div className="grid gap-5 xl:grid-cols-[minmax(0,1.6fr)_minmax(300px,1fr)]">
+            <Card className="rounded-xl shadow-sm">
+              <CardHeader className="sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <CardTitle className="text-lg">Recent credit activity</CardTitle>
+                  <CardDescription>Latest records in AY {year}.</CardDescription>
+                </div>
+                <Link href={`${D}/reports`} className="text-sm font-medium text-primary hover:underline">
+                  View reports
+                </Link>
+              </CardHeader>
+              <CardContent className="space-y-1">
+                {data.recent.length ? (
+                  data.recent.map((item) => (
+                    <div key={item.id} className="flex items-start justify-between gap-4 border-b py-3 last:border-0">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-medium">{item.title}</p>
+                        <p className="mt-1 truncate text-xs text-muted-foreground">
+                          {item.faculty}
+                          {item.college ? ` · ${item.college}` : ""}
+                        </p>
+                      </div>
+                      <div className="shrink-0 text-right">
+                        <p
+                          className={`text-sm font-semibold tabular-nums ${item.impact < 0 ? "text-danger-text" : ""}`}
+                        >
+                          {item.impact > 0 ? "+" : ""}
+                          {formatNumber.format(item.impact)} effective
+                        </p>
+                        <p className="mt-1 text-xs capitalize text-muted-foreground">
+                          {item.status} · {item.createdAt ? new Date(item.createdAt).toLocaleDateString("en-IN") : "—"}
+                        </p>
+                        {item.impact !== item.points && (
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {item.type === "positive" ? "Requested" : "Issued"}{" "}
+                            {formatNumber.format(Math.abs(item.points))} pts
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="py-8 text-center text-sm text-muted-foreground">
+                    No credit activity is recorded for this year.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+            <div className="space-y-5">
+              <Card className="rounded-xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">User registrations</CardTitle>
+                  <CardDescription>Monthly account creation across all academic years.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {data.userGrowth.length ? (
+                    <div className="h-40 w-full" role="img" aria-label="Monthly user registrations">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={data.userGrowth} margin={{ top: 4, right: 0, left: -26, bottom: 0 }}>
+                          <XAxis
+                            dataKey="month"
+                            tickFormatter={monthLabel}
+                            axisLine={false}
+                            tickLine={false}
+                            fontSize={10}
+                            stroke="hsl(var(--muted-foreground))"
+                          />
+                          <YAxis
+                            allowDecimals={false}
+                            axisLine={false}
+                            tickLine={false}
+                            fontSize={10}
+                            stroke="hsl(var(--muted-foreground))"
+                          />
+                          <Tooltip
+                            contentStyle={chartTooltipStyle}
+                            labelFormatter={(label) => monthLabel(String(label))}
+                          />
+                          <Bar
+                            name="New users"
+                            dataKey="users"
+                            fill={colors.submitted}
+                            radius={[4, 4, 0, 0]}
+                            maxBarSize={28}
+                          />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  ) : (
+                    <EmptyChart>No registration dates are available.</EmptyChart>
+                  )}
+                </CardContent>
+              </Card>
+              <Card className="rounded-xl shadow-sm">
+                <CardHeader>
+                  <CardTitle className="text-lg">Quick actions</CardTitle>
+                </CardHeader>
+                <CardContent className="grid gap-2">
+                  {[
+                    { label: "Review submissions", href: `${D}/review`, icon: FileCheck2 },
+                    { label: "Add a user", href: `${D}/users/new`, icon: Users },
+                    { label: "Open reports", href: `${D}/reports`, icon: BarChart3 },
+                  ].map((action) => (
+                    <Link
+                      key={action.label}
+                      href={action.href}
+                      className="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-medium hover:bg-muted/40"
+                    >
+                      <action.icon className="h-4 w-4 text-primary" />
+                      {action.label}
+                      <ArrowRight className="ml-auto h-4 w-4 text-muted-foreground" />
+                    </Link>
+                  ))}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          <Card className="rounded-xl shadow-sm">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-lg">
+                <Megaphone className="h-5 w-5 text-primary" />
+                Broadcast announcement
+              </CardTitle>
+              <CardDescription>Send an institution-wide update to faculty.</CardDescription>
             </CardHeader>
-            <CardContent className="pt-6">
-              <form onSubmit={handleBroadcast} className="space-y-4">
-                <div className="grid grid-cols-1 gap-4">
+            <CardContent>
+              <form
+                onSubmit={broadcast}
+                className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)_auto] lg:items-end"
+              >
+                <div className="space-y-2">
+                  <label htmlFor="broadcast-title" className="text-sm font-medium">
+                    Title
+                  </label>
                   <Input
-                    placeholder="Subject title (e.g., Extended Appeal Deadline)"
+                    id="broadcast-title"
                     value={announcementTitle}
-                    onChange={(e) => setAnnouncementTitle(e.target.value)}
+                    onChange={(event) => setAnnouncementTitle(event.target.value)}
+                    maxLength={120}
+                    placeholder="Announcement title"
                     required
-                    className="bg-muted border-none focus:ring-1 focus:ring-primary h-11"
                   />
+                </div>
+                <div className="space-y-2">
+                  <label htmlFor="broadcast-body" className="text-sm font-medium">
+                    Message
+                  </label>
                   <Textarea
-                    placeholder="Type the notification content here..."
-                    rows={3}
+                    id="broadcast-body"
                     value={announcementBody}
-                    onChange={(e) => setAnnouncementBody(e.target.value)}
+                    onChange={(event) => setAnnouncementBody(event.target.value)}
+                    rows={2}
+                    maxLength={2000}
+                    placeholder="Write a clear update for faculty"
                     required
-                    className="bg-muted border-none focus:ring-1 focus:ring-primary resize-none"
                   />
                 </div>
-                <div className="flex justify-end">
-                  <Button type="submit" disabled={isBroadcasting || loading} className="px-8 font-semibold">
-                    {isBroadcasting ? (
-                      "Broadcasting..."
-                    ) : (
-                      <>
-                        <Send className="mr-2 h-4 w-4" /> Send Broadcast
-                      </>
-                    )}
-                  </Button>
-                </div>
+                <Button type="submit" disabled={broadcasting}>
+                  <Send className="mr-2 h-4 w-4" />
+                  {broadcasting ? "Sending…" : "Send announcement"}
+                </Button>
               </form>
             </CardContent>
           </Card>
-
-          <Card className="dashboard-card border shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between pb-6">
-              <div>
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Credit Processing Trends
-                </CardTitle>
-                <CardDescription className="text-xs">
-                  Activity volume across approved and rejected submissions.
-                </CardDescription>
-              </div>
-              <Select value={trendsTimescale} onValueChange={(v) => setTrendsTimescale(v as any)}>
-                <SelectTrigger aria-label="Trend timescale" className="w-[120px] h-8 text-xs bg-muted border-none">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Daily View</SelectItem>
-                  <SelectItem value="weekly">Weekly View</SelectItem>
-                  <SelectItem value="monthly">Monthly View</SelectItem>
-                </SelectContent>
-              </Select>
-            </CardHeader>
-            <CardContent>
-              {loading ? (
-                <Skeleton className="h-[300px] w-full bg-muted" />
-              ) : (
-                <div className="h-[300px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trendData}>
-                      <defs>
-                        <linearGradient id="colorApproved" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.1} />
-                          <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sidebar-border)" />
-                      <XAxis
-                        dataKey="name"
-                        stroke="hsl(var(--muted-foreground))"
-                        fontSize={12}
-                        tickLine={false}
-                        axisLine={false}
-                        dy={10}
-                      />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                      <Tooltip contentStyle={chartTooltipStyle} itemStyle={{ fontSize: "12px" }} />
-                      <Legend
-                        verticalAlign="top"
-                        align="right"
-                        iconType="circle"
-                        wrapperStyle={{ fontSize: "11px", paddingBottom: "20px" }}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="approved"
-                        stroke="hsl(var(--success))"
-                        fillOpacity={1}
-                        fill="url(#colorApproved)"
-                        name="Approved"
-                        strokeWidth={2}
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="rejected"
-                        stroke="hsl(var(--danger))"
-                        fill="transparent"
-                        name="Rejected"
-                        strokeWidth={2}
-                        strokeDasharray="5 5"
-                      />
-                      <Area
-                        type="monotone"
-                        dataKey="pending"
-                        stroke="hsl(var(--warning))"
-                        fill="transparent"
-                        name="Pending"
-                        strokeWidth={2}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Sidebar Insights */}
-        <div className="lg:col-span-6 space-y-6">
-          <Card className="dashboard-card border shadow-none">
-            <CardHeader>
-              <CardTitle className="text-base font-semibold">Credit Status Distribution</CardTitle>
-              <CardDescription className="text-xs">Overall health of submitted performance records.</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col items-center">
-              {loading ? (
-                <Skeleton className="h-[220px] w-full bg-muted" />
-              ) : (
-                <div className="h-[220px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={analytics?.creditStatus}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={4}
-                        dataKey="value"
-                        nameKey="name"
-                        stroke="none"
-                      >
-                        {analytics?.creditStatus.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip contentStyle={chartTooltipStyle} />
-                      <Legend
-                        iconType="rect"
-                        verticalAlign="bottom"
-                        wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          <Card className="dashboard-card border shadow-none">
-            <CardHeader className="flex flex-row items-center justify-between">
-              <div>
-                <CardTitle className="text-base font-semibold">System Activity Log</CardTitle>
-                <CardDescription className="text-xs">Recent mission-critical system events.</CardDescription>
-              </div>
-              <Activity className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent className="pt-2">
-              {loading ? (
-                <div className="space-y-4">
-                  {[1, 2, 3].map((i) => (
-                    <Skeleton key={i} className="h-12 w-full bg-muted" />
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-1 max-h-[380px] overflow-y-auto pr-2 custom-scrollbar">
-                  {analytics?.recentActivities?.map((activity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-start gap-4 p-3 hover:bg-muted transition-colors border-b border-sidebar-border last:border-0 group"
-                    >
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center bg-background border border-sidebar-border group-hover:border-primary/30 transition-colors">
-                        <FolderKanban className="h-3.5 w-3.5 text-muted-foreground group-hover:text-primary transition-colors" />
-                      </div>
-                      <div className="space-y-0.5">
-                        <p className="text-body font-medium leading-tight text-foreground line-clamp-2">
-                          {activity.description}
-                        </p>
-                        <div className="flex items-center gap-2 text-caption text-muted-foreground font-medium">
-                          <span>{activity.user}</span>
-                          <span className="h-1 w-1 rounded-full bg-input" />
-                          <span>{activity.date}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                  {(!analytics?.recentActivities || analytics.recentActivities.length === 0) && (
-                    <div className="py-10 text-center text-xs text-muted-foreground italic">
-                      No recent activity recorded.
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-
-      {/* User Growth Utility Area */}
-      <Card className="dashboard-card border shadow-none bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-base font-semibold">Registration Growth</CardTitle>
-          <CardDescription className="text-xs">
-            Faculty enrollment trends over the current fiscal cycle.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <Skeleton className="h-[200px] w-full bg-muted" />
-          ) : (
-            <div className="h-[200px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={analytics?.userGrowth}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--sidebar-border)" />
-                  <XAxis
-                    dataKey="month"
-                    stroke="hsl(var(--muted-foreground))"
-                    fontSize={12}
-                    tickLine={false}
-                    axisLine={false}
-                    dy={10}
-                  />
-                  <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} axisLine={false} />
-                  <Tooltip contentStyle={chartTooltipStyle} />
-                  <Line
-                    type="stepAfter"
-                    dataKey="users"
-                    name="Enrollments"
-                    stroke="hsl(var(--primary))"
-                    strokeWidth={3}
-                    dot={{ r: 4, fill: "hsl(var(--primary))", strokeWidth: 0 }}
-                    activeDot={{ r: 6, strokeWidth: 0 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          )}
-        </CardContent>
-      </Card>
+        </>
+      ) : !error ? (
+        <EmptyChart>Dashboard data is unavailable. Refresh to try again.</EmptyChart>
+      ) : null}
     </div>
   );
 }

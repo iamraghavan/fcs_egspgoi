@@ -1,6 +1,7 @@
 "use client";
 
 import { API_ORIGIN } from "@/lib/api-url";
+import { useAcademicYear } from "@/components/shell/academic-year";
 import { useState, useEffect, useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
@@ -80,28 +81,6 @@ type Appeal = NegativeCredit & {
   appeal: NonNullable<NegativeCredit["appeal"]>;
 };
 
-const getCurrentAcademicYear = () => {
-  const today = new Date();
-  const currentMonth = today.getMonth();
-  const currentYear = today.getFullYear();
-  if (currentMonth >= 5) {
-    return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-  }
-  return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
-};
-
-const generateYearOptions = () => {
-  const currentYearString = getCurrentAcademicYear();
-  const [startCurrentYear] = currentYearString.split("-").map(Number);
-  const years = [];
-  for (let i = 0; i < 5; i++) {
-    const startYear = startCurrentYear - i;
-    const endYear = (startYear + 1).toString().slice(-2);
-    years.push(`${startYear}-${endYear}`);
-  }
-  return years;
-};
-
 export default function AppealsPage() {
   const { toast } = useToast();
   const { showAlert } = useAlert();
@@ -124,7 +103,7 @@ export default function AppealsPage() {
 
   const facultyId = searchParams.get("uid");
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
-  const yearOptions = generateYearOptions();
+  const { options: yearOptions } = useAcademicYear();
 
   const fetchAppeals = async () => {
     setIsLoading(true);

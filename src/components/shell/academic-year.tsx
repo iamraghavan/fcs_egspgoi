@@ -6,6 +6,7 @@ import { CalendarRange } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ALL_YEARS, academicYearOptions, getCurrentAcademicYear, isAcademicYear } from "@/lib/academic-year";
 import { ALL_YEARS_PATHS } from "./nav-config";
+import { useApplicationSettings } from "@/lib/application-settings";
 
 const STORAGE_KEY = "shell.academicYear";
 
@@ -20,7 +21,18 @@ export function AcademicYearProvider({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const router = useRouter();
-  const options = useMemo(() => academicYearOptions(5), []);
+  const { settings } = useApplicationSettings();
+  const options = useMemo(
+    () =>
+      settings
+        ? settings.academicYears
+            .map((year) => year.id)
+            .sort()
+            .reverse()
+        : academicYearOptions(5),
+    [settings],
+  );
+  const defaultYear = settings?.currentAcademicYear || getCurrentAcademicYear();
   const allowAll = ALL_YEARS_PATHS.includes(pathname);
   const [stored, setStored] = useState<string | null>(null);
 
@@ -33,12 +45,10 @@ export function AcademicYearProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const fromUrl = searchParams.get("ay");
-  const candidate = fromUrl ?? stored ?? getCurrentAcademicYear();
+  const candidate = fromUrl ?? stored ?? defaultYear;
   const valid =
-    (isAcademicYear(candidate) && options.includes(candidate)) || candidate === ALL_YEARS
-      ? candidate
-      : getCurrentAcademicYear();
-  const year = valid === ALL_YEARS && !allowAll ? getCurrentAcademicYear() : valid;
+    (isAcademicYear(candidate) && options.includes(candidate)) || candidate === ALL_YEARS ? candidate : defaultYear;
+  const year = valid === ALL_YEARS && !allowAll ? defaultYear : valid;
 
   const setYear = useCallback(
     (y: string) => {

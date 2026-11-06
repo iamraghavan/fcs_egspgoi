@@ -35,10 +35,12 @@ export function SecondaryPanel({
         </button>
       </div>
 
-      <div className="px-3 pt-3">
-        <p className="mb-1 px-1 text-caption font-medium text-muted-foreground">Academic year</p>
-        <AcademicYearSwitcher className="h-9 w-full" />
-      </div>
+      {!["setup", "account"].includes(module.id) && (
+        <div className="px-3 pt-3">
+          <p className="mb-1 px-1 text-caption font-medium text-muted-foreground">Academic year</p>
+          <AcademicYearSwitcher className="h-9 w-full" />
+        </div>
+      )}
 
       <nav aria-label={module.label} className="flex-1 overflow-y-auto px-3 py-4">
         {module.groups.map((group) => (

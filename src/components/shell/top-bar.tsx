@@ -1,41 +1,17 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Bell, ChevronRight, LifeBuoy, Menu, PanelLeftOpen } from "lucide-react";
-import { API_V1 } from "@/lib/api-url";
+
+import { ChevronDown, ChevronRight, LifeBuoy, Menu, PanelLeftOpen } from "lucide-react";
+import { NotificationMenu } from "./notification-menu";
 import { BRANDING } from "@/config/branding";
-import { HELP_PATH, withUid, type PanelItem, type RailItem } from "./nav-config";
+import { useApplicationSettings } from "@/lib/application-settings";
+import { HELP_PATH, ROLE_LABEL, withUid, type PanelItem, type RailItem } from "./nav-config";
 import { CommandPalette } from "./command-palette";
 import { AccountMenu, UserAvatar, type ShellUser } from "./account-menu";
 
 const iconButton =
   "relative flex h-10 w-10 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
-
-function useUnreadCount(enabled: boolean) {
-  const [count, setCount] = useState(0);
-  useEffect(() => {
-    if (!enabled) return;
-    const check = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) return;
-      try {
-        const res = await fetch(`${API_V1}/notifications?limit=50`, { headers: { Authorization: `Bearer ${token}` } });
-        if (res.ok) setCount(Number((await res.json()).unreadCount) || 0);
-      } catch {
-        /* the bell is non-critical */
-      }
-    };
-    void check();
-    const interval = window.setInterval(check, 60_000);
-    window.addEventListener("notifications-updated", check);
-    return () => {
-      window.clearInterval(interval);
-      window.removeEventListener("notifications-updated", check);
-    };
-  }, [enabled]);
-  return count;
-}
 
 /** 56 px workspace bar: where am I (breadcrumb) + search, notifications, help, institution. */
 export function TopBar({
@@ -55,8 +31,7 @@ export function TopBar({
   onOpenMobileNav: () => void;
   onCookiePreferences: () => void;
 }) {
-  const showBell = user.role !== "admin";
-  const unread = useUnreadCount(showBell);
+  const { settings } = useApplicationSettings();
   const crumbs = [module?.label, page && page.label !== module?.label ? page.label : undefined].filter(
     Boolean,
   ) as string[];
@@ -111,36 +86,23 @@ export function TopBar({
         <CommandPalette role={user.role} uid={user.id} />
       </div>
 
-      <div className="flex items-center gap-1">
-        {showBell && (
-          <Link
-            href={withUid("/u/portal/dashboard/notifications", user.id)}
-            className={iconButton}
-            aria-label={unread ? `Notifications, ${unread} unread` : "Notifications"}
-          >
-            <Bell className="h-5 w-5" aria-hidden="true" />
-            {unread > 0 && (
-              <span
-                className="absolute right-1 top-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-danger px-1 text-caption font-semibold leading-none text-destructive-foreground"
-                aria-hidden="true"
-                data-numeric
-              >
-                {unread > 99 ? "99+" : unread}
-              </span>
-            )}
-          </Link>
-        )}
-        <Link href={HELP_PATH} className={`${iconButton} hidden sm:flex`} aria-label="Help">
+      <div className="flex shrink-0 items-center gap-1">
+        <NotificationMenu uid={user.id} />
+        <Link
+          href={settings?.supportEmail ? `mailto:${settings.supportEmail}` : HELP_PATH}
+          className={`${iconButton} hidden sm:flex`}
+          aria-label="Help"
+        >
           <LifeBuoy className="h-5 w-5" aria-hidden="true" />
         </Link>
         <span
-          className="ml-2 hidden max-w-56 truncate border-l border-border pl-3 text-caption font-medium text-muted-foreground xl:block"
-          title={BRANDING.institution}
+          className="ml-2 hidden max-w-56 truncate border-l border-border pl-3 text-caption font-medium text-muted-foreground 2xl:block"
+          title={settings?.organizationName || BRANDING.institution}
         >
-          {BRANDING.institution}
+          {settings?.organizationName || BRANDING.institution}
         </span>
-        {/* On phones the rail is hidden, so the account menu lives here. */}
-        <div className="md:hidden">
+
+        <div className="ml-2 border-l pl-3">
           <AccountMenu
             user={user}
             side="bottom"
@@ -149,9 +111,14 @@ export function TopBar({
               <button
                 type="button"
                 aria-label={`Account menu for ${user.name}`}
-                className="ml-1 rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                className="flex h-10 items-center gap-2 rounded-lg px-1.5 transition-colors hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
                 <UserAvatar user={user} className="h-8 w-8" />
+                <span className="hidden min-w-0 text-left sm:block">
+                  <span className="block max-w-32 truncate text-sm font-medium">{user.name}</span>
+                  <span className="block text-[11px] text-muted-foreground">{ROLE_LABEL[user.role]}</span>
+                </span>
+                <ChevronDown className="hidden h-3.5 w-3.5 text-muted-foreground sm:block" aria-hidden="true" />
               </button>
             }
           />

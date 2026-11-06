@@ -2,7 +2,18 @@
 
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Cookie, FileText, LifeBuoy, LogOut, Settings, ShieldCheck, UserRound } from "lucide-react";
+import {
+  Bell,
+  Cookie,
+  FileText,
+  LifeBuoy,
+  LogOut,
+  Settings,
+  Settings2,
+  ShieldCheck,
+  UserRound,
+  Lock,
+} from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -59,18 +70,8 @@ export function AccountMenu({
   side?: "right" | "bottom" | "top";
   onCookiePreferences: () => void;
 }) {
-  const profileHref =
-    user.role === "faculty"
-      ? withUid("/u/portal/dashboard/profile", user.id)
-      : user.role === "admin"
-        ? withUid("/u/portal/dashboard/admin/settings", user.id)
-        : null;
-  const settingsHref =
-    user.role === "faculty"
-      ? withUid("/u/portal/dashboard/settings", user.id)
-      : user.role === "admin"
-        ? withUid("/u/portal/dashboard/admin/settings", user.id)
-        : null;
+  const profileHref = withUid("/u/portal/dashboard/account/profile", user.id);
+  const settingsHref = withUid("/u/portal/dashboard/account/preferences", user.id);
 
   return (
     <DropdownMenu>
@@ -91,16 +92,45 @@ export function AccountMenu({
           {profileHref && (
             <DropdownMenuItem asChild>
               <Link href={profileHref}>
-                <UserRound aria-hidden="true" /> Profile
+                <UserRound aria-hidden="true" /> My profile
               </Link>
             </DropdownMenuItem>
           )}
           {settingsHref && (
             <DropdownMenuItem asChild>
               <Link href={settingsHref}>
-                <Settings aria-hidden="true" /> Settings
+                <Settings aria-hidden="true" /> Account preferences
               </Link>
             </DropdownMenuItem>
+          )}
+          <DropdownMenuItem asChild>
+            <Link href={withUid("/u/portal/dashboard/account/password", user.id)}>
+              <Lock aria-hidden="true" />
+              Change password
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={withUid("/u/portal/dashboard/account/security", user.id)}>
+              <ShieldCheck aria-hidden="true" />
+              Security &amp; sessions
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem asChild>
+            <Link href={withUid("/u/portal/dashboard/notifications", user.id)}>
+              <Bell aria-hidden="true" />
+              Notifications
+            </Link>
+          </DropdownMenuItem>
+          {user.role === "admin" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link href={withUid("/u/portal/dashboard/admin/setup/organization", user.id)}>
+                  <Settings2 aria-hidden="true" />
+                  Application setup
+                </Link>
+              </DropdownMenuItem>
+            </>
           )}
           <DropdownMenuItem asChild>
             <Link href={HELP_PATH}>

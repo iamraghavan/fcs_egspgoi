@@ -1,6 +1,6 @@
 "use client";
 
-import { API_ORIGIN } from '@/lib/api-url';
+import { API_ORIGIN } from "@/lib/api-url";
 import { useState } from "react";
 import { useToast } from "./use-toast";
 import { useAlert } from "@/context/alert-context";
@@ -15,10 +15,12 @@ export function useMfaSettings() {
 
   const setupAppMfa = async () => {
     setIsLoading(true);
-    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/setup`, {
-        headers: { "Authorization": `Bearer ${token}` }
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "app" }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to setup MFA");
@@ -32,21 +34,45 @@ export function useMfaSettings() {
     }
   };
 
-  const enableMfa = async (type: 'app' | 'email', verificationCode: string) => {
+  const setupEmailMfa = async () => {
     setIsLoading(true);
-    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/setup`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "email" }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to send verification code");
+      toast({ title: "Code sent", description: "Check your registered email address for the verification code." });
+      return true;
+    } catch (error: any) {
+      showAlert("Email setup failed", error.message);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const enableMfa = async (type: "app" | "email", verificationCode: string) => {
+    setIsLoading(true);
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/enable`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ type, token: verificationCode }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to enable MFA");
-      toast({ title: "Success", description: `${type === 'app' ? 'Authenticator app' : 'Email MFA'} has been enabled.` });
+      toast({
+        title: "Success",
+        description: `${type === "app" ? "Authenticator app" : "Email MFA"} has been enabled.`,
+      });
       return true;
     } catch (error: any) {
       showAlert("Operation Failed", error.message);
@@ -56,17 +82,17 @@ export function useMfaSettings() {
     }
   };
 
-  const disableMfa = async (verificationCode: string) => {
+  const disableMfa = async (verificationCode: string, currentPassword: string) => {
     setIsLoading(true);
-    const token = typeof window !== 'undefined' ? localStorage.getItem("token") : null;
+    const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
     try {
       const res = await fetch(`${API_BASE_URL}/api/v1/users/me/mfa/disable`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ token: verificationCode }),
+        body: JSON.stringify({ token: verificationCode, currentPassword }),
       });
       const data = await res.json();
       if (!res.ok || !data.success) throw new Error(data.message || "Failed to disable MFA");
@@ -85,6 +111,7 @@ export function useMfaSettings() {
     qrCode,
     setQrCode,
     setupAppMfa,
+    setupEmailMfa,
     enableMfa,
     disableMfa,
   };

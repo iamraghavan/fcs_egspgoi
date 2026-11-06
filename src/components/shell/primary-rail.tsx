@@ -7,7 +7,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { NAV, withUid, type RailItem, type Role } from "./nav-config";
 import { QuickCreateMenu } from "./quick-create";
 import { AppearanceIcon, AppearanceMenu } from "./appearance-menu";
-import { AccountMenu, UserAvatar, type ShellUser } from "./account-menu";
+import type { ShellUser } from "./account-menu";
 
 const railButton =
   "flex h-11 w-11 items-center justify-center rounded-lg text-rail-icon transition-colors duration-fast hover:bg-rail-hover hover:text-rail-icon-active focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rail-icon-active/70";
@@ -16,15 +16,7 @@ const railButton =
  * Global navigation (level 1). Icon + 12 px label, ≤ 7 items per role (Hick),
  * 44 px targets (Fitts). The active module gets a filled pill in the accent colour.
  */
-export function PrimaryRail({
-  user,
-  active,
-  onCookiePreferences,
-}: {
-  user: ShellUser;
-  active?: RailItem;
-  onCookiePreferences: () => void;
-}) {
+export function PrimaryRail({ user, active }: { user: ShellUser; active?: RailItem; onCookiePreferences: () => void }) {
   const items = NAV[user.role as Role];
   return (
     <nav
@@ -99,19 +91,6 @@ export function PrimaryRail({
           trigger={
             <button type="button" aria-label="Appearance" className={railButton}>
               <AppearanceIcon className="h-5 w-5" aria-hidden="true" />
-            </button>
-          }
-        />
-        <AccountMenu
-          user={user}
-          onCookiePreferences={onCookiePreferences}
-          trigger={
-            <button
-              type="button"
-              aria-label={`Account menu for ${user.name}`}
-              className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rail-icon-active/70"
-            >
-              <UserAvatar user={user} />
             </button>
           }
         />

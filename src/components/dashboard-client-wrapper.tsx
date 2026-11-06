@@ -130,13 +130,9 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
         setIsVerificationModalOpen(false);
         const uid = searchParams.get("uid");
         if (userPayload.id !== uid) {
-          const prefix =
-            userPayload.role === "admin"
-              ? "/u/portal/dashboard/admin"
-              : userPayload.role === "oa"
-                ? "/u/portal/dashboard/oa"
-                : "/u/portal/dashboard";
-          router.replace(`${prefix}?uid=${userPayload.id}`);
+          const params = new URLSearchParams(searchParams.toString());
+          params.set("uid", userPayload.id);
+          router.replace(`${pathname}?${params.toString()}`);
         }
       }
     } catch (error: any) {
@@ -165,6 +161,14 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   // Re-check the session when the page or account changes (not on every filter change).
   useEffect(() => {
     fetchUser();
+  }, [pathname, uidParam]);
+
+  useEffect(() => {
+    const refresh = () => {
+      void fetchUser();
+    };
+    window.addEventListener("profile-updated", refresh);
+    return () => window.removeEventListener("profile-updated", refresh);
   }, [pathname, uidParam]);
 
   // Role guard (G11): a page for another role sends you to your own Home with a message,

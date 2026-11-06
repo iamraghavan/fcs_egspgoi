@@ -74,7 +74,7 @@ export default defineConfig({
     {
       command: "node ../backend/tests/support/testServer.js",
       url: `${API}/health`,
-      reuseExistingServer: false,
+      reuseExistingServer: process.env.PLAYWRIGHT_REUSE_LOCAL === "1",
       timeout: 120_000,
       env: {
         TEST_SERVER_PORT: "5050",
@@ -86,7 +86,7 @@ export default defineConfig({
     {
       command: "npx next dev -p 9002",
       url: "http://localhost:9002/u/portal/auth",
-      reuseExistingServer: false,
+      reuseExistingServer: process.env.PLAYWRIGHT_REUSE_LOCAL === "1",
       timeout: 300_000,
       env: frontendEnv,
     },

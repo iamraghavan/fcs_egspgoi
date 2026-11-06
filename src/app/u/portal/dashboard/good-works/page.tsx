@@ -56,29 +56,6 @@ type GoodWork = {
   notes?: string;
 };
 
-const getCurrentAcademicYear = () => {
-  const today = new Date();
-  const currentMonth = today.getMonth(); // 0-11
-  const currentYear = today.getFullYear();
-  // Academic year starts in June (index 5)
-  if (currentMonth >= 5) {
-    return `${currentYear}-${(currentYear + 1).toString().slice(-2)}`;
-  }
-  return `${currentYear - 1}-${currentYear.toString().slice(-2)}`;
-};
-
-const generateYearOptions = () => {
-  const currentYearString = getCurrentAcademicYear();
-  const [startCurrentYear] = currentYearString.split("-").map(Number);
-  const years = [];
-  for (let i = 0; i < 5; i++) {
-    const startYear = startCurrentYear - i;
-    const endYear = (startYear + 1).toString().slice(-2);
-    years.push(`${startYear}-${endYear}`);
-  }
-  return years;
-};
-
 export default function GoodWorksPage() {
   const { showAlert } = useAlert();
   const { toast } = useToast();
@@ -308,7 +285,7 @@ export default function GoodWorksPage() {
   });
 
   const totalPages = Math.ceil(total / limit);
-  const yearOptions = generateYearOptions();
+  const { options: yearOptions } = useAcademicYear();
 
   return (
     <div className="mx-auto max-w-7xl">

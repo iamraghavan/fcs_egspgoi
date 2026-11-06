@@ -59,9 +59,11 @@ export function MobileNav({
             }
           />
         </div>
-        <div className="px-4 pt-3">
-          <AcademicYearSwitcher className="h-11 w-full" />
-        </div>
+        {!["setup", "account"].includes(active?.id || "") && (
+          <div className="px-4 pt-3">
+            <AcademicYearSwitcher className="h-11 w-full" />
+          </div>
+        )}
         <nav aria-label="Main" className="px-2 py-3">
           <ul className="space-y-1">
             {NAV[user.role].map((m) => {

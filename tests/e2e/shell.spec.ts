@@ -84,7 +84,7 @@ test("admin and OA rails show their own modules", async ({ page }) => {
   await loginFast(page, "admin");
   await page.goto(`${D}/admin?uid=${USERS.admin.id}`);
   const rail = page.getByRole("navigation", { name: "Main" });
-  for (const name of ["Home", "Review", "Credits", "People", "Reports", "Setup", "Help"]) {
+  for (const name of ["Home", "Review", "Credits", "People", "Reports", "Setup", "My account"]) {
     await expect(rail.getByRole("link", { name, exact: true })).toBeVisible();
   }
   await rail.getByRole("link", { name: "Credits" }).click();

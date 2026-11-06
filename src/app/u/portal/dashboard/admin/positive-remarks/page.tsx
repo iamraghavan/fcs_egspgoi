@@ -1,4 +1,5 @@
 "use client";
+import { useApplicationSettings } from "@/lib/application-settings";
 
 import { API_V1 } from "@/lib/api-url";
 import { useState, useEffect, useMemo, useRef } from "react";
@@ -123,6 +124,8 @@ const generateYearOptions = () => {
 };
 
 export default function ManagePositiveCreditsPage() {
+  const { settings: applicationSettings } = useApplicationSettings();
+  const currentAcademicYear = applicationSettings?.currentAcademicYear || getCurrentAcademicYear();
   const { toast } = useToast();
   const { showAlert } = useAlert();
   const searchParams = useSearchParams();
@@ -290,7 +293,7 @@ export default function ManagePositiveCreditsPage() {
     const formData = new FormData();
     formData.append("facultyId", selectedFaculty._id);
     formData.append("points", points.toString());
-    formData.append("academicYear", getCurrentAcademicYear());
+    formData.append("academicYear", currentAcademicYear);
     formData.append("title", title);
     if (creditTitleId) formData.append("creditTitleId", creditTitleId);
     if (notes) formData.append("notes", notes);
@@ -463,7 +466,7 @@ export default function ManagePositiveCreditsPage() {
                   </div>
                   <div>
                     <Label className="block text-sm font-medium text-muted-foreground">Academic Year</Label>
-                    <Input value={getCurrentAcademicYear()} readOnly className="bg-muted " />
+                    <Input value={currentAcademicYear} readOnly className="bg-muted " />
                   </div>
                 </div>
                 <div>

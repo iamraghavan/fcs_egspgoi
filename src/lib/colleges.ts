@@ -1,7 +1,6 @@
-
 export const colleges = {
   "E.G.S.Pillay Arts and Science College": {
-    "Undergraduate": [
+    Undergraduate: [
       "B.A – Tamil",
       "B.A – English",
       "B.A – Defence & Strategic Studies",
@@ -25,9 +24,9 @@ export const colleges = {
       "B.Sc- Artificial Intelligence and Machine Learning",
       "B.Sc – Data Science",
       "B.Sc – Microbiology",
-      "B.Com – Professional Accounting"
+      "B.Com – Professional Accounting",
     ],
-    "Postgraduate": [
+    Postgraduate: [
       "M.Com",
       "M.B.A",
       "M.A – English",
@@ -38,54 +37,35 @@ export const colleges = {
       "M.Sc – Chemistry",
       "M.Sc – Bio Chemistry",
       "M.Sc – Bio Technology",
-      "M.Sc – Food Science & Nutrition"
+      "M.Sc – Food Science & Nutrition",
     ],
-    "Common": [
-      "Training and Placement"
-    ]
+    Common: ["Training and Placement"],
   },
   "E.G.S.Pillay Polytechnic College": {
-    "Diploma": [
+    Diploma: [
       "Diploma in Mechanical Engineering",
       "Diploma in Civil Engineering",
       "Diploma in Electrical and Electronics Engineering",
       "Diploma in Electronics and Communication Engineering",
-      "Diploma in Computer Engineering"
+      "Diploma in Computer Engineering",
     ],
-    "Common": [
-      "Training and Placement"
-    ]
+    Common: ["Training and Placement"],
   },
   "E.G.S. Pillay College and School of Nursing": {
-    "Courses": [
-      "B.Sc – Nursing",
-      "DGNM – (Diploma in General Nursing & Midwifery)"
-    ],
-    "Common": [
-      "Training and Placement"
-    ]
+    Courses: ["B.Sc – Nursing", "DGNM – (Diploma in General Nursing & Midwifery)"],
+    Common: ["Training and Placement"],
   },
   "E.G.S.Pillay College of Education": {
-    "Courses": [
-      "All Subjects"
-    ],
-    "Common": [
-      "Training and Placement"
-    ]
+    Courses: ["All Subjects"],
+    Common: ["Training and Placement"],
   },
   "E.G.S. Pillay College of Pharmacy": {
-    "Courses": [
-      "D.Pharm",
-      "B.Pharm",
-      "M.Pharm",
-      "Pharm.D"
-    ],
-    "Common": [
-      "Training and Placement"
-    ]
+    Courses: ["D.Pharm", "B.Pharm", "M.Pharm", "Pharm.D"],
+    Common: ["Training and Placement"],
   },
   "EGS Pillay Engineering College": {
-    "Undergraduate": [
+    Departments: ["Artificial Intelligence and Machine Learning", "Science & Humanities"],
+    Undergraduate: [
       "B.E – Mechanical Engineering",
       "B.E – Electronics and Communication Engineering",
       "B.E – Electrical & Electronics Engineering",
@@ -94,19 +74,17 @@ export const colleges = {
       "B.E – Civil Engineering",
       "B.E – Bio-Medical Engineering",
       "B.Tech – Computer Science & Business Systems",
-      "B.Tech – Artificial Intelligence and Data Science"
+      "B.Tech – Artificial Intelligence and Data Science",
     ],
-    "Postgraduate": [
+    Postgraduate: [
       "M.E (Computer Science and Engineering)",
       "M.E (Communication Systems)",
       "M.E (Manufacturing Engineering)",
       "M.E (Power Electronics and Drives)",
       "M.E (Environmental Engineering)",
       "MCA – Master of Computer Applications",
-      "MBA – Master of Business Administration"
+      "MBA – Master of Business Administration",
     ],
-    "Common": [
-      "Training and Placement"
-    ]
-  }
+    Common: ["Training and Placement"],
+  },
 };
