@@ -1,49 +1,29 @@
 "use client";
 
-import { API_ORIGIN } from "@/lib/api-url";
 import { useState } from "react";
 import { Button } from "./ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { BellRing, CheckCircle, Send, Loader2 } from "lucide-react";
 import { usePushNotifications } from "@/hooks/use-push-notifications";
-
-const API_BASE_URL = API_ORIGIN;
+import { apiFetch } from "@/lib/api";
 
 export function PushNotificationManager() {
   const { toast } = useToast();
-  const { isSupported, isSubscribed, permission, isProcessing, subscribeUser } = usePushNotifications();
+  const { isSupported, isConfigured, isSubscribed, permission, isProcessing, error, subscribeUser, unsubscribeUser } =
+    usePushNotifications();
   const [isTestProcessing, setIsTestProcessing] = useState(false);
 
   const sendTestNotification = async () => {
-    const userToken = localStorage.getItem("token");
-    if (!userToken) {
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "You must be logged in to send a test notification.",
-      });
-      return;
-    }
-
     setIsTestProcessing(true);
     try {
-      const response = await fetch(`${API_BASE_URL}/api/v1/notifications/test`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${userToken}`,
-        },
+      const result = await apiFetch("/notifications/test", { method: "POST" });
+      toast({
+        title: "Test processed",
+        description:
+          result.channels?.fcm === "delivered"
+            ? "A push was sent to this device."
+            : "The test is in your inbox. Push delivery is unavailable; check Firebase setup.",
       });
-
-      if (response.ok) {
-        toast({
-          title: "Test Sent",
-          description: "If notifications are set up correctly, you should receive a test notification shortly.",
-        });
-      } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || "Failed to send test notification.");
-      }
     } catch (error: any) {
       toast({ variant: "destructive", title: "Test Failed", description: error.message });
       console.error("Failed to send test notification: ", error);
@@ -62,7 +42,19 @@ export function PushNotificationManager() {
   }
 
   if (!isSupported) {
-    return <p className="text-sm text-muted-foreground">Push notifications are not supported in your browser.</p>;
+    return (
+      <p className="text-sm text-muted-foreground">
+        This browser cannot receive push notifications. Your in-app inbox is still available.
+      </p>
+    );
+  }
+
+  if (!isConfigured) {
+    return (
+      <p className="text-sm text-destructive">
+        Browser push is not configured for this site. Ask an administrator to check Firebase settings.
+      </p>
+    );
   }
 
   if (isSubscribed) {
@@ -76,6 +68,14 @@ export function PushNotificationManager() {
           <Send className="mr-2 h-4 w-4" />
           {isTestProcessing ? "Sending..." : "Send Test Notification"}
         </Button>
+        <Button onClick={() => void unsubscribeUser()} variant="ghost" disabled={isProcessing}>
+          Disable on this device
+        </Button>
+        {error && (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        )}
       </div>
     );
   }
@@ -90,13 +90,18 @@ export function PushNotificationManager() {
 
   return (
     <div className="space-y-3">
-      <Button onClick={subscribeUser} disabled={isProcessing}>
+      <Button onClick={() => void subscribeUser()} disabled={isProcessing}>
         <BellRing className="mr-2 h-4 w-4" />
         {isProcessing ? "Processing..." : "Enable Push Notifications"}
       </Button>
       <p className="text-xs text-muted-foreground">
         Your browser will ask for permission. Please select "Allow" to receive updates.
       </p>
+      {error && (
+        <p role="alert" className="text-sm text-destructive">
+          {error}
+        </p>
+      )}
     </div>
   );
 }

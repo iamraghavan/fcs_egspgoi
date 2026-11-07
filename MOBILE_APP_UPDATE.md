@@ -162,15 +162,16 @@ Bulk upload needs a row-level success/failure review. It may remain web-first on
 
 ### Notifications
 
-| Method/path                       | Access                   | Request and behavior                                                                                                       |
-| --------------------------------- | ------------------------ | -------------------------------------------------------------------------------------------------------------------------- |
-| `GET /notifications?limit=6`      | Signed in                | Returns `{success,items,unreadCount}`; items include `_id,title,message,read,createdAt,url?`. Server maximum limit is 200. |
-| `PATCH /notifications/:id/read`   | Signed in                | Mark one owned notification read.                                                                                          |
-| `PATCH /notifications/read-all`   | Signed in                | Mark all owned notifications read.                                                                                         |
-| `PUT /notifications/device-token` | Signed in                | JSON `{fcmToken}`; register or update the native FCM token.                                                                |
-| `POST /notifications/broadcast`   | `notification.broadcast` | Admin broadcast workflow.                                                                                                  |
+| Method/path                          | Access                   | Request and behavior                                                                                                                                      |
+| ------------------------------------ | ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `GET /notifications?limit=6`         | Signed in                | Returns `{success,items,unreadCount}`; items include `_id,title,message,read,createdAt,url?`. Server maximum limit is 200.                                |
+| `PATCH /notifications/:id/read`      | Signed in                | Mark one owned notification read.                                                                                                                         |
+| `PATCH /notifications/read-all`      | Signed in                | Mark all owned notifications read.                                                                                                                        |
+| `PUT /notifications/device-token`    | Signed in                | JSON `{fcmToken,platform}`, with `platform` = `android` or `ios`; register this device without replacing the user's other devices. Returns `deviceCount`. |
+| `DELETE /notifications/device-token` | Signed in                | JSON `{fcmToken}`; remove this device before sign out or account switching. Returns `deviceCount`.                                                        |
+| `POST /notifications/broadcast`      | `notification.broadcast` | Admin broadcast workflow.                                                                                                                                 |
 
-Show an unread badge and a full inbox. Refresh on app foreground and after reading; the web polls every 60 seconds, which can be used as a foreground fallback on mobile. Register the native FCM token after sign-in and when it rotates. `/notifications/subscribe` accepts a **web push** subscription and is not the native endpoint. No dedicated native token removal route is documented; coordinate logout/device cleanup with backend rather than inventing one. Treat notification URLs as untrusted input and map only known application destinations.
+Show an unread badge and a full inbox. Refresh on app foreground and after reading; the web polls every 60 seconds, which can be used as a foreground fallback on mobile. Ask for OS notification permission from a clear user action; keep the in-app inbox usable if permission is denied. Register the native FCM token after sign-in, on token rotation, and after permission is granted. Wait for server success before showing push as enabled. Call `DELETE /notifications/device-token` with the current token before logout or account switching, then clear local registration. `/notifications/subscribe` accepts a **web push** subscription and is not the native endpoint. Treat notification URLs as untrusted input and map only known application destinations.
 
 ### Admin dashboard and core workflows
 
@@ -245,7 +246,6 @@ Present summary cards, review and appeal queues, status distribution, monthly tr
 
 - The production and staging backend API origins, TLS configuration, and mobile app link domains.
 - Whether password reset and notification destinations should open native screens or the existing web pages.
-- FCM token replacement/removal behavior when a user signs out or changes accounts on the same device.
 - Which P2 administration functions need phone UI versus tablet/web access.
 
 ## Source files to inspect

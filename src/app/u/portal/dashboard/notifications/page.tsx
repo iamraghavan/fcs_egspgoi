@@ -1,6 +1,7 @@
 "use client";
 
-import { API_ORIGIN } from "@/lib/api-url";
+import { apiFetch } from "@/lib/api";
+import { PushNotificationManager } from "@/components/push-notification-manager";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { AlertTriangle, Bell, CheckCircle2, ChevronDown, Clock3, Info, Megaphone, XCircle } from "lucide-react";
@@ -14,7 +15,6 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 
-const API_BASE_URL = API_ORIGIN;
 type NotificationItem = {
   _id: string;
   type: string;
@@ -38,17 +38,11 @@ const iconFor = (type: string) => {
 export default function NotificationsPage() {
   const [items, setItems] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [filter, setFilter] = useState<Filter>("all");
   const { toast } = useToast();
   const request = useCallback(async (path: string, init?: RequestInit) => {
-    const token = localStorage.getItem("token");
-    const response = await fetch(`${API_BASE_URL}/api/v1/notifications${path}`, {
-      ...init,
-      headers: { Authorization: `Bearer ${token}`, ...(init?.headers || {}) },
-    });
-    const body = await response.json();
-    if (!response.ok) throw new Error(body.message || "Notification request failed");
-    return body;
+    return apiFetch(`/notifications${path}`, init);
   }, []);
   const load = useCallback(
     async (quiet = false) => {
@@ -56,12 +50,9 @@ export default function NotificationsPage() {
       try {
         const body = await request("?limit=200");
         setItems(body.items || []);
+        setLoadError(null);
       } catch (error) {
-        toast({
-          title: "Notifications unavailable",
-          description: error instanceof Error ? error.message : "Please retry",
-          variant: "destructive",
-        });
+        setLoadError(error instanceof Error ? error.message : "Please retry");
       } finally {
         setLoading(false);
       }
@@ -123,6 +114,21 @@ export default function NotificationsPage() {
           Mark all as read
         </Button>
       </header>
+      <div className="rounded-xl border bg-card p-4">
+        <h2 className="mb-2 text-sm font-semibold">Push notifications on this device</h2>
+        <PushNotificationManager />
+      </div>
+      {loadError && (
+        <div
+          role="alert"
+          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-destructive/40 bg-destructive/5 p-4"
+        >
+          <p className="text-sm">Could not load your notification inbox: {loadError}</p>
+          <Button variant="outline" onClick={() => void load()}>
+            Retry
+          </Button>
+        </div>
+      )}
       <div className="flex items-center justify-between border-y py-3">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -144,7 +150,7 @@ export default function NotificationsPage() {
       <div className="space-y-3" aria-live="polite">
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-28 w-full rounded-xl" />)
-        ) : visible.length ? (
+        ) : loadError ? null : visible.length ? (
           visible.map((item) => {
             const Icon = iconFor(item.type);
             const warning =

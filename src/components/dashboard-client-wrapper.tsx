@@ -10,9 +10,9 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { useAlert } from "@/context/alert-context";
 import { Skeleton } from "./ui/skeleton";
 import dynamic from "next/dynamic";
-import { usePushNotifications } from "@/hooks/use-push-notifications";
+import { messaging } from "@/lib/firebase";
+import { onMessage } from "firebase/messaging";
 import { useToast } from "@/hooks/use-toast";
-import { Button } from "./ui/button";
 
 const CookiePreferencesDialog = dynamic(() =>
   import("@/components/cookie-preferences-dialog").then((mod) => mod.CookiePreferencesDialog),
@@ -83,8 +83,6 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   const [isCookiePrefsOpen, setIsCookiePrefsOpen] = useState(false);
   const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
   const [userForVerification, setUserForVerification] = useState<any | null>(null);
-
-  const { permission, subscribeUser, isSupported } = usePushNotifications();
 
   const fetchUser = async () => {
     const token = localStorage.getItem("token");
@@ -184,22 +182,16 @@ export default function DashboardClientWrapper({ children }: { children: ReactNo
   }, [user, allowed, router, toast]);
 
   useEffect(() => {
-    if (user && isSupported && permission === "default") {
-      const timer = setTimeout(() => {
-        toast({
-          title: "Enable updates",
-          description: "Stay informed with real-time push notifications.",
-          action: (
-            <Button variant="outline" size="sm" onClick={() => subscribeUser()}>
-              Enable
-            </Button>
-          ),
-          duration: 10000,
-        });
-      }, 5000);
-      return () => clearTimeout(timer);
-    }
-  }, [user, isSupported, permission, subscribeUser, toast]);
+    const client = messaging();
+    if (!client) return;
+    return onMessage(client, (payload) => {
+      toast({
+        title: payload.notification?.title || "New notification",
+        description: payload.notification?.body || "Open your notification inbox for details.",
+      });
+      window.dispatchEvent(new Event("notifications-updated"));
+    });
+  }, [toast]);
 
   if (loading || !user || !allowed) return <LoadingSkeleton />;
 

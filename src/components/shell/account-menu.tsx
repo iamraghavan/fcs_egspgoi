@@ -25,6 +25,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { API_V1 } from "@/lib/api-url";
+import { removeBrowserPushForCurrentUser } from "@/hooks/use-push-notifications";
 import { HELP_PATH, ROLE_LABEL, withUid, type Role } from "./nav-config";
 
 export type ShellUser = { id: string; name: string; email: string; avatar: string; role: Role };
@@ -36,6 +37,7 @@ export async function signOut() {
   // End the session on the server too, so a copied token stops working (SEC-10).
   const token = localStorage.getItem("token");
   if (token) {
+    await removeBrowserPushForCurrentUser();
     await fetch(`${API_V1}/auth/logout`, { method: "POST", headers: { Authorization: `Bearer ${token}` } }).catch(
       () => {
         /* still sign out locally */
